@@ -756,6 +756,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         <div style="font-size:10px;color:var(--text3);margin-top:6px">Ao confirmar "Sim" e salvar, o equipamento vai direto para <b style="color:var(--verde)">Check List Saída</b></div>
       </div>
       <div class="mc-row2">
+        <div class="mc-field">
+          <label>Ordem Manusis</label>
+          <input type="text" id="mc-ordem-manusis" placeholder="Nº da ordem..." oninput="setOrdemManusis(this.value)" maxlength="40">
+        </div>
+        <div class="mc-field">
+          <label>Requisição de Compra</label>
+          <input type="text" id="mc-req-compra" placeholder="Nº da requisição..." oninput="setReqCompra(this.value)" maxlength="40">
+        </div>
+      </div>
+      <div class="mc-row2">
         <div id="mc-semana-section">
           <div class="mc-section-title">Semana prevista</div>
           <div class="mc-field"><select id="mc-semana-sel" onchange="setSemana(this.value)"><option value="">— Não programado —</option></select></div>
@@ -892,7 +902,7 @@ async function saveToFirebase(eqIds){
         tempo_etapas:eq.tempo_etapas||{},semana_anterior:eq.semana_anterior||null,
         etapa_interna:eq.etapa_interna||null,etapa_interna_desde:eq.etapa_interna_desde||null,
         baixado:eq.baixado||false,reservado:eq.reservado||false,cliente:eq.cliente||'',
-        historico:eq.historico||[],
+        historico:eq.historico||[],ordemManusis:eq.ordemManusis||'',reqCompra:eq.reqCompra||'',
       });
     }
     setSyncStatus('ok');
@@ -1003,7 +1013,7 @@ function init(){
       obs:sv?sv.obs:'',retrabalho:sv?sv.retrabalho||0:0,tempo_etapas:sv?sv.tempo_etapas||{}:{},
       assinaturas:sv?sv.assinaturas||{}:{},semana_anterior:sv?sv.semana_anterior||null:null,
       baixado:sv?sv.baixado||false:false,reservado:sv?sv.reservado||false:false,cliente:sv?sv.cliente||'':'',
-      historico:sv?sv.historico||[]:[],
+      historico:sv?sv.historico||[]:[],ordemManusis:sv?sv.ordemManusis||'':'',reqCompra:sv?sv.reqCompra||'':'',
     };
   });
   document.getElementById('header-date').textContent=new Date().toLocaleDateString('pt-BR',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
@@ -1292,6 +1302,8 @@ function openCardModal(eqId,visao){
   if(eq.semana_locked){ss.disabled=true;li.innerHTML='<span style="color:var(--terra)">🔒 Bloqueada.</span> <button style="font-size:10px;padding:2px 6px;background:var(--bg3);border:1px solid var(--borda);border-radius:4px;cursor:pointer;color:var(--text2)" onclick="desbloquearSemana()">Alterar</button>';}
   else{ss.disabled=false;li.innerHTML='<span style="color:var(--text3)">Após salvar, semana será bloqueada.</span>';}
   document.getElementById('mc-obs').value=eq.obs||'';
+  document.getElementById('mc-ordem-manusis').value=eq.ordemManusis||'';
+  document.getElementById('mc-req-compra').value=eq.reqCompra||'';
   // Histórico de movimentações do equipamento
   const hist = document.getElementById('mc-historico');
   if (hist) {
@@ -1308,7 +1320,7 @@ function openCardModal(eqId,visao){
     }
   }
 
-  document.getElementById('mc-info-box').innerHTML=`<b>Oficina:</b> ${eq.oficina}<br><b>Etapa atual:</b> ${ETAPAS_GERAL.find(e=>e.id===eq.etapa)?.label||eq.etapa}<br><b>Dias nesta etapa:</b> ${Math.floor((Date.now()-(eq.etapa_desde||Date.now()))/86400000)===0?'Hoje':Math.floor((Date.now()-(eq.etapa_desde||Date.now()))/86400000)+' dias'}${eq.semana?'<br><b>Semana:</b> '+semanaLabel(eq.semana):''}${eq.reservado&&eq.cliente?'<br><b>Cliente:</b> '+eq.cliente:''}${eq.baixado?'<br><b style="color:var(--terra)">⚠ Baixado/Vendido</b>':''}`;
+  document.getElementById('mc-info-box').innerHTML=`<b>Oficina:</b> ${eq.oficina}<br><b>Etapa atual:</b> ${ETAPAS_GERAL.find(e=>e.id===eq.etapa)?.label||eq.etapa}<br><b>Dias nesta etapa:</b> ${Math.floor((Date.now()-(eq.etapa_desde||Date.now()))/86400000)===0?'Hoje':Math.floor((Date.now()-(eq.etapa_desde||Date.now()))/86400000)+' dias'}${eq.semana?'<br><b>Semana:</b> '+semanaLabel(eq.semana):''}${eq.ordemManusis?'<br><b>OS Manusis:</b> <span style="color:var(--laranja);font-weight:600">'+eq.ordemManusis+'</span>':''}${eq.reqCompra?'<br><b>Req. Compra:</b> <span style="color:var(--laranja);font-weight:600">'+eq.reqCompra+'</span>':''}${eq.reservado&&eq.cliente?'<br><b>Cliente:</b> '+eq.cliente:''}${eq.baixado?'<br><b style="color:var(--terra)">⚠ Baixado/Vendido</b>':''}`;
   document.getElementById('mc-footer-info').textContent=eq.prioridade?'Prioridade: '+prioLabel(eq.prioridade):'Sem prioridade';
   showModal('modal-card');
 }
@@ -1317,6 +1329,8 @@ function setPrioridade(p){const cur=pendingCardChanges.prioridade!==undefined?pe
 function setSemana(v){pendingCardChanges.semana=v||null;}
 function setObs(v){pendingCardChanges.obs=v;}
 function setCliente(v){pendingCardChanges.cliente=v;}
+function setOrdemManusis(v){pendingCardChanges.ordemManusis=v;}
+function setReqCompra(v){pendingCardChanges.reqCompra=v;}
 function setManutFinalizada(v){
   pendingCardChanges.manutFinalizada=v;
   document.getElementById('manut-sim').className='reserva-btn'+(v?' active-sim':'');
@@ -1341,13 +1355,8 @@ function desbloquearSemana(){
 function saveCardAndClose(){
   if(!currentCardId)return;
   const eq=state[currentCardId];
-  const temProg=pendingCardChanges.semana!==undefined||pendingCardChanges.prioridade!==undefined;
-  if(temProg&&!pendingCardChanges._perfilAutenticado){
-    const nv=currentUser?currentUser.perfil:'';
-    if(nv==='master'||(nv==='oficina'&&(currentUser.oficina===''||currentUser.oficina===eq.oficina))){pendingCardChanges._perfilAutenticado={perfil:currentUser.nome,nivel:nv};_salvarCard();}
-    else requestSenha('🔐 Programação','Senha da oficina ou master.','programar_semana_prio',{oficina:eq.oficina},p=>{pendingCardChanges._perfilAutenticado=p;_salvarCard();});
-    return;
-  }
+  // Qualquer usuário logado pode programar semana e prioridade
+  pendingCardChanges._perfilAutenticado={perfil:currentUser?currentUser.nome:'operador',nivel:currentUser?currentUser.perfil:'operador'};
   _salvarCard();
 }
 function _salvarCard(){
@@ -1355,6 +1364,8 @@ function _salvarCard(){
   const eq=state[currentCardId];
   const perfil=pendingCardChanges._perfilAutenticado||null;
   if(pendingCardChanges.obs!==undefined)eq.obs=pendingCardChanges.obs;
+  if(pendingCardChanges.ordemManusis!==undefined)eq.ordemManusis=pendingCardChanges.ordemManusis;
+  if(pendingCardChanges.reqCompra!==undefined)eq.reqCompra=pendingCardChanges.reqCompra;
   if(pendingCardChanges.prioridade!==undefined)eq.prioridade=pendingCardChanges.prioridade;
   if(pendingCardChanges.reservado!==undefined)eq.reservado=pendingCardChanges.reservado;
   if(pendingCardChanges.cliente!==undefined)eq.cliente=pendingCardChanges.cliente;
