@@ -179,6 +179,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .prog-card:hover{border-color:var(--laranja)}
 .prog-card.concluido{border-color:var(--verde2);background:rgba(29,158,117,.08)}
 .prog-card.atrasado{border-color:var(--terra);border-width:1.5px}
+.prog-card.reservado{border-left:3px solid var(--laranja);background:#FFF8F0}
 .prog-card-id{font-size:9px;font-weight:600;color:var(--text3);text-transform:uppercase}
 .prog-card-equip{font-size:11px;font-weight:600;color:var(--text);line-height:1.3;margin:2px 0}
 .prog-card-modelo{font-size:10px;color:var(--text3)}
@@ -928,28 +929,57 @@ async function loadFromFirebase(){
   setSyncStatus('loading');
   try{
     const rem=await fbGetAll();
-    if(rem){
+    if(rem&&Object.keys(rem).length>0){
       Object.entries(rem).forEach(([id,d])=>{
+        if(!d||!d.equipamento)return;
         if(state[id]){
-          if((d.etapa_desde||0)>=(state[id].etapa_desde||0))Object.assign(state[id],d);
-        } else if(d.id&&d.equipamento&&!d.baixado){
-          // Equipamento novo adicionado por outro usuário via Nova base
+          // Mesclar — Firebase é fonte de verdade para estado do kanban
+          Object.assign(state[id],{
+            equipamento:d.equipamento||state[id].equipamento,
+            modelo:d.modelo||state[id].modelo,
+            tipo:d.tipo||state[id].tipo,
+            oficina:d.oficina||state[id].oficina,
+            etapa:d.etapa||state[id].etapa,
+            etapa_desde:d.etapa_desde||state[id].etapa_desde,
+            etapa_interna:d.etapa_interna!==undefined?d.etapa_interna:null,
+            etapa_interna_desde:d.etapa_interna_desde||null,
+            prioridade:d.prioridade!==undefined?d.prioridade:null,
+            semana:d.semana!==undefined?d.semana:null,
+            semana_locked:d.semana_locked||false,
+            obs:d.obs||'',retrabalho:d.retrabalho||0,
+            tempo_etapas:d.tempo_etapas||{},
+            assinaturas:d.assinaturas||{},
+            semana_anterior:d.semana_anterior||null,
+            baixado:d.baixado||false,
+            reservado:d.reservado||false,
+            cliente:d.cliente||'',
+            dataEmbarque:d.dataEmbarque||'',
+            historico:d.historico||[],
+          });
+        } else {
+          // Equipamento novo — não está no EQUIPAMENTOS_ORIG (adicionado via Nova base)
           state[id]={
-            id:d.id,equipamento:d.equipamento,modelo:d.modelo||'',tipo:d.tipo||'',
-            oficina:d.oficina||'',status:d.status||'Disponível',
+            id:d.id||id,equipamento:d.equipamento,modelo:d.modelo||'',
+            tipo:d.tipo||'',oficina:d.oficina||'',status:d.status||'Disponível',
             etapa:d.etapa||'chegada',etapa_desde:d.etapa_desde||Date.now(),
+            etapa_interna:d.etapa_interna||null,etapa_interna_desde:d.etapa_interna_desde||null,
             prioridade:d.prioridade||null,semana:d.semana||null,semana_locked:d.semana_locked||false,
             obs:d.obs||'',retrabalho:d.retrabalho||0,tempo_etapas:d.tempo_etapas||{},
             assinaturas:d.assinaturas||{},semana_anterior:d.semana_anterior||null,
-            etapa_interna:d.etapa_interna||null,etapa_interna_desde:d.etapa_interna_desde||null,
-            baixado:false,reservado:d.reservado||false,cliente:d.cliente||'',
+            baixado:d.baixado||false,reservado:d.reservado||false,cliente:d.cliente||'',
             dataEmbarque:d.dataEmbarque||'',historico:d.historico||[],
           };
         }
       });
+      try{sessionStorage.setItem('mills_v4',JSON.stringify(state));}catch(e){}
     }
     reRenderAtivo();setSyncStatus('ok');fbListen();
-  }catch(e){setSyncStatus('error');showToast('⚠ Modo offline');}
+  }catch(e){
+    console.error('Firebase error:',e);
+    setSyncStatus('error');
+    showToast('⚠ Modo offline — usando dados locais');
+    fbListen();
+  }
 }
 
 async function saveToFirebase(eqIds){
@@ -1609,8 +1639,9 @@ function renderProgramacao(){
       const orig=eq.semana_anterior&&eq.semana_anterior!==sem?`<div style="font-size:9px;color:var(--terra);margin-top:2px">↻ De ${semanaLabel(eq.semana_anterior)}</div>`:'';
       const assP=eq.assinaturas?.programacao;
       const assH=assP?`<div style="font-size:9px;color:var(--verde);margin-top:2px">📅 ${assP.perfil} · ${assP.data}</div>`:'';
-      const cliH=eq.reservado&&eq.cliente?`<div style="font-size:9px;color:var(--verde);margin-top:2px">👤 ${eq.cliente}</div>`:'';
-      return`<div class="prog-card ${isConc?'concluido':isAtr?'atrasado':''}" onclick="openCardModal('${eq.id}','geral')">
+      const cliH=eq.reservado&&eq.cliente?`<div style="font-size:9px;color:var(--laranja);margin-top:2px;font-weight:600">◈ ${eq.cliente}</div>`:'';
+      const resClass=(eq.reservado&&!isConc)?'reservado':'';
+      return`<div class="prog-card ${isConc?'concluido':isAtr?'atrasado':''} ${(eq.reservado&&!isConc)?'reservado':''}" onclick="openCardModal('${eq.id}','geral')">
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:3px">
           <div style="min-width:0"><div class="prog-card-id">${eq.id}</div><div class="prog-card-equip">${eq.equipamento}</div><div class="prog-card-modelo">${eq.modelo}</div></div>
           <button class="prog-remove-btn" onclick="removerDaProgramacao('${eq.id}',event)">✕</button>
