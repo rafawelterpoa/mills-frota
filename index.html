@@ -955,21 +955,39 @@ async function loadFromFirebase(){
 async function saveToFirebase(eqIds){
   setSyncStatus('saving');
   try{
-    for(const id of eqIds){
-      const eq=state[id];if(!eq)continue;
-      await fbSet(`equipamentos/${id}`,{
-        // Dados base — necessários para outros usuários receberem equipamentos novos
-        id:eq.id,equipamento:eq.equipamento,modelo:eq.modelo||'',
-        tipo:eq.tipo||'',oficina:eq.oficina||'',status:eq.status||'',
-        // Estado do kanban
-        etapa:eq.etapa,etapa_desde:eq.etapa_desde,prioridade:eq.prioridade||null,
-        semana:eq.semana||null,semana_locked:eq.semana_locked||false,obs:eq.obs||'',
-        retrabalho:eq.retrabalho||0,assinaturas:eq.assinaturas||{},
-        tempo_etapas:eq.tempo_etapas||{},semana_anterior:eq.semana_anterior||null,
-        etapa_interna:eq.etapa_interna||null,etapa_interna_desde:eq.etapa_interna_desde||null,
-        baixado:eq.baixado||false,reservado:eq.reservado||false,cliente:eq.cliente||'',
-        dataEmbarque:eq.dataEmbarque||'',historico:eq.historico||[],
+    // Se for atualização completa (muitos IDs), gravar tudo de uma vez
+    if(eqIds.length>10){
+      const todos={};
+      Object.values(state).forEach(eq=>{
+        todos[eq.id]={
+          id:eq.id,equipamento:eq.equipamento,modelo:eq.modelo||'',
+          tipo:eq.tipo||'',oficina:eq.oficina||'',status:eq.status||'',
+          etapa:eq.etapa,etapa_desde:eq.etapa_desde,prioridade:eq.prioridade||null,
+          semana:eq.semana||null,semana_locked:eq.semana_locked||false,obs:eq.obs||'',
+          retrabalho:eq.retrabalho||0,assinaturas:eq.assinaturas||{},
+          tempo_etapas:eq.tempo_etapas||{},semana_anterior:eq.semana_anterior||null,
+          etapa_interna:eq.etapa_interna||null,etapa_interna_desde:eq.etapa_interna_desde||null,
+          baixado:eq.baixado||false,reservado:eq.reservado||false,cliente:eq.cliente||'',
+          dataEmbarque:eq.dataEmbarque||'',historico:eq.historico||[],
+        };
       });
+      await fbSet('equipamentos',todos);
+    } else {
+      // Poucos IDs — gravar individualmente (movimentações normais)
+      for(const id of eqIds){
+        const eq=state[id];if(!eq)continue;
+        await fbSet(`equipamentos/${id}`,{
+          id:eq.id,equipamento:eq.equipamento,modelo:eq.modelo||'',
+          tipo:eq.tipo||'',oficina:eq.oficina||'',status:eq.status||'',
+          etapa:eq.etapa,etapa_desde:eq.etapa_desde,prioridade:eq.prioridade||null,
+          semana:eq.semana||null,semana_locked:eq.semana_locked||false,obs:eq.obs||'',
+          retrabalho:eq.retrabalho||0,assinaturas:eq.assinaturas||{},
+          tempo_etapas:eq.tempo_etapas||{},semana_anterior:eq.semana_anterior||null,
+          etapa_interna:eq.etapa_interna||null,etapa_interna_desde:eq.etapa_interna_desde||null,
+          baixado:eq.baixado||false,reservado:eq.reservado||false,cliente:eq.cliente||'',
+          dataEmbarque:eq.dataEmbarque||'',historico:eq.historico||[],
+        });
+      }
     }
     setSyncStatus('ok');
   }catch(e){setSyncStatus('error');showToast('⚠ Erro ao salvar');}
@@ -1776,7 +1794,7 @@ async function loadLogJson(){
 }
 
 // BASE
-function doBaseUpdate(){
+async function doBaseUpdate(){
   const raw=document.getElementById('base-ta').value.trim();if(!raw)return;
   let novos;try{novos=JSON.parse(raw);}catch(e){alert('JSON inválido');return;}
   const idsNovos=new Set(novos.map(n=>n.id));
@@ -1817,15 +1835,17 @@ function doBaseUpdate(){
     }
   });
   closeModal('modal-base');
-  saveToFirebase(Object.keys(state));
-  try{sessionStorage.setItem('mills_v4',JSON.stringify(state));}catch(e){}
   reRenderAtivo();
-  // Mostrar aba de alterações se houver mudanças
+  atualizarTabAlteracoes();
+  // Salvar local imediatamente
+  try{sessionStorage.setItem('mills_v4',JSON.stringify(state));}catch(e){}
+  // Gravar no Firebase e aguardar confirmação
+  showToast(`Salvando ${Object.keys(state).length} equipamentos no Firebase...`);
+  await saveToFirebase(Object.keys(state));
   if(adicionados>0||baixados>0){
-    atualizarTabAlteracoes();
-    showToast(`Base atualizada: ${adicionados} novos · ${atualizados} atualizados · ${baixados} baixados — ver aba ⚡ Alterações`);
+    showToast(`✓ Base salva! ${adicionados} novos · ${atualizados} atualizados · ${baixados} baixados — ver ⚡ Alterações`);
   } else {
-    showToast(`Base: sem novidades · ${atualizados} equipamentos verificados`);
+    showToast(`✓ Base salva! ${atualizados} equipamentos verificados`);
   }
 }
 const SEM_MOTOR_ARR=Array.from(SEM_MOTOR_SET);
