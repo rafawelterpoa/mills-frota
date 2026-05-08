@@ -180,6 +180,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .prog-card.concluido{border-color:var(--verde2);background:rgba(29,158,117,.08)}
 .prog-card.atrasado{border-color:var(--terra);border-width:1.5px}
 .prog-card.reservado{border-left:3px solid var(--laranja);background:#FFF8F0}
+.prog-card.reprogramado{border-left:3px solid #7F77DD;background:#F5F3FF}
+.reprogramado-badge{display:inline-flex;align-items:center;gap:2px;background:#EDE9FF;color:#5B4DB5;border-radius:3px;padding:1px 6px;font-size:9px;font-weight:700;border:1px solid #C4BAFF}
 .prog-card-id{font-size:9px;font-weight:600;color:var(--text3);text-transform:uppercase}
 .prog-card-equip{font-size:11px;font-weight:600;color:var(--text);line-height:1.3;margin:2px 0}
 .prog-card-modelo{font-size:10px;color:var(--text3)}
@@ -429,11 +431,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <option value="media">Média</option><option value="baixa">Baixa</option>
     </select>
     <select class="filter-sel" id="prog-tipo-sel" onchange="renderProgramacao()"><option value="">Todos os tipos</option></select>
+    <select class="filter-sel" id="prog-semana-vis" onchange="renderProgramacao()" style="max-width:200px">
+      <option value="futuras">Apenas semanas futuras</option>
+      <option value="todas">Todas as semanas</option>
+      <option value="4semanas">Últimas 4 semanas</option>
+      <option value="atual">Só semana atual</option>
+    </select>
   </div>
   <div class="prog-filter-bar" id="prog-stats-bar" style="display:none">
     <span id="prog-stats-text" style="font-size:12px;color:var(--text2)"></span>
   </div>
-  <div id="prog-graficos" style="display:none;margin-bottom:14px"></div>
+  <div id="prog-graficos" style="margin-bottom:14px"></div>
   <div class="prog-semanas" id="prog-semanas"></div>
 </div>
 </div>
@@ -1601,57 +1609,141 @@ function renderProgramacao(){
   const ofFil=document.getElementById('prog-oficina-sel').value;
   const prioFil=document.getElementById('prog-prio-sel').value;
   const tipoFil=document.getElementById('prog-tipo-sel').value;
+  const semVis=(document.getElementById('prog-semana-vis')||{}).value||'futuras';
+  const semAtual=semanaAtual();
+
+  // Filtrar equipamentos programados
   let equips=Object.values(state).filter(e=>e.semana);
   if(ofFil)equips=equips.filter(e=>e.oficina===ofFil);
   if(prioFil)equips=equips.filter(e=>e.prioridade===prioFil);
   if(tipoFil)equips=equips.filter(e=>e.tipo===tipoFil);
+
+  // Filtrar semanas visíveis
+  let semsVisiveis=new Set(equips.map(e=>e.semana));
+  if(semVis==='futuras'){
+    semsVisiveis=new Set([...semsVisiveis].filter(s=>s>=semAtual));
+    equips=equips.filter(e=>e.semana>=semAtual);
+  } else if(semVis==='atual'){
+    semsVisiveis=new Set([semAtual]);
+    equips=equips.filter(e=>e.semana===semAtual);
+  } else if(semVis==='4semanas'){
+    const sems=Object.keys(SEMANAS_LISTA.reduce((a,s)=>{a[s.value]=1;return a},{}));
+    const idxAtual=SEMANAS_LISTA.findIndex(s=>s.value===semAtual);
+    const inicio=Math.max(0,idxAtual-4);
+    const semRange=new Set(SEMANAS_LISTA.slice(inicio,idxAtual+8).map(s=>s.value));
+    semsVisiveis=new Set([...semsVisiveis].filter(s=>semRange.has(s)));
+    equips=equips.filter(e=>semRange.has(e.semana));
+  }
+  // Para reprogramados: também incluir a semana anterior se visível
+  const equipsReprog=Object.values(state).filter(e=>e.semana_anterior&&e.semana_anterior!==e.semana&&e.semana);
+
+  // Stats bar
   const statsBar=document.getElementById('prog-stats-bar');
-  const grafDiv=document.getElementById('prog-graficos');
-  if(tipoFil||ofFil){
+  const tot=equips.length,pron=equips.filter(e=>e.etapa==='pronto').length,atr=equips.filter(e=>e.etapa!=='pronto'&&semanaPassada(e.semana)).length,res=equips.filter(e=>e.reservado).length;
+  if(tot>0){
     statsBar.style.display='flex';
-    const tot=equips.length,pron=equips.filter(e=>e.etapa==='pronto').length,atr=equips.filter(e=>e.etapa!=='pronto'&&semanaPassada(e.semana)).length;
-    document.getElementById('prog-stats-text').innerHTML=`<b>${tot}</b> programados · <b style="color:var(--verde)">${pron}</b> concluídos · <b style="color:var(--terra)">${atr}</b> atrasados`;
-    if(equips.length>0){
-      grafDiv.style.display='block';
-      const cntEt={};ETAPAS_GERAL.forEach(e=>cntEt[e.label]=0);equips.forEach(e=>{const l=ETAPAS_GERAL.find(x=>x.id===e.etapa)?.label||e.etapa;cntEt[l]=(cntEt[l]||0)+1;});
-      const maxC=Math.max(...Object.values(cntEt),1);
-      grafDiv.innerHTML=`<div class="graf-section"><div class="graf-section-hd">Distribuição por etapa <span>${tipoFil||ofFil}</span></div><div class="graf-body"><div class="graf-bar-group">${Object.entries(cntEt).filter(([,v])=>v>0).map(([l,v])=>`<div class="graf-bar-row"><span class="graf-bar-label">${l}</span><div class="graf-bar-track"><div class="graf-bar-fill" style="width:${Math.round(v/maxC*100)}%;background:var(--laranja)"><span class="graf-bar-val">${v}</span></div></div></div>`).join('')}</div></div></div>`;
-    }else grafDiv.style.display='none';
-  }else{statsBar.style.display='none';grafDiv.style.display='none';}
-  const bySemana={};equips.forEach(e=>{if(!bySemana[e.semana])bySemana[e.semana]=[];bySemana[e.semana].push(e);});
-  const semAtual=semanaAtual(),semOrder=Object.keys(bySemana).sort();
-  if(!semOrder.length){container.innerHTML='<div style="padding:30px;color:var(--text3);font-size:13px;text-align:center">Nenhum equipamento programado.<br><br>Clique num card e defina a semana prevista.</div>';return;}
+    document.getElementById('prog-stats-text').innerHTML=
+      `<b>${tot}</b> programados · <b style="color:var(--verde2)">${pron}</b> concluídos · <b style="color:var(--terra)">${atr}</b> atrasados · <b style="color:var(--laranja)">${res}</b> reservados`;
+  } else statsBar.style.display='none';
+
+  // Gráficos — sempre visíveis se houver dados
+  const grafDiv=document.getElementById('prog-graficos');
+  if(equips.length>0){
+    const cntEt={};ETAPAS_GERAL.forEach(e=>cntEt[e.id]={label:e.label,n:0,cor:CORES_ET_G[e.id]||'#888'});
+    equips.forEach(e=>{if(cntEt[e.etapa])cntEt[e.etapa].n++;});
+    const maxE=Math.max(...Object.values(cntEt).map(x=>x.n),1);
+    const cntOf={};equips.forEach(e=>{cntOf[e.oficina]=(cntOf[e.oficina]||0)+1;});
+    const maxOf=Math.max(...Object.values(cntOf),1);
+    grafDiv.innerHTML=`<div style="display:flex;gap:12px;flex-wrap:wrap">
+      <div class="graf-section" style="flex:1;min-width:260px">
+        <div class="graf-section-hd">Por etapa <span>${tot} equipamentos</span></div>
+        <div class="graf-body">
+          ${Object.values(cntEt).filter(x=>x.n>0).map(x=>`<div class="graf-bar-row">
+            <span class="graf-bar-label">${x.label}</span>
+            <div class="graf-bar-track"><div class="graf-bar-fill" style="width:${Math.round(x.n/maxE*100)}%;background:${x.cor}"><span class="graf-bar-val">${x.n}</span></div></div>
+          </div>`).join('')}
+        </div>
+      </div>
+      <div class="graf-section" style="flex:1;min-width:260px">
+        <div class="graf-section-hd">Por oficina</div>
+        <div class="graf-body">
+          ${Object.entries(cntOf).sort((a,b)=>b[1]-a[1]).map(([of,n])=>`<div class="graf-bar-row">
+            <span class="graf-bar-label">${of}</span>
+            <div class="graf-bar-track"><div class="graf-bar-fill" style="width:${Math.round(n/maxOf*100)}%;background:var(--verde)"><span class="graf-bar-val">${n}</span></div></div>
+          </div>`).join('')}
+        </div>
+      </div>
+    </div>`;
+  } else {
+    grafDiv.innerHTML='';
+  }
+
+  // Montar semanas — incluindo semana_anterior dos reprogramados
+  const bySemana={};
+  equips.forEach(e=>{
+    if(!bySemana[e.semana])bySemana[e.semana]=[];
+    bySemana[e.semana].push({...e,_reprog:false});
+  });
+  // Adicionar entrada fantasma na semana anterior dos reprogramados
+  equipsReprog.forEach(e=>{
+    const semAnt=e.semana_anterior;
+    if(!semAnt||semAnt===e.semana)return;
+    // Só mostrar se a semana anterior está no range visível
+    if(semVis==='futuras'&&semAnt<semAtual)return;
+    if(semVis==='atual'&&semAnt!==semAtual)return;
+    if(!bySemana[semAnt])bySemana[semAnt]=[];
+    // Evitar duplicata
+    if(!bySemana[semAnt].find(x=>x.id===e.id))
+      bySemana[semAnt].push({...e,_reprog:true,_novaSemana:e.semana});
+  });
+
+  const semOrder=Object.keys(bySemana).sort();
+  if(!semOrder.length){
+    container.innerHTML='<div style="padding:30px;color:var(--text3);font-size:13px;text-align:center">Nenhum equipamento programado.<br><br>Clique num card e defina a semana prevista.</div>';
+    return;
+  }
   const prioOrder={critica:0,alta:1,media:2,baixa:3};
+
   container.innerHTML=semOrder.map(sem=>{
     const items=bySemana[sem].sort((a,b)=>(prioOrder[a.prioridade]??4)-(prioOrder[b.prioridade]??4));
     const si=SEMANAS_LISTA.find(s=>s.value===sem);
     const ehAtual=sem===semAtual,ehPass=sem<semAtual;
-    const nConc=items.filter(e=>e.etapa==='pronto').length,nAtr=items.filter(e=>e.etapa!=='pronto'&&ehPass).length;
+    const itemsReais=items.filter(x=>!x._reprog);
+    const nConc=itemsReais.filter(e=>e.etapa==='pronto').length;
+    const nAtr=itemsReais.filter(e=>e.etapa!=='pronto'&&ehPass).length;
+    const nReprog=items.filter(x=>x._reprog).length;
     let hdCls='prog-sem-hd';if(ehAtual)hdCls+=' sem-atual';else if(nAtr>0)hdCls+=' tem-atraso';
     let sub='';
-    if(nConc>0)sub+=`<span style="background:rgba(107,250,199,.15);color:var(--verde);border-radius:6px;padding:1px 6px;font-size:10px">${nConc} concluído${nConc>1?'s':''}</span> `;
-    if(nAtr>0)sub+=`<span style="background:rgba(194,64,3,.2);color:#F59F60;border-radius:6px;padding:1px 6px;font-size:10px">${nAtr} atrasado${nAtr>1?'s':''}</span>`;
+    if(nConc>0)sub+=`<span style="background:rgba(29,158,117,.15);color:var(--verde2);border-radius:6px;padding:1px 6px;font-size:10px">${nConc} concluído${nConc>1?'s':''}</span> `;
+    if(nAtr>0)sub+=`<span style="background:rgba(194,64,3,.15);color:var(--terra);border-radius:6px;padding:1px 6px;font-size:10px">${nAtr} atrasado${nAtr>1?'s':''}</span> `;
+    if(nReprog>0)sub+=`<span style="background:#EDE9FF;color:#5B4DB5;border-radius:6px;padding:1px 6px;font-size:10px">${nReprog} reprogramado${nReprog>1?'s':''}</span>`;
+
     const cards=items.map(eq=>{
       const etLbl=ETAPAS_GERAL.find(e=>e.id===eq.etapa)?.label||eq.etapa;
-      const isConc=eq.etapa==='pronto',atrD=(!isConc&&ehPass)?diasAtraso(sem):0,isAtr=atrD>0;
+      const isConc=eq.etapa==='pronto',atrD=(!isConc&&ehPass&&!eq._reprog)?diasAtraso(sem):0,isAtr=atrD>0;
       const prioPill=eq.prioridade&&!isConc?`<span class="prio-pill prio-${eq.prioridade}" style="font-size:9px">${prioLabel(eq.prioridade)}</span>`:'';
       const sBadge=isConc?'<span class="concluido-badge">✓ Concluído</span>':isAtr?`<span class="atraso-badge">⚠ ${atrD}d</span>`:'';
-      const orig=eq.semana_anterior&&eq.semana_anterior!==sem?`<div style="font-size:9px;color:var(--terra);margin-top:2px">↻ De ${semanaLabel(eq.semana_anterior)}</div>`:'';
+      const reprogBadge=eq._reprog?`<span class="reprogramado-badge">↻ Reprogramado → ${semanaLabel(eq._novaSemana)}</span>`:'';
       const assP=eq.assinaturas?.programacao;
-      const assH=assP?`<div style="font-size:9px;color:var(--verde);margin-top:2px">📅 ${assP.perfil} · ${assP.data}</div>`:'';
+      const assH=assP?`<div style="font-size:9px;color:var(--verde2);margin-top:2px">📅 ${assP.perfil} · ${assP.data}</div>`:'';
       const cliH=eq.reservado&&eq.cliente?`<div style="font-size:9px;color:var(--laranja);margin-top:2px;font-weight:600">◈ ${eq.cliente}</div>`:'';
-      const resClass=(eq.reservado&&!isConc)?'reservado':'';
-      return`<div class="prog-card ${isConc?'concluido':isAtr?'atrasado':''} ${(eq.reservado&&!isConc)?'reservado':''}" onclick="openCardModal('${eq.id}','geral')">
+      const embH=eq.dataEmbarque?`<div style="font-size:9px;color:#7F77DD;margin-top:2px;font-weight:500">🚢 ${new Date(eq.dataEmbarque+'T12:00:00').toLocaleDateString('pt-BR')}</div>`:'';
+      const cardCls=[
+        isConc?'concluido':isAtr?'atrasado':'',
+        (eq.reservado&&!isConc)?'reservado':'',
+        eq._reprog?'reprogramado':'',
+      ].filter(Boolean).join(' ');
+      return`<div class="prog-card ${cardCls}" onclick="openCardModal('${eq.id}','geral')" style="${eq._reprog?'opacity:.75':''}">
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:3px">
           <div style="min-width:0"><div class="prog-card-id">${eq.id}</div><div class="prog-card-equip">${eq.equipamento}</div><div class="prog-card-modelo">${eq.modelo}</div></div>
-          <button class="prog-remove-btn" onclick="removerDaProgramacao('${eq.id}',event)">✕</button>
+          ${!eq._reprog?`<button class="prog-remove-btn" onclick="removerDaProgramacao('${eq.id}',event)">✕</button>`:''}
         </div>
         <div class="prog-card-row">${prioPill}<span class="prog-etapa">${etLbl}</span></div>
-        ${sBadge}${orig}${assH}${cliH}
+        ${sBadge}${reprogBadge}${assH}${cliH}${embH}
         ${eq.obs?`<div style="font-size:9px;color:var(--text3);margin-top:2px;font-style:italic">"${eq.obs}"</div>`:''}
       </div>`;
     }).join('');
-    return`<div class="prog-semana"><div class="${hdCls}"><span class="prog-sem-label">${si?si.label:sem}${ehAtual?' — atual':''}</span><span class="prog-sem-total">${items.length}</span>${sub}</div><div class="prog-sem-body">${cards}</div></div>`;
+    return`<div class="prog-semana"><div class="${hdCls}"><span class="prog-sem-label">${si?si.label:sem}${ehAtual?' — atual':''}</span><span class="prog-sem-total">${itemsReais.length}</span>${sub}</div><div class="prog-sem-body">${cards}</div></div>`;
   }).join('');
 }
 
