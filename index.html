@@ -894,7 +894,14 @@ function fbListen(){
   es.addEventListener('put',e=>{
     try{
       const msg=JSON.parse(e.data);if(!msg.data)return;
-      if(msg.path==='/'){Object.entries(msg.data).forEach(([id,d])=>{if(state[id]&&(d.etapa_desde||0)>=(state[id].etapa_desde||0))Object.assign(state[id],d);});}
+      if(msg.path==='/'){
+        Object.entries(msg.data).forEach(([id,d])=>{
+          if(state[id]){if((d.etapa_desde||0)>=(state[id].etapa_desde||0))Object.assign(state[id],d);}
+          else if(d.id&&d.equipamento&&!d.baixado){
+            state[id]={id:d.id,equipamento:d.equipamento,modelo:d.modelo||'',tipo:d.tipo||'',oficina:d.oficina||'',status:d.status||'Disponível',etapa:d.etapa||'chegada',etapa_desde:d.etapa_desde||Date.now(),prioridade:d.prioridade||null,semana:d.semana||null,semana_locked:d.semana_locked||false,obs:d.obs||'',retrabalho:d.retrabalho||0,tempo_etapas:d.tempo_etapas||{},assinaturas:d.assinaturas||{},semana_anterior:d.semana_anterior||null,etapa_interna:d.etapa_interna||null,etapa_interna_desde:d.etapa_interna_desde||null,baixado:false,reservado:d.reservado||false,cliente:d.cliente||'',dataEmbarque:d.dataEmbarque||'',historico:d.historico||[]};
+          }
+        });
+      }
       else{const p=msg.path.split('/').filter(Boolean);const id=p[0];if(!state[id])return;if(p.length===1){if((msg.data.etapa_desde||0)>=(state[id].etapa_desde||0))Object.assign(state[id],msg.data);}else state[id][p[1]]=msg.data;}
       reRenderAtivo();setSyncStatus('ok');
     }catch(ex){}
@@ -921,7 +928,26 @@ async function loadFromFirebase(){
   setSyncStatus('loading');
   try{
     const rem=await fbGetAll();
-    if(rem)Object.entries(rem).forEach(([id,d])=>{if(state[id]&&(d.etapa_desde||0)>=(state[id].etapa_desde||0))Object.assign(state[id],d);});
+    if(rem){
+      Object.entries(rem).forEach(([id,d])=>{
+        if(state[id]){
+          if((d.etapa_desde||0)>=(state[id].etapa_desde||0))Object.assign(state[id],d);
+        } else if(d.id&&d.equipamento&&!d.baixado){
+          // Equipamento novo adicionado por outro usuário via Nova base
+          state[id]={
+            id:d.id,equipamento:d.equipamento,modelo:d.modelo||'',tipo:d.tipo||'',
+            oficina:d.oficina||'',status:d.status||'Disponível',
+            etapa:d.etapa||'chegada',etapa_desde:d.etapa_desde||Date.now(),
+            prioridade:d.prioridade||null,semana:d.semana||null,semana_locked:d.semana_locked||false,
+            obs:d.obs||'',retrabalho:d.retrabalho||0,tempo_etapas:d.tempo_etapas||{},
+            assinaturas:d.assinaturas||{},semana_anterior:d.semana_anterior||null,
+            etapa_interna:d.etapa_interna||null,etapa_interna_desde:d.etapa_interna_desde||null,
+            baixado:false,reservado:d.reservado||false,cliente:d.cliente||'',
+            dataEmbarque:d.dataEmbarque||'',historico:d.historico||[],
+          };
+        }
+      });
+    }
     reRenderAtivo();setSyncStatus('ok');fbListen();
   }catch(e){setSyncStatus('error');showToast('⚠ Modo offline');}
 }
@@ -932,14 +958,17 @@ async function saveToFirebase(eqIds){
     for(const id of eqIds){
       const eq=state[id];if(!eq)continue;
       await fbSet(`equipamentos/${id}`,{
+        // Dados base — necessários para outros usuários receberem equipamentos novos
+        id:eq.id,equipamento:eq.equipamento,modelo:eq.modelo||'',
+        tipo:eq.tipo||'',oficina:eq.oficina||'',status:eq.status||'',
+        // Estado do kanban
         etapa:eq.etapa,etapa_desde:eq.etapa_desde,prioridade:eq.prioridade||null,
         semana:eq.semana||null,semana_locked:eq.semana_locked||false,obs:eq.obs||'',
         retrabalho:eq.retrabalho||0,assinaturas:eq.assinaturas||{},
         tempo_etapas:eq.tempo_etapas||{},semana_anterior:eq.semana_anterior||null,
         etapa_interna:eq.etapa_interna||null,etapa_interna_desde:eq.etapa_interna_desde||null,
         baixado:eq.baixado||false,reservado:eq.reservado||false,cliente:eq.cliente||'',
-        dataEmbarque:eq.dataEmbarque||'',
-        historico:eq.historico||[],ordemManusis:eq.ordemManusis||'',reqCompra:eq.reqCompra||'',
+        dataEmbarque:eq.dataEmbarque||'',historico:eq.historico||[],
       });
     }
     setSyncStatus('ok');
