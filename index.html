@@ -336,7 +336,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div>
 </header>
 
-<div class="tabs-bar" id="tabs-bar"><div class="tab active" data-tab="bi" onclick="switchTab('bi')">BI Geral <span class="tab-n">561</span></div><div class="tab" data-tab="programacao" onclick="switchTab('programacao')">Programação</div><div class="tab" data-tab="graficos" onclick="switchTab('graficos')">Gráficos</div><div class="tab" data-tab="reservas" onclick="switchTab('reservas')">Reservas</div><div class="tab" data-tab="Assis_SP" onclick="switchTab('Assis_SP')">Assis (SP) <span class="tab-n">130</span></div><div class="tab" data-tab="Contagem_MG" onclick="switchTab('Contagem_MG')">Contagem (MG) <span class="tab-n">62</span></div><div class="tab" data-tab="Osasco_SP" onclick="switchTab('Osasco_SP')">Osasco (SP) <span class="tab-n">4</span></div><div class="tab" data-tab="Parauapebas_PA" onclick="switchTab('Parauapebas_PA')">Parauapebas (PA) <span class="tab-n">3</span></div><div class="tab" data-tab="Santos_SP" onclick="switchTab('Santos_SP')">Santos (SP) <span class="tab-n">4</span></div><div class="tab" data-tab="Sumaré_SP" onclick="switchTab('Sumaré_SP')">Sumaré (SP) <span class="tab-n">280</span></div><div class="tab" data-tab="São_José_dos_Pinhais_PR" onclick="switchTab('São_José_dos_Pinhais_PR')">São José dos Pinhais (PR) <span class="tab-n">78</span></div><div class="tab" data-tab="admin" onclick="switchToAdmin()">⚙ Admin</div></div>
+<div class="tabs-bar" id="tabs-bar"><div class="tab active" data-tab="bi" onclick="switchTab('bi')">BI Geral <span class="tab-n">561</span></div><div class="tab" data-tab="programacao" onclick="switchTab('programacao')">Programação</div><div class="tab" data-tab="graficos" onclick="switchTab('graficos')">Gráficos</div><div class="tab" data-tab="reservas" onclick="switchTab('reservas')">Reservas</div><div class="tab" data-tab="alteracoes" id="tab-alteracoes" onclick="switchTab('alteracoes')" style="display:none">⚡ Alterações <span class="tab-n" id="tab-alteracoes-n">0</span></div><div class="tab" data-tab="Assis_SP" onclick="switchTab('Assis_SP')">Assis (SP) <span class="tab-n">130</span></div><div class="tab" data-tab="Contagem_MG" onclick="switchTab('Contagem_MG')">Contagem (MG) <span class="tab-n">62</span></div><div class="tab" data-tab="Osasco_SP" onclick="switchTab('Osasco_SP')">Osasco (SP) <span class="tab-n">4</span></div><div class="tab" data-tab="Parauapebas_PA" onclick="switchTab('Parauapebas_PA')">Parauapebas (PA) <span class="tab-n">3</span></div><div class="tab" data-tab="Santos_SP" onclick="switchTab('Santos_SP')">Santos (SP) <span class="tab-n">4</span></div><div class="tab" data-tab="Sumaré_SP" onclick="switchTab('Sumaré_SP')">Sumaré (SP) <span class="tab-n">280</span></div><div class="tab" data-tab="São_José_dos_Pinhais_PR" onclick="switchTab('São_José_dos_Pinhais_PR')">São José dos Pinhais (PR) <span class="tab-n">78</span></div><div class="tab" data-tab="admin" onclick="switchToAdmin()">⚙ Admin</div></div>
 
 <!-- BI -->
 <div class="page active" id="page-bi">
@@ -445,6 +445,27 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <select class="filter-sel" id="graf-oficina-sel" onchange="renderGraficos()"><option value="">Todas as oficinas</option></select>
   </div>
   <div id="graf-container"></div>
+</div>
+</div>
+
+<!-- ALTERAÇÕES BASE -->
+<div class="page" id="page-alteracoes">
+<div class="prog-wrap">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+    <div>
+      <span class="kanban-title">Alterações da última atualização de base</span>
+      <div style="font-size:11px;color:var(--text3);margin-top:3px" id="alt-timestamp"></div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <div id="alt-resumo" style="font-size:12px;color:var(--text2)"></div>
+      <button class="btn btn-ghost btn-sm" onclick="limparAlteracoes()">Limpar</button>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px" id="alt-container">
+    <div style="padding:30px;color:var(--text3);font-size:13px;text-align:center;grid-column:1/-1">
+      Nenhuma alteração registrada. Faça uma atualização de base para ver as mudanças.
+    </div>
+  </div>
 </div>
 </div>
 
@@ -1001,7 +1022,7 @@ const ETAPAS_OFICINA=[
 ];
 const ETAPAS_BLOQUEIO=new Set(['cl_saida','pronto','manutencao']);
 
-let state={},movLog=[],dragId=null,dragOficina=null,dragVisao=null;
+let alteracoesBase=[];let state={},movLog=[],dragId=null,dragOficina=null,dragVisao=null;
 let currentCardId=null,pendingCardChanges={};
 let senhaCallback=null,senhaAcaoAtual=null,senhaCtxAtual=null;
 
@@ -1046,6 +1067,9 @@ function init(){
   const ss=document.getElementById('mc-semana-sel');
   SEMANAS_LISTA.forEach(s=>{const o=document.createElement('option');o.value=s.value;o.textContent=s.label;ss.appendChild(o);});
   renderBiEtapas();updateKpisDinamicos();
+  // Carregar alterações salvas
+  try{const a=sessionStorage.getItem('mills_alteracoes');if(a)alteracoesBase=JSON.parse(a);}catch(e){}
+  atualizarTabAlteracoes();
 }
 
 // TABS
@@ -1058,6 +1082,7 @@ function switchTab(tabId){
   if(tabId==='programacao')renderProgramacao();
   else if(tabId==='graficos')renderGraficos();
   else if(tabId==='reservas')renderReservas();
+  else if(tabId==='alteracoes')renderAlteracoes();
   else if(tabId==='admin')renderAdminPage();
   else if(tabId!=='bi')renderBoard(tabId,'geral');
   else{renderBiEtapas();updateKpisDinamicos();}
@@ -1726,14 +1751,53 @@ function doBaseUpdate(){
   const raw=document.getElementById('base-ta').value.trim();if(!raw)return;
   let novos;try{novos=JSON.parse(raw);}catch(e){alert('JSON inválido');return;}
   const idsNovos=new Set(novos.map(n=>n.id));
-  let adicionados=0,baixados=0;
-  Object.values(state).forEach(eq=>{if(!idsNovos.has(eq.id)&&!eq.baixado){eq.baixado=true;baixados++;}});
-  novos.forEach(n=>{
-    if(state[n.id]){state[n.id].equipamento=n.equipamento||state[n.id].equipamento;state[n.id].modelo=n.modelo||state[n.id].modelo;state[n.id].baixado=false;}
-    else{state[n.id]={...n,etapa:'chegada',etapa_desde:Date.now(),prioridade:null,semana:null,semana_locked:false,obs:'',retrabalho:0,tempo_etapas:{},assinaturas:{},semana_anterior:null,etapa_interna:null,etapa_interna_desde:null,baixado:false,reservado:false,cliente:''};adicionados++;}
+  const agora=Date.now();
+  const user=currentUser?currentUser.nome:'sistema';
+  let adicionados=0,baixados=0,atualizados=0;
+  // Marcar baixados
+  Object.values(state).forEach(eq=>{
+    if(!idsNovos.has(eq.id)&&!eq.baixado){
+      eq.baixado=true;baixados++;
+      registrarAlteracao('saida',eq.id,eq.equipamento,eq.oficina,user);
+    }
   });
-  closeModal('modal-base');saveState(Object.keys(state));reRenderAtivo();
-  showToast(`Base: ${adicionados} novos · ${baixados} baixados`);
+  novos.forEach(n=>{
+    if(state[n.id]){
+      const eq=state[n.id];
+      const mudouOficina=eq.oficina&&n.oficina&&eq.oficina!==n.oficina;
+      const eraB=eq.baixado;
+      eq.equipamento=n.equipamento||eq.equipamento;eq.modelo=n.modelo||eq.modelo;eq.tipo=n.tipo||eq.tipo;
+      eq.baixado=false;
+      if(eraB){
+        registrarAlteracao('reativado',eq.id,eq.equipamento,n.oficina,user);
+      }
+      if(mudouOficina){
+        const ofAnt=eq.oficina;
+        if(!eq.historico)eq.historico=[];
+        eq.historico.push({from:`Oficina: ${ofAnt}`,to:`Oficina: ${n.oficina}`,ts:agora,hora:new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),data:new Date().toLocaleDateString('pt-BR'),perfil:'sistema'});
+        eq.oficina=n.oficina;eq.etapa='chegada';eq.etapa_desde=agora;eq.etapa_interna=null;eq.etapa_interna_desde=null;
+        fbLogMove({eqId:eq.id,nome:eq.equipamento,from:`Oficina: ${ofAnt}`,to:`Oficina: ${n.oficina} → Aguard. Movimentação`,ts:agora,hora:new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),data:new Date().toLocaleDateString('pt-BR'),perfil:'sistema',oficina:n.oficina,visao:'mudanca_oficina'});
+        registrarAlteracao('mudanca_oficina',eq.id,eq.equipamento,n.oficina,user,ofAnt);
+      }
+      atualizados++;
+    } else {
+      state[n.id]={...n,etapa:'chegada',etapa_desde:agora,prioridade:null,semana:null,semana_locked:false,obs:'',retrabalho:0,tempo_etapas:{},assinaturas:{},semana_anterior:null,etapa_interna:null,etapa_interna_desde:null,baixado:false,reservado:false,cliente:'',historico:[],dataEmbarque:''};
+      fbLogMove({eqId:n.id,nome:n.equipamento,from:'—',to:'Chegada (novo na base)',ts:agora,hora:new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),data:new Date().toLocaleDateString('pt-BR'),perfil:user,oficina:n.oficina,visao:'base_entrada'});
+      registrarAlteracao('entrada',n.id,n.equipamento,n.oficina,user);
+      adicionados++;
+    }
+  });
+  closeModal('modal-base');
+  saveToFirebase(Object.keys(state));
+  try{sessionStorage.setItem('mills_v4',JSON.stringify(state));}catch(e){}
+  reRenderAtivo();
+  // Mostrar aba de alterações se houver mudanças
+  if(adicionados>0||baixados>0){
+    atualizarTabAlteracoes();
+    showToast(`Base atualizada: ${adicionados} novos · ${atualizados} atualizados · ${baixados} baixados — ver aba ⚡ Alterações`);
+  } else {
+    showToast(`Base: sem novidades · ${atualizados} equipamentos verificados`);
+  }
 }
 const SEM_MOTOR_ARR=Array.from(SEM_MOTOR_SET);
 const EXCLUIR_STATUS_SET=new Set(['alugado','vendido','comodato','sinistrado']);
@@ -1780,6 +1844,88 @@ function handleBaseFile(file){
 function showModal(id){document.getElementById(id).classList.add('show');}
 function closeModal(id){document.getElementById(id).classList.remove('show');}
 document.querySelectorAll('.modal-ov').forEach(ov=>{ov.addEventListener('click',e=>{if(e.target===ov)closeModal(ov.id);});});
+
+
+// ===== ALTERAÇÕES DE BASE =====
+function atualizarTabAlteracoes(){
+  // Filtrar apenas últimas 24h
+  const h24=Date.now()-86400000;
+  const recentes=alteracoesBase.filter(a=>a.ts>=h24);
+  const tabEl=document.getElementById('tab-alteracoes');
+  const tabN=document.getElementById('tab-alteracoes-n');
+  if(tabEl){tabEl.style.display=recentes.length>0?'':'none';}
+  if(tabN)tabN.textContent=recentes.length;
+}
+
+function renderAlteracoes(){
+  const h24=Date.now()-86400000;
+  const recentes=alteracoesBase.filter(a=>a.ts>=h24);
+  const container=document.getElementById('alt-container');
+  const ts=document.getElementById('alt-timestamp');
+  const resumo=document.getElementById('alt-resumo');
+  if(!container)return;
+
+  if(!recentes.length){
+    container.innerHTML='<div style="padding:30px;color:var(--text3);font-size:13px;text-align:center;grid-column:1/-1">Nenhuma alteração nas últimas 24h.</div>';
+    if(ts)ts.textContent='';
+    if(resumo)resumo.textContent='';
+    return;
+  }
+
+  // Separar por tipo
+  const entradas=recentes.filter(a=>a.tipo==='entrada');
+  const saidas=recentes.filter(a=>a.tipo==='saida');
+  const mudancas=recentes.filter(a=>a.tipo==='mudanca_oficina');
+  const reativados=recentes.filter(a=>a.tipo==='reativado');
+
+  const ultima=recentes[recentes.length-1];
+  if(ts)ts.textContent=`Última atualização: ${ultima.data} às ${ultima.hora} por ${ultima.perfil}`;
+  if(resumo)resumo.innerHTML=`<span style="color:var(--verde2);font-weight:600">+${entradas.length} entradas</span> · <span style="color:var(--terra);font-weight:600">-${saidas.length} saídas</span>${mudancas.length>0?` · <span style="color:#7F77DD;font-weight:600">${mudancas.length} transferências</span>`:''}${reativados.length>0?` · <span style="color:var(--laranja);font-weight:600">${reativados.length} reativados</span>`:''}`;
+
+  const secao = (titulo, cor, icone, items) => {
+    if(!items.length)return'';
+    return `<div class="graf-section">
+      <div class="graf-section-hd" style="background:${cor}">${icone} ${titulo} <span>${items.length} equipamento${items.length>1?'s':''}</span></div>
+      <div class="graf-body" style="padding:10px 12px">
+        <div style="display:flex;flex-wrap:wrap;gap:7px">
+          ${items.map(a=>`<div style="background:var(--bg3);border-radius:7px;border:1px solid var(--borda);padding:8px 11px;min-width:160px;max-width:220px">
+            <div style="font-size:9px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.04em">${a.id}</div>
+            <div style="font-size:12px;font-weight:600;color:var(--text);margin:2px 0;line-height:1.3">${(a.nome||'').substring(0,30)}</div>
+            <div style="font-size:10px;color:var(--text3)">${a.oficina||''}</div>
+            ${a.deOficina?`<div style="font-size:10px;color:#7F77DD;margin-top:2px">De: ${a.deOficina}</div>`:''}
+            <div style="font-size:9px;color:var(--text3);margin-top:3px">${a.hora} · ${a.data}</div>
+          </div>`).join('')}
+        </div>
+      </div>
+    </div>`;
+  };
+
+  container.innerHTML =
+    secao('Entradas — novos na frota','#1D9E75','📥',entradas) +
+    secao('Reativados — voltaram para a frota','#F37021','♻️',reativados) +
+    secao('Saídas — saíram da frota','#C24003','📤',saidas) +
+    secao('Transferências de oficina','#7F77DD','🔄',mudancas);
+}
+
+function limparAlteracoes(){
+  if(!confirm('Limpar registro de alterações?'))return;
+  alteracoesBase=[];
+  try{sessionStorage.removeItem('mills_alteracoes');}catch(e){}
+  atualizarTabAlteracoes();
+  renderAlteracoes();
+  showToast('Registro de alterações limpo');
+}
+
+function registrarAlteracao(tipo, id, nome, oficina, perfil, deOficina){
+  const entry={tipo,id,nome,oficina,perfil,ts:Date.now(),hora:new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),data:new Date().toLocaleDateString('pt-BR')};
+  if(deOficina)entry.deOficina=deOficina;
+  alteracoesBase.push(entry);
+  // Limpar entradas com mais de 24h
+  const h24=Date.now()-86400000;
+  alteracoesBase=alteracoesBase.filter(a=>a.ts>=h24);
+  try{sessionStorage.setItem('mills_alteracoes',JSON.stringify(alteracoesBase));}catch(e){}
+  atualizarTabAlteracoes();
+}
 
 // TOAST
 function showToast(msg){const t=document.getElementById('toast');t.textContent='✓ '+msg;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),3200);}
