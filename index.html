@@ -457,6 +457,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <span class="kanban-title" style="font-size:13px">Equipamentos reservados</span>
     <select class="filter-sel" id="res-tipo-sel" onchange="renderReservas()"><option value="">Todos os tipos</option></select>
     <select class="filter-sel" id="res-oficina-sel" onchange="renderReservas()"><option value="">Todas as oficinas</option></select>
+    <select class="filter-sel" id="res-cliente-sel" onchange="renderReservas()"><option value="">Todos os clientes</option></select>
   </div>
   <div id="res-graficos" style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:16px"></div>
   <div class="reservas-tabela">
@@ -745,6 +746,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
           <label>Cliente</label>
           <input type="text" id="mc-cliente" placeholder="Nome do cliente..." oninput="setCliente(this.value)" maxlength="80">
         </div>
+        <div class="mc-field" id="campo-embarque" style="margin-top:8px">
+          <label>Data de embarque prevista</label>
+          <input type="date" id="mc-embarque" oninput="setEmbarque(this.value)">
+        </div>
       </div>
       <!-- Manutenção Finalizada — só aparece quando em manutenção -->
       <div id="mc-manut-section" style="display:none">
@@ -777,6 +782,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         </div>
       </div>
       <div class="mc-info-box" id="mc-info-box"></div>
+      <div>
+        <div class="mc-section-title">Transferir para outra oficina</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <select id="mc-oficina-sel" style="flex:1;padding:7px 10px;border:1px solid var(--borda);border-radius:7px;font-size:12px;background:#fff;outline:none;color:var(--text)">
+            <option value="">— Manter na oficina atual —</option>
+          </select>
+          <button class="btn btn-ghost btn-sm" style="white-space:nowrap;color:var(--terra);border-color:var(--terra)" onclick="confirmarTransferencia()">Transferir</button>
+        </div>
+        <div style="font-size:10px;color:var(--text3);margin-top:4px">Ao transferir, o equipamento vai para <b>Aguard. Movimentação</b> na nova oficina.</div>
+      </div>
       <!-- Histórico de movimentações -->
       <div>
         <div class="mc-section-title">Histórico de movimentações</div>
@@ -902,6 +917,7 @@ async function saveToFirebase(eqIds){
         tempo_etapas:eq.tempo_etapas||{},semana_anterior:eq.semana_anterior||null,
         etapa_interna:eq.etapa_interna||null,etapa_interna_desde:eq.etapa_interna_desde||null,
         baixado:eq.baixado||false,reservado:eq.reservado||false,cliente:eq.cliente||'',
+        dataEmbarque:eq.dataEmbarque||'',
         historico:eq.historico||[],ordemManusis:eq.ordemManusis||'',reqCompra:eq.reqCompra||'',
       });
     }
@@ -1013,6 +1029,7 @@ function init(){
       obs:sv?sv.obs:'',retrabalho:sv?sv.retrabalho||0:0,tempo_etapas:sv?sv.tempo_etapas||{}:{},
       assinaturas:sv?sv.assinaturas||{}:{},semana_anterior:sv?sv.semana_anterior||null:null,
       baixado:sv?sv.baixado||false:false,reservado:sv?sv.reservado||false:false,cliente:sv?sv.cliente||'':'',
+      dataEmbarque:sv?sv.dataEmbarque||'':'',
       historico:sv?sv.historico||[]:[],ordemManusis:sv?sv.ordemManusis||'':'',reqCompra:sv?sv.reqCompra||'':'',
     };
   });
@@ -1132,6 +1149,7 @@ function renderBoard(sid,visao){
       const semAtualBadge=ehSA?'<span class="badge-semana-atual">★ Esta semana</span>':'';
       const reservaBadge=eq.reservado?`<span class="card-badge badge-reservado">◈ Reservado</span>`:'';
       const clienteHTML=eq.reservado&&eq.cliente?`<div class="card-cliente">👤 ${eq.cliente}</div>`:'';
+      const embarqueHTML=eq.dataEmbarque?`<div style="font-size:9px;color:#7F77DD;margin-top:2px;font-weight:500">🚢 Embarque: ${new Date(eq.dataEmbarque+'T12:00:00').toLocaleDateString('pt-BR')}</div>`:'';
       const assin=eq.assinaturas&&eq.assinaturas[eq.etapa];
       const assinHTML=assin?`<div class="card-assinatura">🔑 ${assin.perfil} · ${assin.data}</div>`:'';
       const liberadoBtn=''; // removido — agora é via modal
@@ -1145,6 +1163,7 @@ function renderBoard(sid,visao){
         <div class="card-row">${badge}${reservaBadge}<div class="card-dias"><span class="dd ${dc}"></span>${dl}</div></div>
         ${prioPill||semPill||semAtualBadge?`<div class="card-row" style="margin-top:4px;gap:3px;flex-wrap:wrap">${prioPill}${semAtualBadge}${semPill}</div>`:''}
         ${clienteHTML}
+        ${embarqueHTML}
         ${eq.retrabalho>0?`<div style="font-size:9px;color:var(--terra);margin-top:3px;font-weight:600">↻ Retrabalho: ${eq.retrabalho}x</div>`:''}
         ${assinHTML}
         ${liberadoBtn}`;
@@ -1296,6 +1315,8 @@ function openCardModal(eqId,visao){
   updateReservaBtns(eq.reservado);
   document.getElementById('campo-cliente').style.display=eq.reservado?'flex':'none';
   document.getElementById('mc-cliente').value=eq.cliente||'';
+  document.getElementById('mc-embarque').value=eq.dataEmbarque||'';
+  populateOficinaSel(eqId);
   // Semana
   const ss=document.getElementById('mc-semana-sel');ss.value=eq.semana||'';
   const li=document.getElementById('mc-semana-lock-info');
@@ -1329,6 +1350,34 @@ function setPrioridade(p){const cur=pendingCardChanges.prioridade!==undefined?pe
 function setSemana(v){pendingCardChanges.semana=v||null;}
 function setObs(v){pendingCardChanges.obs=v;}
 function setCliente(v){pendingCardChanges.cliente=v;}
+function setEmbarque(v){pendingCardChanges.dataEmbarque=v;}
+function mudarOficina(eqId,novaOficina){
+  const eq=state[eqId];if(!eq||eq.oficina===novaOficina)return;
+  const ofAnt=eq.oficina;
+  eq.oficina=novaOficina;eq.etapa='chegada';eq.etapa_desde=Date.now();eq.etapa_interna=null;eq.etapa_interna_desde=null;
+  const u=currentUser?currentUser.nome:'operador';
+  if(!eq.historico)eq.historico=[];
+  eq.historico.push({from:`Oficina: ${ofAnt}`,to:`Oficina: ${novaOficina}`,ts:Date.now(),hora:new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),data:new Date().toLocaleDateString('pt-BR'),perfil:u});
+  fbLogMove({eqId:eq.id,nome:eq.equipamento,from:`Oficina: ${ofAnt}`,to:`Oficina: ${novaOficina} → Aguard. Movimentação`,ts:Date.now(),hora:new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),data:new Date().toLocaleDateString('pt-BR'),perfil:u,oficina:novaOficina,visao:'mudanca_oficina'});
+  saveState([eqId]);reRenderAtivo();
+  showToast(`${eqId} transferido para ${novaOficina}`);
+}
+function confirmarTransferencia(){
+  const sel=document.getElementById('mc-oficina-sel');
+  const nova=sel.value;
+  if(!nova){showToast('Selecione uma oficina de destino');return;}
+  const eq=state[currentCardId];if(!eq)return;
+  if(!confirm(`Transferir ${eq.id} para ${nova}?\nO equipamento voltará para Aguard. Movimentação.`))return;
+  closeModal('modal-card');
+  mudarOficina(currentCardId,nova);
+}
+function populateOficinaSel(eqId){
+  const sel=document.getElementById('mc-oficina-sel');if(!sel)return;
+  const eq=state[eqId];
+  const oficinas=[...new Set(Object.values(state).map(e=>e.oficina).filter(Boolean))].sort();
+  sel.innerHTML='<option value="">— Manter na oficina atual —</option>'+
+    oficinas.filter(of=>of!==eq?.oficina).map(of=>`<option value="${of}">${of}</option>`).join('');
+}
 function setOrdemManusis(v){pendingCardChanges.ordemManusis=v;}
 function setReqCompra(v){pendingCardChanges.reqCompra=v;}
 function setManutFinalizada(v){
@@ -1369,7 +1418,9 @@ function _salvarCard(){
   if(pendingCardChanges.prioridade!==undefined)eq.prioridade=pendingCardChanges.prioridade;
   if(pendingCardChanges.reservado!==undefined)eq.reservado=pendingCardChanges.reservado;
   if(pendingCardChanges.cliente!==undefined)eq.cliente=pendingCardChanges.cliente;
+  if(pendingCardChanges.dataEmbarque!==undefined)eq.dataEmbarque=pendingCardChanges.dataEmbarque;
   if(!eq.reservado)eq.cliente='';
+  if(!eq.reservado)eq.dataEmbarque=eq.dataEmbarque||'';
 
   // Manutenção finalizada → liberar para CL Saída
   if(pendingCardChanges.manutFinalizada===true && eq.etapa==='manutencao'){
@@ -1545,18 +1596,27 @@ function renderGraficos(){
 function renderReservas(){
   const tipoFil=document.getElementById('res-tipo-sel').value;
   const ofFil=document.getElementById('res-oficina-sel').value;
+  const cliFil=(document.getElementById('res-cliente-sel')||{}).value||'';
   let reservados=Object.values(state).filter(e=>e.reservado);
+  // Popular select clientes dinamicamente
+  const clienteSel=document.getElementById('res-cliente-sel');
+  if(clienteSel){
+    const todosClientes=[...new Set(Object.values(state).filter(e=>e.reservado&&e.cliente).map(e=>e.cliente))].sort();
+    const curCli=clienteSel.value;
+    clienteSel.innerHTML='<option value="">Todos os clientes</option>'+todosClientes.map(c=>`<option value="${c}"${c===curCli?' selected':''}>${c}</option>`).join('');
+  }
   if(tipoFil)reservados=reservados.filter(e=>e.tipo===tipoFil);
   if(ofFil)reservados=reservados.filter(e=>e.oficina===ofFil);
+  if(cliFil)reservados=reservados.filter(e=>e.cliente===cliFil);
 
   // KPIs
   const total=Object.values(state).length||1;
   const nRes=reservados.length;
-  const clientes=[...new Set(reservados.map(e=>e.cliente).filter(Boolean))];
+  const clientesAtivos=[...new Set(reservados.map(e=>e.cliente).filter(Boolean))];
   const kpis=document.getElementById('res-kpis');
   kpis.innerHTML=`
     <div class="kpi"><div class="kpi-label">Total reservados</div><div class="kpi-value verde">${nRes}</div><div class="kpi-sub">${Math.round(nRes/total*100)}% da frota</div><div class="kpi-bar"><div class="kpi-bar-fill" style="width:${Math.round(nRes/total*100)}%;background:var(--verde)"></div></div></div>
-    <div class="kpi"><div class="kpi-label">Clientes ativos</div><div class="kpi-value orange">${clientes.length}</div><div class="kpi-sub">com reservas ativas</div><div class="kpi-bar"><div class="kpi-bar-fill" style="width:100%;background:var(--laranja)"></div></div></div>
+    <div class="kpi"><div class="kpi-label">Clientes ativos</div><div class="kpi-value orange">${clientesAtivos.length}</div><div class="kpi-sub">com reservas ativas</div><div class="kpi-bar"><div class="kpi-bar-fill" style="width:100%;background:var(--laranja)"></div></div></div>
     <div class="kpi"><div class="kpi-label">Sem cliente</div><div class="kpi-value terra">${reservados.filter(e=>!e.cliente).length}</div><div class="kpi-sub">reservados sem nome</div><div class="kpi-bar"><div class="kpi-bar-fill" style="width:${reservados.length?Math.round(reservados.filter(e=>!e.cliente).length/reservados.length*100):0}%;background:var(--terra)"></div></div></div>
   `;
 
@@ -1676,16 +1736,35 @@ function doBaseUpdate(){
   showToast(`Base: ${adicionados} novos · ${baixados} baixados`);
 }
 const SEM_MOTOR_ARR=Array.from(SEM_MOTOR_SET);
+const EXCLUIR_STATUS_SET=new Set(['alugado','vendido','comodato','sinistrado']);
 function parseCSVToEquipamentos(csvText){
   const lines=csvText.split(/\r?\n/).filter(l=>l.trim());const equips=[];
-  for(let i=1;i<lines.length;i++){
+  const isNovoFormato=lines[0]&&lines[0].toLowerCase().includes('equipamento;equipamento');
+  const startLine=isNovoFormato?2:1;
+  for(let i=startLine;i<lines.length;i++){
     const cols=lines[i].split(';').map(c=>c.replace(/^"|"$/g,'').trim());
-    if(cols.length<16)continue;
-    const id=cols[2],tipo=cols[7],equip=cols[8],modelo=cols[10],oficina=cols[12],status=cols[15].toLowerCase();
-    if(!id||SEM_MOTOR_SET.has(tipo))continue;
-    if(!status.includes('disponív')&&!status.includes('disponiv')&&!status.includes('manutenç')&&!status.includes('manutenc'))continue;
-    equips.push({id,equipamento:equip,modelo,tipo,oficina,status:(status.includes('disponív')||status.includes('disponiv'))?'Disponível':'Manutenção'});
+    if(isNovoFormato){
+      if(cols.length<16)continue;
+      const id=cols[2],familia=cols[5],grupo=cols[6],fabric=cols[7],modelo=cols[8],oficina=cols[9],status=cols[15];
+      if(!id||id.startsWith('VLU'))continue;
+      if(EXCLUIR_STATUS_SET.has(status.toLowerCase())||!status)continue;
+      if(SEM_MOTOR_SET.has(familia)||SEM_MOTOR_SET.has(grupo))continue;
+      const sn=status.toLowerCase().includes('manutenç')||status.toLowerCase().includes('manutenc')?'Manutenção':'Disponível';
+      equips.push({id,equipamento:grupo||familia,modelo:`${fabric} ${modelo}`.trim(),tipo:familia,oficina,status:sn});
+    } else {
+      if(cols.length<16)continue;
+      const id=cols[2],tipo=cols[7],equip=cols[8],modelo=cols[10],oficina=cols[12],status=cols[15];
+      if(!id||id.startsWith('VLU'))continue;
+      if(EXCLUIR_STATUS_SET.has(status.toLowerCase())||!status)continue;
+      if(SEM_MOTOR_SET.has(tipo))continue;
+      const sn=status.toLowerCase().includes('disponív')||status.toLowerCase().includes('disponiv')?'Disponível':'Manutenção';
+      equips.push({id,equipamento:equip,modelo,tipo,oficina,status:sn});
+    }
   }
+  return equips;
+}
+// OVERRIDE função abaixo (substituída acima)
+function _parseCSVLegado_DISABLED(csvText){
   return equips;
 }
 function handleBaseDrop(e){e.preventDefault();document.getElementById('base-dropzone').classList.remove('over');const f=e.dataTransfer.files[0];if(f)handleBaseFile(f);}
