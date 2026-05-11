@@ -175,12 +175,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .prog-sem-label{color:var(--text);font-weight:600;font-size:12px}
 .prog-sem-total{background:var(--bg4);color:var(--text2);border-radius:8px;padding:1px 7px;font-size:10px;font-weight:600}
 .prog-sem-body{padding:10px 12px;display:flex;flex-wrap:wrap;gap:7px}
-.prog-card{background:var(--bg3);border-radius:7px;border:1px solid var(--borda);padding:8px 10px;min-width:155px;max-width:200px;cursor:pointer;transition:border-color .15s}
-.prog-card:hover{border-color:var(--laranja)}
-.prog-card.concluido{border-color:var(--verde2);background:rgba(29,158,117,.08)}
-.prog-card.atrasado{border-color:var(--terra);border-width:1.5px}
-.prog-card.reservado{border-left:3px solid var(--laranja);background:#FFF8F0}
-.prog-card.reprogramado{border-left:3px solid #7F77DD;background:#F5F3FF}
+.prog-card{background:#F2F2F2;border-radius:7px;border:1px solid var(--borda);border-top:3px solid #888;padding:8px 10px;min-width:155px;max-width:200px;cursor:pointer;transition:all .15s}
+.prog-card:hover{border-color:var(--laranja);box-shadow:0 2px 8px rgba(0,0,0,.1)}
+.prog-card.concluido{border-top-color:var(--verde2);background:#F0FAF6}
+.prog-card.atrasado{border-top-color:var(--terra);background:#FFF5F3}
+.prog-card.reservado{border-top-color:#555;background:#EFEFEF}
+.prog-card.reservado.concluido{border-top-color:var(--verde2);background:#F0FAF6}
+.prog-card.reprogramado{border-top-color:#7F77DD;background:#F5F3FF}
 .reprogramado-badge{display:inline-flex;align-items:center;gap:2px;background:#EDE9FF;color:#5B4DB5;border-radius:3px;padding:1px 6px;font-size:9px;font-weight:700;border:1px solid #C4BAFF}
 .prog-card-id{font-size:9px;font-weight:600;color:var(--text3);text-transform:uppercase}
 .prog-card-equip{font-size:11px;font-weight:600;color:var(--text);line-height:1.3;margin:2px 0}
@@ -437,6 +438,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <option value="4semanas">Últimas 4 semanas</option>
       <option value="atual">Só semana atual</option>
     </select>
+    <select class="filter-sel" id="prog-cliente-sel" onchange="renderProgramacao()"><option value="">Todos os clientes</option></select>
+    <input type="date" class="filter-sel" id="prog-embarque-ate" onchange="renderProgramacao()" title="Embarque até" style="max-width:150px">
+    <button class="btn btn-ghost btn-sm" onclick="document.getElementById('prog-embarque-ate').value='';renderProgramacao()" title="Limpar filtro de embarque">✕ Data</button>
   </div>
   <div class="prog-filter-bar" id="prog-stats-bar" style="display:none">
     <span id="prog-stats-text" style="font-size:12px;color:var(--text2)"></span>
@@ -1651,6 +1655,46 @@ function removerDaProgramacao(eqId,event){
     const eq=state[eqId];if(eq){eq.semana=null;eq.semana_locked=false;eq.semana_anterior=null;saveState([eqId]);renderProgramacao();showToast(eqId+' removido');}
   });
 }
+// Gráfico rosca SVG
+function rosca(titulo, dados, total){
+  if(!dados.length)return'';
+  const CORES_ROSCA=['#F37021','#004042','#C24003','#1D9E75','#7F77DD','#EF9F27','#378ADD','#6BFAC7','#E8A87C','#9B59B6'];
+  let items=dados.map((d,i)=>({...d,cor:d.cor||CORES_ROSCA[i%CORES_ROSCA.length]}));
+  const tot=items.reduce((s,x)=>s+x.n,0)||1;
+  // Calcular arcos
+  const cx=80,cy=80,r=60,ri=35;
+  let angAcum=0;
+  const arcos=items.map(x=>{
+    const ang=(x.n/tot)*2*Math.PI;
+    const x1=cx+r*Math.cos(angAcum),y1=cy+r*Math.sin(angAcum);
+    const x2=cx+r*Math.cos(angAcum+ang),y2=cy+r*Math.sin(angAcum+ang);
+    const xi1=cx+ri*Math.cos(angAcum),yi1=cy+ri*Math.sin(angAcum);
+    const xi2=cx+ri*Math.cos(angAcum+ang),yi2=cy+ri*Math.sin(angAcum+ang);
+    const lg=ang>Math.PI?1:0;
+    const path=`M${x1.toFixed(1)},${y1.toFixed(1)} A${r},${r} 0 ${lg},1 ${x2.toFixed(1)},${y2.toFixed(1)} L${xi2.toFixed(1)},${yi2.toFixed(1)} A${ri},${ri} 0 ${lg},0 ${xi1.toFixed(1)},${yi1.toFixed(1)} Z`;
+    angAcum+=ang;
+    return{...x,path,pct:Math.round(x.n/tot*100)};
+  });
+  const svgArcos=arcos.map(a=>`<path d="${a.path}" fill="${a.cor}" stroke="#fff" stroke-width="1.5"><title>${a.label}: ${a.n} (${a.pct}%)</title></path>`).join('');
+  const legenda=arcos.map(a=>`<div style="display:flex;align-items:center;gap:5px;margin-bottom:4px">
+    <div style="width:10px;height:10px;border-radius:2px;background:${a.cor};flex-shrink:0"></div>
+    <span style="font-size:10px;color:var(--text2);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:110px" title="${a.label}">${a.label}</span>
+    <span style="font-size:10px;font-weight:700;color:var(--text)">${a.n}</span>
+    <span style="font-size:9px;color:var(--text3)">${a.pct}%</span>
+  </div>`).join('');
+  return`<div class="graf-section" style="flex:0 0 auto;min-width:280px;max-width:340px">
+    <div class="graf-section-hd">${titulo} <span>${tot}</span></div>
+    <div class="graf-body" style="display:flex;gap:12px;align-items:center;padding:12px 14px">
+      <svg width="160" height="160" viewBox="0 0 160 160" style="flex-shrink:0">
+        ${svgArcos}
+        <text x="80" y="75" text-anchor="middle" font-size="18" font-weight="700" fill="var(--verde)">${tot}</text>
+        <text x="80" y="92" text-anchor="middle" font-size="10" fill="var(--text3)">total</text>
+      </svg>
+      <div style="flex:1;min-width:0">${legenda}</div>
+    </div>
+  </div>`;
+}
+
 function renderProgramacao(){
   autoAvancarAtrasados();
   const container=document.getElementById('prog-semanas');
@@ -1661,10 +1705,14 @@ function renderProgramacao(){
   const semAtual=semanaAtual();
 
   // Filtrar equipamentos programados
+  const cliFil=(document.getElementById('prog-cliente-sel')||{}).value||'';
+  const embFil=(document.getElementById('prog-embarque-ate')||{}).value||'';
   let equips=Object.values(state).filter(e=>e.semana&&!e.baixado);
   if(ofFil)equips=equips.filter(e=>e.oficina===ofFil);
   if(prioFil)equips=equips.filter(e=>e.prioridade===prioFil);
   if(tipoFil)equips=equips.filter(e=>e.tipo===tipoFil);
+  if(cliFil)equips=equips.filter(e=>e.cliente===cliFil);
+  if(embFil)equips=equips.filter(e=>e.dataEmbarque&&e.dataEmbarque<=embFil);
 
   // Filtrar semanas visíveis
   let semsVisiveis=new Set(equips.map(e=>e.semana));
@@ -1694,33 +1742,30 @@ function renderProgramacao(){
       `<b>${tot}</b> programados · <b style="color:var(--verde2)">${pron}</b> concluídos · <b style="color:var(--terra)">${atr}</b> atrasados · <b style="color:var(--laranja)">${res}</b> reservados`;
   } else statsBar.style.display='none';
 
-  // Gráficos — sempre visíveis se houver dados
+  // Gráficos rosca — sempre visíveis se houver dados
   const grafDiv=document.getElementById('prog-graficos');
+  // Popular select de clientes
+  const cliSel=document.getElementById('prog-cliente-sel');
+  if(cliSel){
+    const todosClientes=[...new Set(Object.values(state).filter(e=>e.semana&&e.reservado&&e.cliente).map(e=>e.cliente))].sort();
+    const curCli=cliSel.value;
+    cliSel.innerHTML='<option value="">Todos os clientes</option>'+todosClientes.map(c=>`<option value="${c}"${c===curCli?' selected':''}>${c}</option>`).join('');
+  }
   if(equips.length>0){
+    // Por etapa
     const cntEt={};ETAPAS_GERAL.forEach(e=>cntEt[e.id]={label:e.label,n:0,cor:CORES_ET_G[e.id]||'#888'});
     equips.forEach(e=>{if(cntEt[e.etapa])cntEt[e.etapa].n++;});
-    const maxE=Math.max(...Object.values(cntEt).map(x=>x.n),1);
+    const etAtivos=Object.values(cntEt).filter(x=>x.n>0);
+    // Por oficina
     const cntOf={};equips.forEach(e=>{cntOf[e.oficina]=(cntOf[e.oficina]||0)+1;});
-    const maxOf=Math.max(...Object.values(cntOf),1);
-    grafDiv.innerHTML=`<div style="display:flex;gap:12px;flex-wrap:wrap">
-      <div class="graf-section" style="flex:1;min-width:260px">
-        <div class="graf-section-hd">Por etapa <span>${tot} equipamentos</span></div>
-        <div class="graf-body">
-          ${Object.values(cntEt).filter(x=>x.n>0).map(x=>`<div class="graf-bar-row">
-            <span class="graf-bar-label">${x.label}</span>
-            <div class="graf-bar-track"><div class="graf-bar-fill" style="width:${Math.round(x.n/maxE*100)}%;background:${x.cor}"><span class="graf-bar-val">${x.n}</span></div></div>
-          </div>`).join('')}
-        </div>
-      </div>
-      <div class="graf-section" style="flex:1;min-width:260px">
-        <div class="graf-section-hd">Por oficina</div>
-        <div class="graf-body">
-          ${Object.entries(cntOf).sort((a,b)=>b[1]-a[1]).map(([of,n])=>`<div class="graf-bar-row">
-            <span class="graf-bar-label">${of}</span>
-            <div class="graf-bar-track"><div class="graf-bar-fill" style="width:${Math.round(n/maxOf*100)}%;background:var(--verde)"><span class="graf-bar-val">${n}</span></div></div>
-          </div>`).join('')}
-        </div>
-      </div>
+    const ofAtivos=Object.entries(cntOf).sort((a,b)=>b[1]-a[1]);
+    // Por cliente
+    const cntCli={};equips.filter(e=>e.reservado&&e.cliente).forEach(e=>{cntCli[e.cliente]=(cntCli[e.cliente]||0)+1;});
+    const cliAtivos=Object.entries(cntCli).sort((a,b)=>b[1]-a[1]);
+    grafDiv.innerHTML=`<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-start">
+      ${rosca('Por etapa',etAtivos.map(x=>({label:x.label,n:x.n,cor:x.cor})),tot)}
+      ${rosca('Por oficina',ofAtivos.map(([l,n])=>({label:l,n,cor:''})),tot)}
+      ${cliAtivos.length>0?rosca('Por cliente',cliAtivos.map(([l,n])=>({label:l,n,cor:''})),equips.filter(e=>e.reservado&&e.cliente).length):''}
     </div>`;
   } else {
     grafDiv.innerHTML='';
@@ -1795,21 +1840,27 @@ function renderProgramacao(){
         const diasEmb=Math.ceil((dtEmb-new Date())/(1000*60*60*24));
         const corEmb=diasEmb<=3?'var(--terra)':diasEmb<=7?'var(--laranja)':'#7F77DD';
         const urgEmb=diasEmb<=3?' ⚠ URGENTE':diasEmb<=7?' — em breve':'';
-        embH=`<div style="font-size:9px;color:${corEmb};margin-top:2px;font-weight:600">🚢 ${dtEmb.toLocaleDateString('pt-BR')}${urgEmb}</div>`;
+        embH=`<div style="font-size:11px;color:${corEmb};margin-top:5px;font-weight:700;padding:3px 6px;background:${diasEmb<=3?'rgba(194,64,3,.08)':diasEmb<=7?'rgba(243,112,33,.08)':'rgba(127,119,221,.08)'};border-radius:4px;border-left:2px solid ${corEmb}">🚢 ${dtEmb.toLocaleDateString('pt-BR')}${urgEmb}</div>`;
       }
       const cardCls=[
         isConc?'concluido':isAtr?'atrasado':'',
         (eq.reservado&&!isConc)?'reservado':'',
         eq._reprog?'reprogramado':'',
       ].filter(Boolean).join(' ');
+      // Cabeçalho: verde=concluído, cinza escuro=sem reserva/estoque, cinza médio=reservado em andamento
+      const hdrBg=isConc?'#1D9E75':eq.reservado?'#555':'#888';
+      const hdrTxt=eq.reservado&&eq.cliente?`◈ ${eq.cliente}`:'Estoque';
+      const cliHeader=`<div style="background:${hdrBg};color:#fff;font-size:10px;font-weight:700;padding:3px 8px;margin:-8px -10px 6px -10px;border-radius:5px 5px 0 0;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${hdrTxt}</div>`;
       return`<div class="prog-card ${cardCls}" onclick="openCardModal('${eq.id}','geral')" style="${eq._reprog?'opacity:.75':''}">
+        ${cliHeader}
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:3px">
           <div style="min-width:0"><div class="prog-card-id">${eq.id}</div><div class="prog-card-equip">${eq.equipamento}</div><div class="prog-card-modelo">${eq.modelo}</div></div>
           ${!eq._reprog?`<button class="prog-remove-btn" onclick="removerDaProgramacao('${eq.id}',event)">✕</button>`:''}
         </div>
         <div class="prog-card-row">${prioPill}<span class="prog-etapa">${etLbl}</span></div>
-        ${sBadge}${reprogBadge}${assH}${cliH}${embH}
+        ${sBadge}${reprogBadge}${assH}
         ${eq.obs?`<div style="font-size:9px;color:var(--text3);margin-top:2px;font-style:italic">"${eq.obs}"</div>`:''}
+        <div style="margin-top:6px;padding-top:5px;border-top:1px dashed var(--borda)">${embH||'<div style="font-size:10px;color:var(--text3);height:20px"></div>'}</div>
       </div>`;
     }).join('');
     return`<div class="prog-semana"><div class="${hdCls}"><span class="prog-sem-label">${si?si.label:sem}${ehAtual?' — atual':''}</span><span class="prog-sem-total">${itemsReais.length}</span>${sub}</div><div class="prog-sem-body">${cards}</div></div>`;
