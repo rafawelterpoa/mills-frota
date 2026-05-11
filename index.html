@@ -174,8 +174,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .prog-sem-hd.tem-atraso{border-left:3px solid var(--terra)}
 .prog-sem-label{color:var(--text);font-weight:600;font-size:12px}
 .prog-sem-total{background:var(--bg4);color:var(--text2);border-radius:8px;padding:1px 7px;font-size:10px;font-weight:600}
-.prog-sem-body{padding:10px 12px;display:flex;flex-wrap:wrap;gap:7px}
-.prog-card{background:#F2F2F2;border-radius:7px;border:1px solid var(--borda);border-top:3px solid #888;padding:8px 10px;min-width:155px;max-width:200px;cursor:pointer;transition:all .15s}
+.prog-sem-body{padding:10px 12px;display:flex;flex-wrap:wrap;gap:7px;align-items:stretch}
+.prog-card{background:#F2F2F2;border-radius:7px;border:1px solid var(--borda);border-top:3px solid #888;padding:8px 10px;min-width:155px;max-width:200px;cursor:pointer;transition:all .15s;display:flex;flex-direction:column}
+.prog-card-body{flex:1}
+.prog-card-footer{margin-top:auto;padding-top:5px;border-top:1px dashed var(--borda)}
 .prog-card:hover{border-color:var(--laranja);box-shadow:0 2px 8px rgba(0,0,0,.1)}
 .prog-card.concluido{border-top-color:var(--verde2);background:#F0FAF6}
 .prog-card.atrasado{border-top-color:var(--terra);background:#FFF5F3}
@@ -238,6 +240,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .perfil-gestao_ativos{background:#FFF8E6;color:#7A5500}
 .perfil-oficina{background:var(--bg3);color:var(--text2)}
 .perfil-operador{background:var(--bg4);color:var(--text3)}
+.perfil-consultor{background:#E8F4FD;color:#1A6B9A;border:1px solid #B3D9F0}
 .del-btn{background:none;border:1px solid var(--borda);border-radius:5px;cursor:pointer;color:var(--terra);font-size:11px;padding:3px 7px}
 .del-btn:hover{background:rgba(194,64,3,.15)}
 
@@ -701,6 +704,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         <div class="admin-field"><div class="admin-label">Setor</div><input type="text" id="new-setor" placeholder="Ex: Manutenção"></div>
         <div class="admin-field"><div class="admin-label">Perfil</div>
           <select id="new-perfil">
+            <option value="consultor">Consultor (só visualização)</option>
             <option value="operador">Operador</option>
             <option value="oficina">Oficina</option>
             <option value="engenharia">Engenharia</option>
@@ -834,6 +838,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     </div>
     <div class="mc-footer">
       <span class="mc-status-info" id="mc-footer-info"></span>
+    <span id="mc-consultor-aviso" style="display:none;font-size:11px;color:#1A6B9A;background:#E8F4FD;padding:4px 10px;border-radius:5px;border:1px solid #B3D9F0">👁 Modo visualização</span>
       <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-card')">Fechar</button>
       <button class="btn btn-orange btn-sm" onclick="saveCardAndClose()">Salvar</button>
     </div>
@@ -1068,8 +1073,8 @@ function doLogin(){
 
 function solicitarNovaBase(){
   if(!currentUser){showToast('Faça login primeiro');return;}
+  if(currentUser.perfil==='consultor'){showToast('Perfil Consultor — apenas visualização');return;}
   if(currentUser.perfil==='master'){showModal('modal-base');return;}
-  // Outros perfis precisam de senha master
   requestSenha('🔐 Nova base','Upload de nova base requer senha master (1526).','retroceder',{},
     ()=>showModal('modal-base'));
 }
@@ -1082,7 +1087,7 @@ function doLogout(){
   document.getElementById('login-error').style.display='none';
 }
 
-function perfilLabel(p){return{master:'Master/Gerencial',engenharia:'Engenharia',gestao_ativos:'Gestão de Ativos',oficina:'Oficina',operador:'Operador'}[p]||p;}
+function perfilLabel(p){return{master:'Master/Gerencial',engenharia:'Engenharia',gestao_ativos:'Gestão de Ativos',oficina:'Oficina',operador:'Operador',consultor:'Consultor'}[p]||p;}
 
 // SENHAS
 function resolverPerfil(senha){
@@ -1095,8 +1100,10 @@ function resolverPerfil(senha){
 function perfilPode(perfil,acao,ctx){
   if(!perfil)return false;
   const nivel=currentUser?currentUser.perfil:(perfil?perfil.nivel:null);
+  if(nivel==='consultor')return false; // consultor nunca pode alterar
   if(nivel==='master')return true;
-  if(acao==='programar_semana_prio'){if(nivel==='oficina')return currentUser.oficina===''||currentUser.oficina===(ctx&&ctx.oficina);return false;}
+  // Programar semana/prio: qualquer usuário logado pode (exceto consultor)
+  if(acao==='programar_semana_prio')return true;
   if(acao==='mover_para_pronto')return nivel==='engenharia'||nivel==='gestao_ativos';
   if(acao==='mover_cl_entrada_catalogacao')return nivel==='engenharia';
   if(acao==='retroceder')return false;
@@ -1190,6 +1197,7 @@ function switchTab(tabId){
   else{renderBiEtapas();updateKpisDinamicos();}
 }
 function switchToAdmin(){
+  if(currentUser&&currentUser.perfil==='consultor'){showToast('Perfil Consultor — apenas visualização');return;}
   if(!currentUser||currentUser.perfil!=='master'){
     requestSenha('Acesso restrito','Área administrativa — apenas senha master.','retroceder',{},()=>switchTab('admin'));
     return;
@@ -1299,7 +1307,7 @@ function renderBoard(sid,visao){
       const card=document.createElement('div');
       const ehSA=eq.semana&&eq.semana===semanaAtual();
       card.className='card'+(ehSA?' semana-atual':'')+(eq.baixado?' baixado':'')+(eq.reservado?' reservado':'');
-      card.draggable=!eq.baixado;card.dataset.id=eq.id;
+      card.draggable=!eq.baixado&&(!currentUser||currentUser.perfil!=='consultor');card.dataset.id=eq.id;
 
       const dc=diasClass(visao==='geral'?eq.etapa_desde:eq.etapa_interna_desde);
       const dl=diasLabel(visao==='geral'?eq.etapa_desde:eq.etapa_interna_desde);
@@ -1505,6 +1513,16 @@ function openCardModal(eqId,visao){
 
   document.getElementById('mc-info-box').innerHTML=`<b>Oficina:</b> ${eq.oficina}<br><b>Etapa atual:</b> ${ETAPAS_GERAL.find(e=>e.id===eq.etapa)?.label||eq.etapa}<br><b>Dias nesta etapa:</b> ${Math.floor((Date.now()-(eq.etapa_desde||Date.now()))/86400000)===0?'Hoje':Math.floor((Date.now()-(eq.etapa_desde||Date.now()))/86400000)+' dias'}${eq.semana?'<br><b>Semana:</b> '+semanaLabel(eq.semana):''}${eq.ordemManusis?'<br><b>OS Manusis:</b> <span style="color:var(--laranja);font-weight:600">'+eq.ordemManusis+'</span>':''}${eq.reqCompra?'<br><b>Req. Compra:</b> <span style="color:var(--laranja);font-weight:600">'+eq.reqCompra+'</span>':''}${eq.reservado&&eq.cliente?'<br><b>Cliente:</b> '+eq.cliente:''}${eq.baixado?'<br><b style="color:var(--terra)">⚠ Baixado/Vendido</b>':''}`;
   document.getElementById('mc-footer-info').textContent=eq.prioridade?'Prioridade: '+prioLabel(eq.prioridade):'Sem prioridade';
+  const avisoCons=document.getElementById('mc-consultor-aviso');
+  if(avisoCons)avisoCons.style.display=(currentUser&&currentUser.perfil==='consultor')?'inline-block':'none';
+  // Desabilitar campos para consultor
+  const isConsultor=currentUser&&currentUser.perfil==='consultor';
+  ['mc-semana-sel','mc-obs','mc-cliente','mc-embarque','mc-oficina-sel'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.disabled=isConsultor;
+  });
+  document.querySelectorAll('.prio-opt,.reserva-btn,.manut-btn').forEach(el=>{
+    el.style.pointerEvents=isConsultor?'none':'';el.style.opacity=isConsultor?'.5':'';
+  });
   showModal('modal-card');
 }
 function updatePrioOpts(p){['critica','alta','media','baixa'].forEach(x=>{document.getElementById('prio-'+x).className='prio-opt'+(p===x?' sel-'+x:'');});}
@@ -1565,6 +1583,7 @@ function desbloquearSemana(){
 }
 function saveCardAndClose(){
   if(!currentCardId)return;
+  if(currentUser&&currentUser.perfil==='consultor'){showToast('Perfil Consultor — apenas visualização');closeModal('modal-card');return;}
   const eq=state[currentCardId];
   // Qualquer usuário logado pode programar semana e prioridade
   pendingCardChanges._perfilAutenticado={perfil:currentUser?currentUser.nome:'operador',nivel:currentUser?currentUser.perfil:'operador'};
@@ -1853,14 +1872,16 @@ function renderProgramacao(){
       const cliHeader=`<div style="background:${hdrBg};color:#fff;font-size:10px;font-weight:700;padding:3px 8px;margin:-8px -10px 6px -10px;border-radius:5px 5px 0 0;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${hdrTxt}</div>`;
       return`<div class="prog-card ${cardCls}" onclick="openCardModal('${eq.id}','geral')" style="${eq._reprog?'opacity:.75':''}">
         ${cliHeader}
-        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:3px">
-          <div style="min-width:0"><div class="prog-card-id">${eq.id}</div><div class="prog-card-equip">${eq.equipamento}</div><div class="prog-card-modelo">${eq.modelo}</div></div>
-          ${!eq._reprog?`<button class="prog-remove-btn" onclick="removerDaProgramacao('${eq.id}',event)">✕</button>`:''}
+        <div class="prog-card-body">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:3px">
+            <div style="min-width:0"><div class="prog-card-id">${eq.id}</div><div class="prog-card-equip">${eq.equipamento}</div><div class="prog-card-modelo">${eq.modelo}</div></div>
+            ${!eq._reprog?`<button class="prog-remove-btn" onclick="removerDaProgramacao('${eq.id}',event)">✕</button>`:''}
+          </div>
+          <div class="prog-card-row">${prioPill}<span class="prog-etapa">${etLbl}</span></div>
+          ${sBadge}${reprogBadge}${assH}
+          ${eq.obs?`<div style="font-size:9px;color:var(--text3);margin-top:2px;font-style:italic">"${eq.obs}"</div>`:''}
         </div>
-        <div class="prog-card-row">${prioPill}<span class="prog-etapa">${etLbl}</span></div>
-        ${sBadge}${reprogBadge}${assH}
-        ${eq.obs?`<div style="font-size:9px;color:var(--text3);margin-top:2px;font-style:italic">"${eq.obs}"</div>`:''}
-        <div style="margin-top:6px;padding-top:5px;border-top:1px dashed var(--borda)">${embH||'<div style="font-size:10px;color:var(--text3);height:20px"></div>'}</div>
+        <div class="prog-card-footer">${embH||'<div style="height:20px"></div>'}</div>
       </div>`;
     }).join('');
     return`<div class="prog-semana"><div class="${hdCls}"><span class="prog-sem-label">${si?si.label:sem}${ehAtual?' — atual':''}</span><span class="prog-sem-total">${itemsReais.length}</span>${sub}</div><div class="prog-sem-body">${cards}</div></div>`;
