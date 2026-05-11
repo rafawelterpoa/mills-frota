@@ -334,12 +334,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <span class="hdate" id="header-date"></span>
     <span id="sync-status" style="font-size:10px;color:var(--verde);margin-right:4px">● Conectando...</span>
     <span class="huser" id="header-user"></span>
-    <button class="btn btn-orange btn-sm" onclick="showModal('modal-base')">Nova base</button>
+    <button class="btn btn-orange btn-sm" onclick="solicitarNovaBase()">Nova base</button>
     <button class="btn btn-outline btn-sm" onclick="doLogout()">Sair</button>
   </div>
 </header>
 
-<div class="tabs-bar" id="tabs-bar"><div class="tab active" data-tab="bi" onclick="switchTab('bi')">BI Geral <span class="tab-n">561</span></div><div class="tab" data-tab="programacao" onclick="switchTab('programacao')">Programação</div><div class="tab" data-tab="graficos" onclick="switchTab('graficos')">Gráficos</div><div class="tab" data-tab="reservas" onclick="switchTab('reservas')">Reservas</div><div class="tab" data-tab="alteracoes" id="tab-alteracoes" onclick="switchTab('alteracoes')" style="display:none">⚡ Alterações <span class="tab-n" id="tab-alteracoes-n">0</span></div><div class="tab" data-tab="Assis_SP" onclick="switchTab('Assis_SP')">Assis (SP) <span class="tab-n">130</span></div><div class="tab" data-tab="Contagem_MG" onclick="switchTab('Contagem_MG')">Contagem (MG) <span class="tab-n">62</span></div><div class="tab" data-tab="Osasco_SP" onclick="switchTab('Osasco_SP')">Osasco (SP) <span class="tab-n">4</span></div><div class="tab" data-tab="Parauapebas_PA" onclick="switchTab('Parauapebas_PA')">Parauapebas (PA) <span class="tab-n">3</span></div><div class="tab" data-tab="Santos_SP" onclick="switchTab('Santos_SP')">Santos (SP) <span class="tab-n">4</span></div><div class="tab" data-tab="Sumaré_SP" onclick="switchTab('Sumaré_SP')">Sumaré (SP) <span class="tab-n">280</span></div><div class="tab" data-tab="São_José_dos_Pinhais_PR" onclick="switchTab('São_José_dos_Pinhais_PR')">São José dos Pinhais (PR) <span class="tab-n">78</span></div><div class="tab" data-tab="admin" onclick="switchToAdmin()">⚙ Admin</div></div>
+<div class="tabs-bar" id="tabs-bar"><div class="tab active" data-tab="bi" onclick="switchTab('bi')">BI Geral <span class="tab-n">561</span></div><div class="tab" data-tab="programacao" onclick="switchTab('programacao')">Programação</div><div class="tab" data-tab="graficos" onclick="switchTab('graficos')">Gráficos</div><div class="tab" data-tab="reservas" onclick="switchTab('reservas')">Reservas</div><div class="tab" data-tab="alteracoes" id="tab-alteracoes" onclick="switchTab('alteracoes')">⚡ Alterações <span class="tab-n" id="tab-alteracoes-n">0</span></div><div class="tab" data-tab="Assis_SP" onclick="switchTab('Assis_SP')">Assis (SP) <span class="tab-n">130</span></div><div class="tab" data-tab="Contagem_MG" onclick="switchTab('Contagem_MG')">Contagem (MG) <span class="tab-n">62</span></div><div class="tab" data-tab="Osasco_SP" onclick="switchTab('Osasco_SP')">Osasco (SP) <span class="tab-n">4</span></div><div class="tab" data-tab="Parauapebas_PA" onclick="switchTab('Parauapebas_PA')">Parauapebas (PA) <span class="tab-n">3</span></div><div class="tab" data-tab="Santos_SP" onclick="switchTab('Santos_SP')">Santos (SP) <span class="tab-n">4</span></div><div class="tab" data-tab="Sumaré_SP" onclick="switchTab('Sumaré_SP')">Sumaré (SP) <span class="tab-n">280</span></div><div class="tab" data-tab="São_José_dos_Pinhais_PR" onclick="switchTab('São_José_dos_Pinhais_PR')">São José dos Pinhais (PR) <span class="tab-n">78</span></div><div class="tab" data-tab="admin" onclick="switchToAdmin()">⚙ Admin</div></div>
 
 <!-- BI -->
 <div class="page active" id="page-bi">
@@ -919,7 +919,7 @@ function fbListen(){
 }
 
 function reRenderAtivo(){
-  renderBiEtapas();updateKpisDinamicos();
+  renderBiEtapas();updateKpisDinamicos();atualizarContagemTabs();
   const at=document.querySelector('.tab.active');if(!at)return;
   const tab=at.dataset.tab;
   if(tab==='programacao')renderProgramacao();
@@ -963,6 +963,8 @@ async function loadFromFirebase(){
             cliente:d.cliente||'',
             dataEmbarque:d.dataEmbarque||'',
             historico:d.historico||[],
+            ordemManusis:d.ordemManusis||'',
+            reqCompra:d.reqCompra||'',
           });
         } else {
           // Equipamento novo — não está no EQUIPAMENTOS_ORIG (adicionado via Nova base)
@@ -976,6 +978,7 @@ async function loadFromFirebase(){
             assinaturas:d.assinaturas||{},semana_anterior:d.semana_anterior||null,
             baixado:d.baixado||false,reservado:d.reservado||false,cliente:d.cliente||'',
             dataEmbarque:d.dataEmbarque||'',historico:d.historico||[],
+            ordemManusis:d.ordemManusis||'',reqCompra:d.reqCompra||'',
           };
         }
       });
@@ -1007,6 +1010,7 @@ async function saveToFirebase(eqIds){
           etapa_interna:eq.etapa_interna||null,etapa_interna_desde:eq.etapa_interna_desde||null,
           baixado:eq.baixado||false,reservado:eq.reservado||false,cliente:eq.cliente||'',
           dataEmbarque:eq.dataEmbarque||'',historico:eq.historico||[],
+        ordemManusis:eq.ordemManusis||'',reqCompra:eq.reqCompra||'',
         };
       });
       await fbSet('equipamentos',todos);
@@ -1056,6 +1060,14 @@ function doLogin(){
   document.getElementById('login-overlay').style.display='none';
   document.getElementById('header-user').textContent=user.nome+(user.setor?' · '+user.setor:'');
   loadFromFirebase();renderAdminUsers();
+}
+
+function solicitarNovaBase(){
+  if(!currentUser){showToast('Faça login primeiro');return;}
+  if(currentUser.perfil==='master'){showModal('modal-base');return;}
+  // Outros perfis precisam de senha master
+  requestSenha('🔐 Nova base','Upload de nova base requer senha master (1526).','retroceder',{},
+    ()=>showModal('modal-base'));
 }
 
 function doLogout(){
@@ -1155,6 +1167,7 @@ function init(){
   // Carregar alterações salvas
   try{const a=sessionStorage.getItem('mills_alteracoes');if(a)alteracoesBase=JSON.parse(a);}catch(e){}
   atualizarTabAlteracoes();
+  atualizarContagemTabs();
 }
 
 // TABS
@@ -1191,7 +1204,7 @@ function switchSubtab(sid,v){
 const CORES_ETAPA={chegada:'#6BFAC7',cl_entrada:'#1D9E75',manutencao:'#C24003',cl_saida:'#7F77DD',pronto:'#F37021'};
 function renderBiEtapas(){
   const grid=document.getElementById('bi-etapas-grid');if(!grid)return;
-  const todos=Object.values(state),total=todos.length||1;
+  const todos=Object.values(state).filter(e=>!e.baixado),total=todos.length||1;
   const cnt={};ETAPAS_GERAL.forEach(e=>cnt[e.id]=0);
   todos.forEach(eq=>{if(cnt[eq.etapa]!==undefined)cnt[eq.etapa]++;});
   const maxE=Math.max(...Object.values(cnt),1);
@@ -1205,9 +1218,12 @@ function renderBiEtapas(){
 }
 function updateKpisDinamicos(){
   const todos=Object.values(state),total=todos.length||1;
-  const res=todos.filter(e=>e.reservado).length;
-  const prog=todos.filter(e=>e.semana).length;
-  const retrab=todos.filter(e=>e.retrabalho>0).length;
+  const ativos=todos.filter(e=>!e.baixado);
+  const res=ativos.filter(e=>e.reservado).length;
+  const prog=ativos.filter(e=>e.semana).length;
+  const retrab=ativos.filter(e=>e.retrabalho>0).length;
+  const disp=ativos.filter(e=>e.etapa==='chegada'||e.etapa==='pronto').length;
+  const manut=ativos.filter(e=>e.etapa==='manutencao'||e.etapa==='cl_entrada'||e.etapa==='cl_saida').length;
   const el=id=>document.getElementById(id);
   if(el('kpi-res'))el('kpi-res').textContent=res;
   if(el('kpi-res-bar'))el('kpi-res-bar').style.width=Math.round(res/total*100)+'%';
@@ -1215,16 +1231,46 @@ function updateKpisDinamicos(){
   if(el('kpi-prog-bar'))el('kpi-prog-bar').style.width=Math.round(prog/total*100)+'%';
   if(el('kpi-retrab'))el('kpi-retrab').textContent=retrab;
   if(el('kpi-retrab-bar'))el('kpi-retrab-bar').style.width=Math.round(retrab/total*100)+'%';
+  // Atualizar KPIs principais
+  if(el('kpi-total'))el('kpi-total').textContent=ativos.length;
+  if(el('kpi-disp'))el('kpi-disp').textContent=disp;
+  if(el('kpi-manut'))el('kpi-manut').textContent=manut;
+  const dpct=Math.round(disp/ativos.length*100)||0,mpct=Math.round(manut/ativos.length*100)||0;
+  if(el('kpi-disp-pct'))el('kpi-disp-pct').textContent=dpct+'% do total';
+  if(el('kpi-manut-pct'))el('kpi-manut-pct').textContent=mpct+'% do total';
+  // Atualizar contagens nas tabs
+  atualizarContagemTabs();
+}
+
+function atualizarContagemTabs(){
+  const ativos=Object.values(state).filter(e=>!e.baixado);
+  // BI Geral
+  const tabBi=document.querySelector('[data-tab="bi"] .tab-n');
+  if(tabBi)tabBi.textContent=ativos.length;
+  // Tabs de oficina
+  document.querySelectorAll('.tab[data-tab]').forEach(tab=>{
+    const tabId=tab.dataset.tab;
+    if(['bi','programacao','graficos','reservas','alteracoes','admin'].includes(tabId))return;
+    const equipsOf=ativos.filter(e=>e.oficina.replace(/ /g,'_').replace(/[()]/g,'').replace(/\//g,'_')===tabId);
+    const n=tab.querySelector('.tab-n');
+    if(n)n.textContent=equipsOf.length;
+  });
 }
 
 // KANBAN
-function getEquipsByOficinaSid(s){return Object.values(state).filter(e=>e.oficina.replace(/ /g,'_').replace(/[()]/g,'').replace(/\//g,'_')===s);}
+function getEquipsByOficinaSid(s){return Object.values(state).filter(e=>!e.baixado&&e.oficina&&e.oficina.replace(/ /g,'_').replace(/[()]/g,'').replace(/\//g,'_')===s);}
 
 function renderBoard(sid,visao){
   const boardId=`board-${sid}-${visao}`;
   const board=document.getElementById(boardId);if(!board)return;
   board.innerHTML='';
-  const equips=getEquipsByOficinaSid(sid);
+  const equips=getEquipsByOficinaSid(sid).filter(e=>!e.baixado);
+  // Atualizar título dinâmico da página
+  const titulo=document.querySelector(`#page-${sid} .kanban-title`);
+  if(titulo){
+    const of=equips[0]?.oficina||sid.replace(/_/g,' ');
+    titulo.innerHTML=`${of||sid} — <span style="color:var(--laranja)">${equips.length} equipamentos</span>`;
+  }
   const fv=(board._search||'').toLowerCase();
   const fp=board._prio||'';
   const ft=board._tipo||'';
@@ -1262,6 +1308,7 @@ function renderBoard(sid,visao){
       const embarqueHTML=eq.dataEmbarque?`<div style="font-size:9px;color:#7F77DD;margin-top:2px;font-weight:500">🚢 Embarque: ${new Date(eq.dataEmbarque+'T12:00:00').toLocaleDateString('pt-BR')}</div>`:'';
       const assin=eq.assinaturas&&eq.assinaturas[eq.etapa];
       const assinHTML=assin?`<div class="card-assinatura">🔑 ${assin.perfil} · ${assin.data}</div>`:'';
+      const osHTML=eq.ordemManusis?`<div style="font-size:9px;color:#7F77DD;margin-top:2px;font-weight:500">📋 OS: ${eq.ordemManusis}</div>`:'';;
       const liberadoBtn=''; // removido — agora é via modal
 
       card.innerHTML=`
@@ -1276,6 +1323,7 @@ function renderBoard(sid,visao){
         ${embarqueHTML}
         ${eq.retrabalho>0?`<div style="font-size:9px;color:var(--terra);margin-top:3px;font-weight:600">↻ Retrabalho: ${eq.retrabalho}x</div>`:''}
         ${assinHTML}
+        ${osHTML}
         ${liberadoBtn}`;
 
       card.addEventListener('click',ev=>{if(!ev.defaultPrevented)openCardModal(eq.id,visao);});
@@ -1613,7 +1661,7 @@ function renderProgramacao(){
   const semAtual=semanaAtual();
 
   // Filtrar equipamentos programados
-  let equips=Object.values(state).filter(e=>e.semana);
+  let equips=Object.values(state).filter(e=>e.semana&&!e.baixado);
   if(ofFil)equips=equips.filter(e=>e.oficina===ofFil);
   if(prioFil)equips=equips.filter(e=>e.prioridade===prioFil);
   if(tipoFil)equips=equips.filter(e=>e.tipo===tipoFil);
@@ -1705,7 +1753,18 @@ function renderProgramacao(){
   const prioOrder={critica:0,alta:1,media:2,baixa:3};
 
   container.innerHTML=semOrder.map(sem=>{
-    const items=bySemana[sem].sort((a,b)=>(prioOrder[a.prioridade]??4)-(prioOrder[b.prioridade]??4));
+    const items=bySemana[sem].sort((a,b)=>{
+      // 1º: reprogramados ficam no final
+      if(a._reprog!==b._reprog)return a._reprog?1:-1;
+      // 2º: com data de embarque têm prioridade, ordenados por data
+      const eA=a.dataEmbarque?new Date(a.dataEmbarque).getTime():null;
+      const eB=b.dataEmbarque?new Date(b.dataEmbarque).getTime():null;
+      if(eA&&eB)return eA-eB; // ambos com embarque: mais próximo primeiro
+      if(eA&&!eB)return -1;   // só A tem embarque: A vem antes
+      if(!eA&&eB)return 1;    // só B tem embarque: B vem antes
+      // 3º: sem embarque, ordenar por prioridade
+      return (prioOrder[a.prioridade]??4)-(prioOrder[b.prioridade]??4);
+    });
     const si=SEMANAS_LISTA.find(s=>s.value===sem);
     const ehAtual=sem===semAtual,ehPass=sem<semAtual;
     const itemsReais=items.filter(x=>!x._reprog);
@@ -1713,7 +1772,10 @@ function renderProgramacao(){
     const nAtr=itemsReais.filter(e=>e.etapa!=='pronto'&&ehPass).length;
     const nReprog=items.filter(x=>x._reprog).length;
     let hdCls='prog-sem-hd';if(ehAtual)hdCls+=' sem-atual';else if(nAtr>0)hdCls+=' tem-atraso';
+    // Contar embarques urgentes na semana
+    const nEmbUrg=itemsReais.filter(e=>e.dataEmbarque&&Math.ceil((new Date(e.dataEmbarque+'T12:00:00')-new Date())/(1000*60*60*24))<=7).length;
     let sub='';
+    if(nEmbUrg>0)sub+=`<span style="background:rgba(194,64,3,.15);color:var(--terra);border-radius:6px;padding:1px 6px;font-size:10px">🚢 ${nEmbUrg} embarque${nEmbUrg>1?'s':''} próximo${nEmbUrg>1?'s':''}</span> `;
     if(nConc>0)sub+=`<span style="background:rgba(29,158,117,.15);color:var(--verde2);border-radius:6px;padding:1px 6px;font-size:10px">${nConc} concluído${nConc>1?'s':''}</span> `;
     if(nAtr>0)sub+=`<span style="background:rgba(194,64,3,.15);color:var(--terra);border-radius:6px;padding:1px 6px;font-size:10px">${nAtr} atrasado${nAtr>1?'s':''}</span> `;
     if(nReprog>0)sub+=`<span style="background:#EDE9FF;color:#5B4DB5;border-radius:6px;padding:1px 6px;font-size:10px">${nReprog} reprogramado${nReprog>1?'s':''}</span>`;
@@ -1727,7 +1789,14 @@ function renderProgramacao(){
       const assP=eq.assinaturas?.programacao;
       const assH=assP?`<div style="font-size:9px;color:var(--verde2);margin-top:2px">📅 ${assP.perfil} · ${assP.data}</div>`:'';
       const cliH=eq.reservado&&eq.cliente?`<div style="font-size:9px;color:var(--laranja);margin-top:2px;font-weight:600">◈ ${eq.cliente}</div>`:'';
-      const embH=eq.dataEmbarque?`<div style="font-size:9px;color:#7F77DD;margin-top:2px;font-weight:500">🚢 ${new Date(eq.dataEmbarque+'T12:00:00').toLocaleDateString('pt-BR')}</div>`:'';
+      let embH='';
+      if(eq.dataEmbarque){
+        const dtEmb=new Date(eq.dataEmbarque+'T12:00:00');
+        const diasEmb=Math.ceil((dtEmb-new Date())/(1000*60*60*24));
+        const corEmb=diasEmb<=3?'var(--terra)':diasEmb<=7?'var(--laranja)':'#7F77DD';
+        const urgEmb=diasEmb<=3?' ⚠ URGENTE':diasEmb<=7?' — em breve':'';
+        embH=`<div style="font-size:9px;color:${corEmb};margin-top:2px;font-weight:600">🚢 ${dtEmb.toLocaleDateString('pt-BR')}${urgEmb}</div>`;
+      }
       const cardCls=[
         isConc?'concluido':isAtr?'atrasado':'',
         (eq.reservado&&!isConc)?'reservado':'',
