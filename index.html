@@ -343,7 +343,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div>
 </header>
 
-<div class="tabs-bar" id="tabs-bar"><div class="tab active" data-tab="bi" onclick="switchTab('bi')">BI Geral <span class="tab-n">561</span></div><div class="tab" data-tab="programacao" onclick="switchTab('programacao')">Programação</div><div class="tab" data-tab="graficos" onclick="switchTab('graficos')">Gráficos</div><div class="tab" data-tab="reservas" onclick="switchTab('reservas')">Reservas</div><div class="tab" data-tab="alteracoes" id="tab-alteracoes" onclick="switchTab('alteracoes')">⚡ Alterações <span class="tab-n" id="tab-alteracoes-n">0</span></div><div class="tab" data-tab="Assis_SP" onclick="switchTab('Assis_SP')">Assis (SP) <span class="tab-n">130</span></div><div class="tab" data-tab="Contagem_MG" onclick="switchTab('Contagem_MG')">Contagem (MG) <span class="tab-n">62</span></div><div class="tab" data-tab="Osasco_SP" onclick="switchTab('Osasco_SP')">Osasco (SP) <span class="tab-n">4</span></div><div class="tab" data-tab="Parauapebas_PA" onclick="switchTab('Parauapebas_PA')">Parauapebas (PA) <span class="tab-n">3</span></div><div class="tab" data-tab="Santos_SP" onclick="switchTab('Santos_SP')">Santos (SP) <span class="tab-n">4</span></div><div class="tab" data-tab="Sumaré_SP" onclick="switchTab('Sumaré_SP')">Sumaré (SP) <span class="tab-n">280</span></div><div class="tab" data-tab="São_José_dos_Pinhais_PR" onclick="switchTab('São_José_dos_Pinhais_PR')">São José dos Pinhais (PR) <span class="tab-n">78</span></div><div class="tab" data-tab="admin" onclick="switchToAdmin()">⚙ Admin</div></div>
+<div class="tabs-bar" id="tabs-bar"><div class="tab active" data-tab="bi" onclick="switchTab('bi')">BI Geral <span class="tab-n">561</span></div><div class="tab" data-tab="programacao" onclick="switchTab('programacao')">Programação</div><div class="tab" data-tab="graficos" onclick="switchTab('graficos')">Gráficos</div><div class="tab" data-tab="reservas" onclick="switchTab('reservas')">Reservas</div>
+<div class="tab" data-tab="disponiveis" onclick="switchTab('disponiveis')">Disponíveis <span class="tab-n" id="tab-disp-n">0</span></div><div class="tab" data-tab="alteracoes" id="tab-alteracoes" onclick="switchTab('alteracoes')">⚡ Alterações <span class="tab-n" id="tab-alteracoes-n">0</span></div><div class="tab" data-tab="Assis_SP" onclick="switchTab('Assis_SP')">Assis (SP) <span class="tab-n">130</span></div><div class="tab" data-tab="Contagem_MG" onclick="switchTab('Contagem_MG')">Contagem (MG) <span class="tab-n">62</span></div><div class="tab" data-tab="Osasco_SP" onclick="switchTab('Osasco_SP')">Osasco (SP) <span class="tab-n">4</span></div><div class="tab" data-tab="Parauapebas_PA" onclick="switchTab('Parauapebas_PA')">Parauapebas (PA) <span class="tab-n">3</span></div><div class="tab" data-tab="Santos_SP" onclick="switchTab('Santos_SP')">Santos (SP) <span class="tab-n">4</span></div><div class="tab" data-tab="Sumaré_SP" onclick="switchTab('Sumaré_SP')">Sumaré (SP) <span class="tab-n">280</span></div><div class="tab" data-tab="São_José_dos_Pinhais_PR" onclick="switchTab('São_José_dos_Pinhais_PR')">São José dos Pinhais (PR) <span class="tab-n">78</span></div><div class="tab" data-tab="admin" onclick="switchToAdmin()">⚙ Admin</div></div>
 
 <!-- BI -->
 <div class="page active" id="page-bi">
@@ -464,6 +465,29 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </div>
 </div>
 
+<!-- DISPONÍVEIS -->
+<div class="page" id="page-disponiveis">
+<div class="reservas-wrap">
+  <div class="section-title">Equipamentos disponíveis para locação</div>
+  <div class="reservas-kpi" id="disp-kpis"></div>
+  <div class="prog-toolbar" style="margin-top:12px;margin-bottom:10px;flex-wrap:wrap">
+    <span class="kanban-title" style="font-size:13px">Frota disponível</span>
+    <input class="search-box" type="text" placeholder="Buscar ID ou equipamento..." oninput="renderDisponiveis()" id="disp-search" style="width:200px">
+    <select class="filter-sel" id="disp-tipo-sel" onchange="renderDisponiveis()"><option value="">Todos os tipos</option></select>
+    <select class="filter-sel" id="disp-oficina-sel" onchange="renderDisponiveis()"><option value="">Todas as oficinas</option></select>
+    <select class="filter-sel" id="disp-reserva-sel" onchange="renderDisponiveis()">
+      <option value="">Todos</option>
+      <option value="reservado">Reservados</option>
+      <option value="livre">Sem reserva</option>
+    </select>
+    <select class="filter-sel" id="disp-tipoManut-sel" onchange="renderDisponiveis()">
+      <option value="">Todos tipos manut.</option><option value="Garantia">Garantia</option><option value="Sinistro">Sinistro</option><option value="Preparação para Mobilização">Preparação para Mobilização</option><option value="Corretiva de contrato">Corretiva de contrato</option><option value="Retorno de contrato">Retorno de contrato</option><option value="Manutenção para Venda">Manutenção para Venda</option>
+    </select>
+  </div>
+  <div id="disp-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px"></div>
+</div>
+</div>
+
 <!-- ALTERAÇÕES BASE -->
 <div class="page" id="page-alteracoes">
 <div class="prog-wrap">
@@ -509,7 +533,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="page" id="page-Assis_SP">
 <div class="kanban-wrap">
   <div class="kanban-toolbar">
-    <span class="kanban-title">Assis (SP) — <span style="color:var(--laranja)">130 equipamentos</span></span>
+    <span class="kanban-title">Assis (SP) — <span style="color:var(--laranja)">122 equipamentos</span></span>
     <div class="subtabs">
       <button class="subtab active" id="subtab-Assis_SP-geral" onclick="switchSubtab('Assis_SP','geral')">Visão Geral</button>
       <button class="subtab" id="subtab-Assis_SP-oficina" onclick="switchSubtab('Assis_SP','oficina')">Visão Oficina</button>
@@ -523,6 +547,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <option value="critica">Crítica</option><option value="alta">Alta</option>
       <option value="media">Média</option><option value="baixa">Baixa</option>
     </select>
+    <select class="filter-sel" onchange="filterTipoManut('Assis_SP',this.value)">
+      <option value="">Todos os tipos de manutenção</option><option value="Garantia">Garantia</option><option value="Sinistro">Sinistro</option><option value="Preparação para Mobilização">Preparação para Mobilização</option><option value="Corretiva de contrato">Corretiva de contrato</option><option value="Retorno de contrato">Retorno de contrato</option><option value="Manutenção para Venda">Manutenção para Venda</option>
+    </select>
   </div>
   <div class="kanban-layout">
     <div class="kanban-board-wrap">
@@ -534,7 +561,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </div><div class="page" id="page-Contagem_MG">
 <div class="kanban-wrap">
   <div class="kanban-toolbar">
-    <span class="kanban-title">Contagem (MG) — <span style="color:var(--laranja)">62 equipamentos</span></span>
+    <span class="kanban-title">Contagem (MG) — <span style="color:var(--laranja)">61 equipamentos</span></span>
     <div class="subtabs">
       <button class="subtab active" id="subtab-Contagem_MG-geral" onclick="switchSubtab('Contagem_MG','geral')">Visão Geral</button>
       <button class="subtab" id="subtab-Contagem_MG-oficina" onclick="switchSubtab('Contagem_MG','oficina')">Visão Oficina</button>
@@ -547,6 +574,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <option value="">Todas prioridades</option>
       <option value="critica">Crítica</option><option value="alta">Alta</option>
       <option value="media">Média</option><option value="baixa">Baixa</option>
+    </select>
+    <select class="filter-sel" onchange="filterTipoManut('Contagem_MG',this.value)">
+      <option value="">Todos os tipos de manutenção</option><option value="Garantia">Garantia</option><option value="Sinistro">Sinistro</option><option value="Preparação para Mobilização">Preparação para Mobilização</option><option value="Corretiva de contrato">Corretiva de contrato</option><option value="Retorno de contrato">Retorno de contrato</option><option value="Manutenção para Venda">Manutenção para Venda</option>
     </select>
   </div>
   <div class="kanban-layout">
@@ -573,6 +603,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <option value="critica">Crítica</option><option value="alta">Alta</option>
       <option value="media">Média</option><option value="baixa">Baixa</option>
     </select>
+    <select class="filter-sel" onchange="filterTipoManut('Osasco_SP',this.value)">
+      <option value="">Todos os tipos de manutenção</option><option value="Garantia">Garantia</option><option value="Sinistro">Sinistro</option><option value="Preparação para Mobilização">Preparação para Mobilização</option><option value="Corretiva de contrato">Corretiva de contrato</option><option value="Retorno de contrato">Retorno de contrato</option><option value="Manutenção para Venda">Manutenção para Venda</option>
+    </select>
   </div>
   <div class="kanban-layout">
     <div class="kanban-board-wrap">
@@ -597,6 +630,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <option value="">Todas prioridades</option>
       <option value="critica">Crítica</option><option value="alta">Alta</option>
       <option value="media">Média</option><option value="baixa">Baixa</option>
+    </select>
+    <select class="filter-sel" onchange="filterTipoManut('Parauapebas_PA',this.value)">
+      <option value="">Todos os tipos de manutenção</option><option value="Garantia">Garantia</option><option value="Sinistro">Sinistro</option><option value="Preparação para Mobilização">Preparação para Mobilização</option><option value="Corretiva de contrato">Corretiva de contrato</option><option value="Retorno de contrato">Retorno de contrato</option><option value="Manutenção para Venda">Manutenção para Venda</option>
     </select>
   </div>
   <div class="kanban-layout">
@@ -623,6 +659,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <option value="critica">Crítica</option><option value="alta">Alta</option>
       <option value="media">Média</option><option value="baixa">Baixa</option>
     </select>
+    <select class="filter-sel" onchange="filterTipoManut('Santos_SP',this.value)">
+      <option value="">Todos os tipos de manutenção</option><option value="Garantia">Garantia</option><option value="Sinistro">Sinistro</option><option value="Preparação para Mobilização">Preparação para Mobilização</option><option value="Corretiva de contrato">Corretiva de contrato</option><option value="Retorno de contrato">Retorno de contrato</option><option value="Manutenção para Venda">Manutenção para Venda</option>
+    </select>
   </div>
   <div class="kanban-layout">
     <div class="kanban-board-wrap">
@@ -634,7 +673,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </div><div class="page" id="page-Sumaré_SP">
 <div class="kanban-wrap">
   <div class="kanban-toolbar">
-    <span class="kanban-title">Sumaré (SP) — <span style="color:var(--laranja)">280 equipamentos</span></span>
+    <span class="kanban-title">Sumaré (SP) — <span style="color:var(--laranja)">283 equipamentos</span></span>
     <div class="subtabs">
       <button class="subtab active" id="subtab-Sumaré_SP-geral" onclick="switchSubtab('Sumaré_SP','geral')">Visão Geral</button>
       <button class="subtab" id="subtab-Sumaré_SP-oficina" onclick="switchSubtab('Sumaré_SP','oficina')">Visão Oficina</button>
@@ -648,6 +687,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <option value="critica">Crítica</option><option value="alta">Alta</option>
       <option value="media">Média</option><option value="baixa">Baixa</option>
     </select>
+    <select class="filter-sel" onchange="filterTipoManut('Sumaré_SP',this.value)">
+      <option value="">Todos os tipos de manutenção</option><option value="Garantia">Garantia</option><option value="Sinistro">Sinistro</option><option value="Preparação para Mobilização">Preparação para Mobilização</option><option value="Corretiva de contrato">Corretiva de contrato</option><option value="Retorno de contrato">Retorno de contrato</option><option value="Manutenção para Venda">Manutenção para Venda</option>
+    </select>
   </div>
   <div class="kanban-layout">
     <div class="kanban-board-wrap">
@@ -659,7 +701,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </div><div class="page" id="page-São_José_dos_Pinhais_PR">
 <div class="kanban-wrap">
   <div class="kanban-toolbar">
-    <span class="kanban-title">São José dos Pinhais (PR) — <span style="color:var(--laranja)">78 equipamentos</span></span>
+    <span class="kanban-title">São José dos Pinhais (PR) — <span style="color:var(--laranja)">75 equipamentos</span></span>
     <div class="subtabs">
       <button class="subtab active" id="subtab-São_José_dos_Pinhais_PR-geral" onclick="switchSubtab('São_José_dos_Pinhais_PR','geral')">Visão Geral</button>
       <button class="subtab" id="subtab-São_José_dos_Pinhais_PR-oficina" onclick="switchSubtab('São_José_dos_Pinhais_PR','oficina')">Visão Oficina</button>
@@ -673,6 +715,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <option value="critica">Crítica</option><option value="alta">Alta</option>
       <option value="media">Média</option><option value="baixa">Baixa</option>
     </select>
+    <select class="filter-sel" onchange="filterTipoManut('São_José_dos_Pinhais_PR',this.value)">
+      <option value="">Todos os tipos de manutenção</option><option value="Garantia">Garantia</option><option value="Sinistro">Sinistro</option><option value="Preparação para Mobilização">Preparação para Mobilização</option><option value="Corretiva de contrato">Corretiva de contrato</option><option value="Retorno de contrato">Retorno de contrato</option><option value="Manutenção para Venda">Manutenção para Venda</option>
+    </select>
   </div>
   <div class="kanban-layout">
     <div class="kanban-board-wrap">
@@ -682,7 +727,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div>
 </div>
 </div>
-
 <!-- ADMIN -->
 <div class="page" id="page-admin">
 <div class="admin-wrap">
@@ -798,14 +842,25 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         </div>
         <div style="font-size:10px;color:var(--text3);margin-top:6px">Ao confirmar "Sim" e salvar, o equipamento vai direto para <b style="color:var(--verde)">Check List Saída</b></div>
       </div>
-      <div class="mc-row2">
-        <div class="mc-field">
-          <label>Ordem Manusis</label>
-          <input type="text" id="mc-ordem-manusis" placeholder="Nº da ordem..." oninput="setOrdemManusis(this.value)" maxlength="40">
+      <!-- Ordens Manusis — múltiplas -->
+      <div>
+        <div class="mc-section-title">Ordens Manusis</div>
+        <div id="mc-ordens-list" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:7px;min-height:20px"></div>
+        <div style="display:flex;gap:6px">
+          <input type="text" id="mc-ordem-input" placeholder="Nº da ordem..." maxlength="40" style="flex:1;padding:7px 10px;border:1px solid var(--borda);border-radius:7px;font-size:12px;background:#fff;outline:none;color:var(--text)" onkeydown="if(event.key==='Enter'){event.preventDefault();addOrdem();}">
+          <button class="btn btn-orange btn-sm" onclick="addOrdem()">+ Adicionar</button>
         </div>
+      </div>
+      <div class="mc-row2">
         <div class="mc-field">
           <label>Requisição de Compra</label>
           <input type="text" id="mc-req-compra" placeholder="Nº da requisição..." oninput="setReqCompra(this.value)" maxlength="40">
+        </div>
+        <div class="mc-field">
+          <label>Tipo de Manutenção</label>
+          <select id="mc-tipo-manut" onchange="setTipoManut(this.value)">
+            <option value="">— Selecionar —</option><option value="Garantia">Garantia</option><option value="Sinistro">Sinistro</option><option value="Preparação para Mobilização">Preparação para Mobilização</option><option value="Corretiva de contrato">Corretiva de contrato</option><option value="Retorno de contrato">Retorno de contrato</option><option value="Manutenção para Venda">Manutenção para Venda</option>
+          </select>
         </div>
       </div>
       <div class="mc-row2">
@@ -929,6 +984,9 @@ function fbListen(){
 
 function reRenderAtivo(){
   renderBiEtapas();updateKpisDinamicos();atualizarContagemTabs();
+  // Atualizar contagem disponíveis
+  const tabDispN=document.getElementById('tab-disp-n');
+  if(tabDispN){const n=Object.values(state).filter(e=>!e.baixado&&(e.etapa==='pronto'||e.etapa==='chegada')).length;tabDispN.textContent=n;}
   const at=document.querySelector('.tab.active');if(!at)return;
   const tab=at.dataset.tab;
   if(tab==='programacao')renderProgramacao();
@@ -972,8 +1030,9 @@ async function loadFromFirebase(){
             cliente:d.cliente||'',
             dataEmbarque:d.dataEmbarque||'',
             historico:d.historico||[],
-            ordemManusis:d.ordemManusis||'',
+            ordens:d.ordens||[],
             reqCompra:d.reqCompra||'',
+            tipoManut:d.tipoManut||'',
           });
         } else {
           // Equipamento novo — não está no EQUIPAMENTOS_ORIG (adicionado via Nova base)
@@ -987,7 +1046,7 @@ async function loadFromFirebase(){
             assinaturas:d.assinaturas||{},semana_anterior:d.semana_anterior||null,
             baixado:d.baixado||false,reservado:d.reservado||false,cliente:d.cliente||'',
             dataEmbarque:d.dataEmbarque||'',historico:d.historico||[],
-            ordemManusis:d.ordemManusis||'',reqCompra:d.reqCompra||'',
+            ordens:d.ordens||[],reqCompra:d.reqCompra||'',
           };
         }
       });
@@ -1019,7 +1078,7 @@ async function saveToFirebase(eqIds){
           etapa_interna:eq.etapa_interna||null,etapa_interna_desde:eq.etapa_interna_desde||null,
           baixado:eq.baixado||false,reservado:eq.reservado||false,cliente:eq.cliente||'',
           dataEmbarque:eq.dataEmbarque||'',historico:eq.historico||[],
-        ordemManusis:eq.ordemManusis||'',reqCompra:eq.reqCompra||'',
+        ordens:eq.ordens||[],reqCompra:eq.reqCompra||'',tipoManut:eq.tipoManut||'',
         };
       });
       await fbSet('equipamentos',todos);
@@ -1159,7 +1218,7 @@ function init(){
       assinaturas:sv?sv.assinaturas||{}:{},semana_anterior:sv?sv.semana_anterior||null:null,
       baixado:sv?sv.baixado||false:false,reservado:sv?sv.reservado||false:false,cliente:sv?sv.cliente||'':'',
       dataEmbarque:sv?sv.dataEmbarque||'':'',
-      historico:sv?sv.historico||[]:[],ordemManusis:sv?sv.ordemManusis||'':'',reqCompra:sv?sv.reqCompra||'':'',
+      historico:sv?sv.historico||[]:[],ordens:sv?sv.ordens||[]:[],reqCompra:sv?sv.reqCompra||'':'',tipoManut:sv?sv.tipoManut||'':'',
     };
   });
   document.getElementById('header-date').textContent=new Date().toLocaleDateString('pt-BR',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
@@ -1192,6 +1251,7 @@ function switchTab(tabId){
   else if(tabId==='graficos')renderGraficos();
   else if(tabId==='reservas')renderReservas();
   else if(tabId==='alteracoes')renderAlteracoes();
+  else if(tabId==='disponiveis')renderDisponiveis();
   else if(tabId==='admin')renderAdminPage();
   else if(tabId!=='bi')renderBoard(tabId,'geral');
   else{renderBiEtapas();updateKpisDinamicos();}
@@ -1296,6 +1356,8 @@ function renderBoard(sid,visao){
     if(fv)items=items.filter(e=>e.id.toLowerCase().includes(fv)||e.equipamento.toLowerCase().includes(fv)||e.modelo.toLowerCase().includes(fv));
     if(fp)items=items.filter(e=>e.prioridade===fp);
     if(ft)items=items.filter(e=>e.tipo===ft);
+    const ftm=board._tipoManut||'';
+    if(ftm)items=items.filter(e=>e.tipoManut===ftm);
     items.sort((a,b)=>(prioOrder[a.prioridade]??4)-(prioOrder[b.prioridade]??4));
 
     const col=document.createElement('div');
@@ -1320,7 +1382,8 @@ function renderBoard(sid,visao){
       const embarqueHTML=eq.dataEmbarque?`<div style="font-size:9px;color:#7F77DD;margin-top:2px;font-weight:500">🚢 Embarque: ${new Date(eq.dataEmbarque+'T12:00:00').toLocaleDateString('pt-BR')}</div>`:'';
       const assin=eq.assinaturas&&eq.assinaturas[eq.etapa];
       const assinHTML=assin?`<div class="card-assinatura">🔑 ${assin.perfil} · ${assin.data}</div>`:'';
-      const osHTML=eq.ordemManusis?`<div style="font-size:9px;color:#7F77DD;margin-top:2px;font-weight:500">📋 OS: ${eq.ordemManusis}</div>`:'';;
+      const osHTML=(eq.ordens&&eq.ordens.length)?`<div style="font-size:9px;color:#7F77DD;margin-top:2px;font-weight:500">📋 ${eq.ordens.length} OS: ${eq.ordens.join(', ')}</div>`:'';
+      const tipoManutHTML=eq.tipoManut?`<div style="font-size:9px;font-weight:600;padding:2px 6px;border-radius:3px;margin-top:2px;display:inline-block;background:#FFF8E6;color:#7A5500;border:1px solid #EFD87A">⚙ ${eq.tipoManut}</div>`:'';;;
       const liberadoBtn=''; // removido — agora é via modal
 
       card.innerHTML=`
@@ -1334,6 +1397,7 @@ function renderBoard(sid,visao){
         ${clienteHTML}
         ${embarqueHTML}
         ${eq.retrabalho>0?`<div style="font-size:9px;color:var(--terra);margin-top:3px;font-weight:600">↻ Retrabalho: ${eq.retrabalho}x</div>`:''}
+        ${tipoManutHTML}
         ${assinHTML}
         ${osHTML}
         ${liberadoBtn}`;
@@ -1429,6 +1493,7 @@ function renderLog(sid){
 }
 
 function filterCards(sid,v){const bg=document.getElementById(`board-${sid}-geral`),bo=document.getElementById(`board-${sid}-oficina`);if(bg){bg._search=v;renderBoard(sid,'geral');}if(bo){bo._search=v;renderBoard(sid,'oficina');}}
+function filterTipoManut(sid,v){const bg=document.getElementById(`board-${sid}-geral`),bo=document.getElementById(`board-${sid}-oficina`);if(bg){bg._tipoManut=v;renderBoard(sid,'geral');}if(bo){bo._tipoManut=v;renderBoard(sid,'oficina');}}
 
 // Liberar equipamento da visão oficina → vai para Check List Saída na visão geral
 function liberarEquipamento(eqId, sid) {
@@ -1493,8 +1558,12 @@ function openCardModal(eqId,visao){
   if(eq.semana_locked){ss.disabled=true;li.innerHTML='<span style="color:var(--terra)">🔒 Bloqueada.</span> <button style="font-size:10px;padding:2px 6px;background:var(--bg3);border:1px solid var(--borda);border-radius:4px;cursor:pointer;color:var(--text2)" onclick="desbloquearSemana()">Alterar</button>';}
   else{ss.disabled=false;li.innerHTML='<span style="color:var(--text3)">Após salvar, semana será bloqueada.</span>';}
   document.getElementById('mc-obs').value=eq.obs||'';
-  document.getElementById('mc-ordem-manusis').value=eq.ordemManusis||'';
   document.getElementById('mc-req-compra').value=eq.reqCompra||'';
+  document.getElementById('mc-ordem-input').value='';
+  document.getElementById('mc-tipo-manut').value=eq.tipoManut||'';
+  // Resetar pending ordens para mostrar lista atual
+  if(pendingCardChanges.ordens!==undefined)delete pendingCardChanges.ordens;
+  renderOrdensList();
   // Histórico de movimentações do equipamento
   const hist = document.getElementById('mc-historico');
   if (hist) {
@@ -1558,8 +1627,37 @@ function populateOficinaSel(eqId){
   sel.innerHTML='<option value="">— Manter na oficina atual —</option>'+
     oficinas.filter(of=>of!==eq?.oficina).map(of=>`<option value="${of}">${of}</option>`).join('');
 }
-function setOrdemManusis(v){pendingCardChanges.ordemManusis=v;}
 function setReqCompra(v){pendingCardChanges.reqCompra=v;}
+function setTipoManut(v){pendingCardChanges.tipoManut=v;}
+
+function addOrdem(){
+  const input=document.getElementById('mc-ordem-input');
+  const val=input.value.trim();
+  if(!val)return;
+  // Adicionar à lista pendente
+  if(!pendingCardChanges.ordens)pendingCardChanges.ordens=[...(state[currentCardId]?.ordens||[])];
+  if(!pendingCardChanges.ordens.includes(val)){
+    pendingCardChanges.ordens.push(val);
+    renderOrdensList();
+  }
+  input.value='';input.focus();
+}
+
+function removeOrdem(idx){
+  if(!pendingCardChanges.ordens)pendingCardChanges.ordens=[...(state[currentCardId]?.ordens||[])];
+  pendingCardChanges.ordens.splice(idx,1);
+  renderOrdensList();
+}
+
+function renderOrdensList(){
+  const list=document.getElementById('mc-ordens-list');if(!list)return;
+  const ordens=pendingCardChanges.ordens!==undefined?pendingCardChanges.ordens:(state[currentCardId]?.ordens||[]);
+  if(!ordens.length){list.innerHTML='<span style="font-size:11px;color:var(--text3);font-style:italic">Nenhuma ordem registrada</span>';return;}
+  list.innerHTML=ordens.map((o,i)=>`<div style="display:inline-flex;align-items:center;gap:4px;background:#EDE9FF;color:#5B4DB5;border:1px solid #C4BAFF;border-radius:5px;padding:3px 8px;font-size:11px;font-weight:600">
+    📋 ${o}
+    <button onclick="removeOrdem(${i})" style="background:none;border:none;cursor:pointer;color:#8B80C8;font-size:12px;line-height:1;padding:0 0 0 3px">✕</button>
+  </div>`).join('');
+}
 function setManutFinalizada(v){
   pendingCardChanges.manutFinalizada=v;
   document.getElementById('manut-sim').className='reserva-btn'+(v?' active-sim':'');
@@ -1594,8 +1692,9 @@ function _salvarCard(){
   const eq=state[currentCardId];
   const perfil=pendingCardChanges._perfilAutenticado||null;
   if(pendingCardChanges.obs!==undefined)eq.obs=pendingCardChanges.obs;
-  if(pendingCardChanges.ordemManusis!==undefined)eq.ordemManusis=pendingCardChanges.ordemManusis;
+  if(pendingCardChanges.ordens!==undefined)eq.ordens=pendingCardChanges.ordens;
   if(pendingCardChanges.reqCompra!==undefined)eq.reqCompra=pendingCardChanges.reqCompra;
+  if(pendingCardChanges.tipoManut!==undefined)eq.tipoManut=pendingCardChanges.tipoManut;
   if(pendingCardChanges.prioridade!==undefined)eq.prioridade=pendingCardChanges.prioridade;
   if(pendingCardChanges.reservado!==undefined)eq.reservado=pendingCardChanges.reservado;
   if(pendingCardChanges.cliente!==undefined)eq.cliente=pendingCardChanges.cliente;
@@ -2240,6 +2339,82 @@ function registrarAlteracao(tipo, id, nome, oficina, perfil, deOficina){
   atualizarTabAlteracoes();
 }
 
+
+// ===== DISPONÍVEIS =====
+function renderDisponiveis(){
+  const search=(document.getElementById('disp-search')||{}).value||'';
+  const tipoFil=(document.getElementById('disp-tipo-sel')||{}).value||'';
+  const ofFil=(document.getElementById('disp-oficina-sel')||{}).value||'';
+  const resFil=(document.getElementById('disp-reserva-sel')||{}).value||'';
+  const tmFil=(document.getElementById('disp-tipoManut-sel')||{}).value||'';
+  const fv=search.toLowerCase();
+
+  // Popular selects
+  const tipos=[...new Set(Object.values(state).filter(e=>!e.baixado).map(e=>e.tipo).filter(Boolean))].sort();
+  const oficinas=[...new Set(Object.values(state).filter(e=>!e.baixado).map(e=>e.oficina).filter(Boolean))].sort();
+  const tipoSel=document.getElementById('disp-tipo-sel');
+  const ofSel=document.getElementById('disp-oficina-sel');
+  if(tipoSel){const cv=tipoSel.value;tipoSel.innerHTML='<option value="">Todos os tipos</option>'+tipos.map(t=>`<option value="${t}"${t===cv?' selected':''}>${t}</option>`).join('');}
+  if(ofSel){const cv=ofSel.value;ofSel.innerHTML='<option value="">Todas as oficinas</option>'+oficinas.map(o=>`<option value="${o}"${o===cv?' selected':''}>${o}</option>`).join('');}
+
+  // Filtrar: etapa pronto OU chegada (disponíveis)
+  let equips=Object.values(state).filter(e=>!e.baixado&&(e.etapa==='pronto'||e.etapa==='chegada'));
+  if(fv)equips=equips.filter(e=>e.id.toLowerCase().includes(fv)||e.equipamento.toLowerCase().includes(fv)||(e.modelo||'').toLowerCase().includes(fv));
+  if(tipoFil)equips=equips.filter(e=>e.tipo===tipoFil);
+  if(ofFil)equips=equips.filter(e=>e.oficina===ofFil);
+  if(resFil==='reservado')equips=equips.filter(e=>e.reservado);
+  if(resFil==='livre')equips=equips.filter(e=>!e.reservado);
+  if(tmFil)equips=equips.filter(e=>e.tipoManut===tmFil);
+
+  // Ordenar: reservados primeiro, depois por oficina
+  equips.sort((a,b)=>{
+    if(a.reservado!==b.reservado)return a.reservado?-1:1;
+    return a.oficina.localeCompare(b.oficina);
+  });
+
+  // Atualizar tab count
+  const tabN=document.getElementById('tab-disp-n');
+  if(tabN)tabN.textContent=equips.length;
+
+  // KPIs
+  const total=equips.length,res=equips.filter(e=>e.reservado).length,livre=total-res;
+  const porOf={};equips.forEach(e=>{porOf[e.oficina]=(porOf[e.oficina]||0)+1;});
+  const kpis=document.getElementById('disp-kpis');
+  if(kpis)kpis.innerHTML=`
+    <div class="kpi"><div class="kpi-label">Total disponíveis</div><div class="kpi-value orange">${total}</div><div class="kpi-sub">frota pronta/aguardando</div><div class="kpi-bar"><div class="kpi-bar-fill" style="width:100%"></div></div></div>
+    <div class="kpi"><div class="kpi-label">Sem reserva</div><div class="kpi-value verde">${livre}</div><div class="kpi-sub">disponíveis para locação</div><div class="kpi-bar"><div class="kpi-bar-fill" style="width:${total?Math.round(livre/total*100):0}%;background:var(--verde2)"></div></div></div>
+    <div class="kpi"><div class="kpi-label">Reservados</div><div class="kpi-value terra">${res}</div><div class="kpi-sub">com cliente definido</div><div class="kpi-bar"><div class="kpi-bar-fill" style="width:${total?Math.round(res/total*100):0}%;background:var(--terra)"></div></div></div>
+    <div class="kpi"><div class="kpi-label">Oficinas</div><div class="kpi-value">${Object.keys(porOf).length}</div><div class="kpi-sub">com equipamentos disp.</div><div class="kpi-bar"><div class="kpi-bar-fill" style="width:100%;background:var(--verde)"></div></div></div>`;
+
+  // Grid de cards
+  const grid=document.getElementById('disp-grid');if(!grid)return;
+  if(!equips.length){
+    grid.innerHTML='<div style="grid-column:1/-1;padding:30px;text-align:center;color:var(--text3);font-size:13px">Nenhum equipamento disponível com os filtros selecionados.</div>';
+    return;
+  }
+
+  grid.innerHTML=equips.map(eq=>{
+    const etLbl=ETAPAS_GERAL.find(e=>e.id===eq.etapa)?.label||eq.etapa;
+    const cliH=eq.reservado&&eq.cliente?`<div style="font-size:10px;color:var(--laranja);font-weight:600;margin-top:3px">◈ ${eq.cliente}</div>`:'';
+    const embH=eq.dataEmbarque?`<div style="font-size:10px;color:#7F77DD;margin-top:2px;font-weight:500">🚢 ${new Date(eq.dataEmbarque+'T12:00:00').toLocaleDateString('pt-BR')}</div>`:'';
+    const tmH=eq.tipoManut?`<div style="font-size:9px;font-weight:600;padding:2px 6px;border-radius:3px;margin-top:3px;display:inline-block;background:#FFF8E6;color:#7A5500;border:1px solid #EFD87A">⚙ ${eq.tipoManut}</div>`:'';
+    const hdrBg=eq.reservado?'#555':'var(--verde2)';
+    const hdrTxt=eq.reservado&&eq.cliente?`◈ ${eq.cliente}`:eq.reservado?'Reservado':'Disponível';
+    return`<div style="background:#fff;border-radius:9px;border:1px solid var(--borda);border-top:3px solid ${hdrBg};overflow:hidden;cursor:pointer;transition:all .15s" onclick="openCardModal('${eq.id}','geral')" onmouseover="this.style.borderColor='var(--laranja)'" onmouseout="this.style.borderColor='var(--borda)'">
+      <div style="background:${hdrBg};color:#fff;font-size:10px;font-weight:700;padding:4px 10px;letter-spacing:.02em">${hdrTxt}</div>
+      <div style="padding:10px 12px">
+        <div style="font-size:9px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.04em">${eq.id}</div>
+        <div style="font-size:13px;font-weight:600;color:var(--verde);line-height:1.3;margin:2px 0">${eq.equipamento}</div>
+        <div style="font-size:11px;color:var(--text3)">${eq.modelo||''}</div>
+        <div style="font-size:10px;color:var(--text3);font-style:italic;margin-top:2px">${eq.tipo||''}</div>
+        <div style="height:1px;background:var(--borda);margin:6px 0"></div>
+        <div style="font-size:10px;color:var(--text2);display:flex;align-items:center;gap:4px">📍 ${eq.oficina}</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:2px">Etapa: <b>${etLbl}</b></div>
+        ${cliH}${embH}${tmH}
+      </div>
+    </div>`;
+  }).join('');
+}
 // TOAST
 function showToast(msg){const t=document.getElementById('toast');t.textContent='✓ '+msg;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),3200);}
 
