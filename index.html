@@ -478,11 +478,11 @@ input.filter-sel{padding:5px 8px;height:34px}
 .prog-linha-filters{display:flex;gap:4px;align-items:center;flex-wrap:nowrap;flex:1}
 .prog-linha-filters select{padding:2px 4px;border:1px solid var(--borda);border-radius:4px;font-size:10px;background:#fff;outline:none;color:#374151;height:22px;flex-shrink:1;min-width:0;max-width:140px}
 .prog-linha-filters .btn{height:22px;font-size:10px;padding:1px 7px;flex-shrink:0}
-/* Aderência badge no cabeçalho da semana */
-.sem-aderencia{display:inline-flex;align-items:center;gap:4px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:6px;padding:1px 8px;font-size:10px;font-weight:700;color:#0369a1;margin-left:4px}
-.sem-aderencia.alta{background:#f0fdf4;border-color:#bbf7d0;color:#15803d}
-.sem-aderencia.media{background:#fffbeb;border-color:#fde68a;color:#92400e}
-.sem-aderencia.baixa{background:#fef2f2;border-color:#fecaca;color:#991b1b}
+/* Desempenho badge no cabeçalho da semana */
+.sem-desempenho{display:inline-flex;align-items:center;gap:4px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:6px;padding:1px 8px;font-size:10px;font-weight:700;color:#0369a1;margin-left:4px}
+.sem-desempenho.alta{background:#f0fdf4;border-color:#bbf7d0;color:#15803d}
+.sem-desempenho.media{background:#fffbeb;border-color:#fde68a;color:#92400e}
+.sem-desempenho.baixa{background:#fef2f2;border-color:#fecaca;color:#991b1b}
 /* Fix graficos container no flex */
 #prog-graficos .prog-dashboard .graf-section{min-width:220px;max-width:260px}
 </style>
@@ -1532,15 +1532,19 @@ function gerarRelatorio(){
   const manut=ativos.filter(e=>e.etapa==='manutencao'||e.etapa==='cl_entrada'||e.etapa==='cl_saida').length;
   const res=ativos.filter(e=>e.reservado).length;
   const prog=ativos.filter(e=>e.semana).length;
+  const progRes=ativos.filter(e=>e.semana&&e.reservado).length;
   const retrab=ativos.filter(e=>e.retrabalho>0).length;
   const dp=Math.round(disp/total*100),mp=Math.round(manut/total*100);
   const semAtual=semanaAtual();
+  const semAnterior=(()=>{const i=SEMANAS_LISTA.findIndex(s=>s.value===semAtual);return i>0?SEMANAS_LISTA[i-1].value:null;})();
+  const semLabel=SEMANAS_LISTA.find(s=>s.value===semAtual)?.label||semAtual;
+  const semAntLabel=semAnterior?(SEMANAS_LISTA.find(s=>s.value===semAnterior)?.label||semAnterior):'—';
 
   // Etapas
   const cntEt={};ETAPAS_GERAL.forEach(e=>cntEt[e.id]={label:e.label,n:0,cor:CORES_ET_G[e.id]||'#888'});
   ativos.forEach(e=>{if(cntEt[e.etapa])cntEt[e.etapa].n++;});
 
-  // Por oficina
+  // Por oficina — dados gerais
   const oficinas=[...new Set(ativos.map(e=>e.oficina).filter(Boolean))].sort();
   const porOf={};
   oficinas.forEach(of=>{
@@ -1548,6 +1552,37 @@ function gerarRelatorio(){
     const nd=lst.filter(e=>e.etapa==='pronto'||e.etapa==='chegada').length;
     const nm=lst.filter(e=>e.etapa==='manutencao'||e.etapa==='cl_entrada'||e.etapa==='cl_saida').length;
     porOf[of]={total:lst.length,disp:nd,manut:nm,pct:lst.length?Math.round(nd/lst.length*100):0};
+  });
+
+  // ── SEMANA ANTERIOR — Desempenho por oficina ──
+  const semAntEquips=semAnterior?ativos.filter(e=>e.semana===semAnterior):[];
+  // também incluir os que tinham semana anterior = semAnterior (foram reprogramados)
+  const semAntAll=semAnterior?ativos.filter(e=>
+    e.semana===semAnterior||(e.semana_anterior===semAnterior&&e.semana!==semAnterior)
+  ):[];
+  const despOf={};
+  if(semAnterior){
+    const todasOfs=[...new Set(semAntAll.map(e=>e.oficina).filter(Boolean))].sort();
+    todasOfs.forEach(of=>{
+      const prev=semAntAll.filter(e=>e.oficina===of);
+      const conc=prev.filter(e=>e.etapa==='pronto');
+      const naoPrev=prev.filter(e=>e.semana_anterior===semAnterior&&e.semana!==semAnterior);
+      const pct=prev.length?Math.round(conc.length/prev.length*100):0;
+      const pend=Math.max(0,prev.length-conc.length-naoPrev.length);
+      despOf[of]={prev:prev.length,conc:conc.length,rep:naoPrev.length,pend,pct};
+    });
+  }
+
+  // ── SEMANA ATUAL — Andamento por oficina ──
+  const semAtualEquips=ativos.filter(e=>e.semana===semAtual);
+  const andamentoOf={};
+  const todasOfsAtual=[...new Set(semAtualEquips.map(e=>e.oficina).filter(Boolean))].sort();
+  todasOfsAtual.forEach(of=>{
+    const lst=semAtualEquips.filter(e=>e.oficina===of);
+    const conc=lst.filter(e=>e.etapa==='pronto').length;
+    const em=lst.filter(e=>e.etapa==='manutencao'||e.etapa==='cl_entrada'||e.etapa==='cl_saida').length;
+    const ag=lst.filter(e=>e.etapa==='chegada').length;
+    andamentoOf[of]={total:lst.length,conc,em,ag};
   });
 
   // Embarques próximos 7 dias
@@ -1560,14 +1595,10 @@ function gerarRelatorio(){
   // Atrasados
   const atrasados=ativos.filter(e=>e.semana&&e.semana<semAtual&&e.etapa!=='pronto');
 
-  // Críticos/Alta prioridade
+  // Críticos/Alta
   const criticos=ativos.filter(e=>e.prioridade==='critica'||e.prioridade==='alta').sort((a,b)=>{
     const o={critica:0,alta:1};return(o[a.prioridade]??2)-(o[b.prioridade]??2);
   });
-
-  // Programação semana atual
-  const semAtualEquips=ativos.filter(e=>e.semana===semAtual);
-  const semLabel=SEMANAS_LISTA.find(s=>s.value===semAtual)?.label||semAtual;
 
   // Por cliente
   const porCli={};ativos.filter(e=>e.reservado&&e.cliente).forEach(e=>{porCli[e.cliente]=(porCli[e.cliente]||0)+1;});
@@ -1577,17 +1608,16 @@ function gerarRelatorio(){
   const h24=Date.now()-86400000;
   const movs24=alteracoesBase.filter(a=>a.ts>=h24);
 
-  // Barras SVG inline
-  const maxOf=Math.max(...Object.values(porOf).map(x=>x.total),1);
+  // ── HTML builders ──
   const barrasOf=oficinas.map(of=>{
     const d=porOf[of];
     const wp=Math.round(d.disp/d.total*100);
     return`<tr>
-      <td style="padding:4px 8px 4px 0;font-size:11px;color:#333;white-space:nowrap;width:180px">${of}</td>
+      <td style="padding:4px 8px 4px 0;font-size:11px;color:#333;white-space:nowrap;width:170px">${of}</td>
       <td style="padding:4px 0;width:100%">
         <div style="background:#F0EDE8;border-radius:3px;height:16px;position:relative;overflow:hidden">
           <div style="position:absolute;left:0;top:0;height:100%;width:${wp}%;background:#1D9E75;border-radius:3px"></div>
-          <div style="position:absolute;left:0;top:0;height:100%;width:${Math.round(d.manut/d.total*100)}%;background:#C24003;border-radius:3px;left:${wp}%"></div>
+          <div style="position:absolute;left:${wp}%;top:0;height:100%;width:${Math.round(d.manut/d.total*100)}%;background:#C24003;border-radius:3px"></div>
         </div>
       </td>
       <td style="padding:4px 0 4px 8px;font-size:10px;color:#666;white-space:nowrap;text-align:right">
@@ -1595,6 +1625,56 @@ function gerarRelatorio(){
       </td>
     </tr>`;
   }).join('');
+
+  // Desempenho semana anterior por oficina
+  const despRows=semAnterior&&Object.keys(despOf).length
+    ?Object.entries(despOf).sort((a,b)=>b[1].pct-a[1].pct).map(([of,d])=>{
+      const pend=d.pend||Math.max(0,d.prev-d.conc-d.rep);
+      const cor=d.pct>=80?'#1D9E75':d.pct>=50?'#F37021':'#C24003';
+      const wConc=d.prev?Math.round(d.conc/d.prev*100):0;
+      const wRep=d.prev?Math.round(d.rep/d.prev*100):0;
+      const wPend=d.prev?Math.round(pend/d.prev*100):0;
+      return`<tr style="border-bottom:1px solid #F0EDE8">
+        <td style="padding:5px 8px;font-size:11px;color:#333;white-space:nowrap">${of}</td>
+        <td style="padding:5px 8px;text-align:center;font-size:12px;font-weight:700;color:#333">${d.prev}</td>
+        <td style="padding:5px 8px;text-align:center;font-size:12px;font-weight:700;color:#1D9E75">${d.conc} <span style="font-size:9px;font-weight:400">(${wConc}%)</span></td>
+        <td style="padding:5px 8px;text-align:center;font-size:12px;font-weight:700;color:#7F77DD">${d.rep} <span style="font-size:9px;font-weight:400">(${wRep}%)</span></td>
+        <td style="padding:5px 8px;text-align:center;font-size:12px;font-weight:700;color:#C24003">${pend} <span style="font-size:9px;font-weight:400">(${wPend}%)</span></td>
+        <td style="padding:5px 8px;width:70px">
+          <div style="background:#F0EDE8;border-radius:3px;height:12px;overflow:hidden;display:flex">
+            <div style="height:100%;width:${wConc}%;background:#1D9E75"></div>
+            <div style="height:100%;width:${wRep}%;background:#7F77DD"></div>
+            <div style="height:100%;width:${wPend}%;background:#C24003"></div>
+          </div>
+        </td>
+        <td style="padding:5px 8px;text-align:center;font-size:13px;font-weight:800;color:${cor}">${d.pct}%</td>
+      </tr>`;
+    }).join('')
+    :'<tr><td colspan="7" style="padding:10px;text-align:center;color:#999;font-size:11px">Nenhum dado disponível para a semana anterior</td></tr>';
+
+  // Andamento semana atual por oficina
+  const totalAtual=semAtualEquips.length||1;
+  const concAtual=semAtualEquips.filter(e=>e.etapa==='pronto').length;
+  const andRows=todasOfsAtual.length
+    ?todasOfsAtual.map(of=>{
+      const d=andamentoOf[of];
+      const pct=d.total?Math.round(d.conc/d.total*100):0;
+      const cor=pct>=80?'#1D9E75':pct>=50?'#F37021':'#C24003';
+      return`<tr style="border-bottom:1px solid #F0EDE8">
+        <td style="padding:5px 8px;font-size:11px;color:#333;white-space:nowrap">${of}</td>
+        <td style="padding:5px 8px;text-align:center;font-size:12px;font-weight:700;color:#333">${d.total}</td>
+        <td style="padding:5px 8px;text-align:center;font-size:12px;font-weight:700;color:#1D9E75">${d.conc}</td>
+        <td style="padding:5px 8px;text-align:center;font-size:12px;font-weight:700;color:#C24003">${d.em}</td>
+        <td style="padding:5px 8px;text-align:center;font-size:12px;font-weight:700;color:#888">${d.ag}</td>
+        <td style="padding:5px 8px;width:70px">
+          <div style="background:#F0EDE8;border-radius:3px;height:12px;overflow:hidden">
+            <div style="height:100%;width:${pct}%;background:${cor};border-radius:3px"></div>
+          </div>
+        </td>
+        <td style="padding:5px 8px;text-align:center;font-size:13px;font-weight:800;color:${cor}">${pct}%</td>
+      </tr>`;
+    }).join('')
+    :'<tr><td colspan="7" style="padding:10px;text-align:center;color:#999;font-size:11px">Nenhum equipamento programado para esta semana</td></tr>';
 
   const etapasRows=ETAPAS_GERAL.map(et=>{
     const x=cntEt[et.id];
@@ -1611,7 +1691,7 @@ function gerarRelatorio(){
 
   const embRows=proxEmb.length?proxEmb.map(e=>`<tr style="border-bottom:1px solid #F0EDE8">
     <td style="padding:4px 8px;font-size:10px;font-weight:600;color:#004042">${e.id}</td>
-    <td style="padding:4px 8px;font-size:10px;color:#333">${e.equipamento.substring(0,30)}</td>
+    <td style="padding:4px 8px;font-size:10px;color:#333">${e.equipamento.substring(0,28)}</td>
     <td style="padding:4px 8px;font-size:10px;color:#666">${e.cliente||'—'}</td>
     <td style="padding:4px 8px;font-size:10px;font-weight:700;color:${e.diasEmb<=0?'#C24003':e.diasEmb<=3?'#F37021':'#7F77DD'};text-align:center">${e.dtFmt}</td>
     <td style="padding:4px 8px;font-size:10px;text-align:center;font-weight:600;color:${e.diasEmb<=0?'#C24003':e.diasEmb<=3?'#F37021':'#666'}">${e.diasEmb<=0?'HOJE':e.diasEmb+'d'}</td>
@@ -1619,24 +1699,16 @@ function gerarRelatorio(){
 
   const criticoRows=criticos.slice(0,10).map(e=>`<tr style="border-bottom:1px solid #F0EDE8">
     <td style="padding:4px 8px;font-size:10px;font-weight:600;color:#004042">${e.id}</td>
-    <td style="padding:4px 8px;font-size:10px;color:#333">${e.equipamento.substring(0,28)}</td>
+    <td style="padding:4px 8px;font-size:10px;color:#333">${e.equipamento.substring(0,26)}</td>
     <td style="padding:4px 8px;font-size:10px;color:#666">${e.oficina}</td>
     <td style="padding:4px 8px;text-align:center"><span style="font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;background:${e.prioridade==='critica'?'#FDE8E8':'#FDEEE6'};color:${e.prioridade==='critica'?'#7B1515':'#7B3300'}">${e.prioridade==='critica'?'CRÍTICA':'ALTA'}</span></td>
     <td style="padding:4px 8px;font-size:10px;color:#666">${ETAPAS_GERAL.find(x=>x.id===e.etapa)?.label||e.etapa}</td>
   </tr>`).join('');
 
-  const semRows=semAtualEquips.map(e=>`<tr style="border-bottom:1px solid #F0EDE8">
-    <td style="padding:4px 8px;font-size:10px;font-weight:600;color:#004042">${e.id}</td>
-    <td style="padding:4px 8px;font-size:10px;color:#333">${e.equipamento.substring(0,25)}</td>
-    <td style="padding:4px 8px;font-size:10px;color:#666">${e.oficina}</td>
-    <td style="padding:4px 8px;font-size:10px;color:${e.etapa==='pronto'?'#1D9E75':'#333'}">${ETAPAS_GERAL.find(x=>x.id===e.etapa)?.label||e.etapa}</td>
-    <td style="padding:4px 8px;font-size:10px;color:#F37021;font-weight:500">${e.cliente||'—'}</td>
-  </tr>`).join('');
-
-  const movRows=movs24.length?movs24.slice(0,15).map(m=>`<tr style="border-bottom:1px solid #F0EDE8">
+  const movRows=movs24.length?movs24.slice(0,12).map(m=>`<tr style="border-bottom:1px solid #F0EDE8">
     <td style="padding:4px 8px;font-size:10px;color:#666;white-space:nowrap">${m.data} ${m.hora}</td>
     <td style="padding:4px 8px;font-size:10px;font-weight:600;color:#004042">${m.id}</td>
-    <td style="padding:4px 8px;font-size:10px;color:#333">${(m.nome||'').substring(0,25)}</td>
+    <td style="padding:4px 8px;font-size:10px;color:#333">${(m.nome||'').substring(0,22)}</td>
     <td style="padding:4px 8px;font-size:10px;color:#666">${m.from||'—'} → ${m.to||'—'}</td>
     <td style="padding:4px 8px;font-size:10px;color:#F37021;font-weight:500">${m.perfil||'—'}</td>
   </tr>`).join(''):'<tr><td colspan="5" style="padding:10px;text-align:center;color:#999;font-size:11px">Nenhuma movimentação nas últimas 24h</td></tr>';
@@ -1647,36 +1719,163 @@ function gerarRelatorio(){
     <td style="padding:5px 8px;font-size:10px;color:#666;text-align:right">${Math.round(n/res*100)}% das reservas</td>
   </tr>`).join('');
 
+  // Desempenho total semana anterior
+  const despTotalPrev=semAnterior?Object.values(despOf).reduce((s,d)=>s+d.prev,0):0;
+  const despTotalConc=semAnterior?Object.values(despOf).reduce((s,d)=>s+d.conc,0):0;
+  const despTotalPct=despTotalPrev?Math.round(despTotalConc/despTotalPrev*100):0;
+  const despCorTotal=despTotalPct>=80?'#1D9E75':despTotalPct>=50?'#F37021':'#C24003';
+  const andPct=Math.round(concAtual/totalAtual*100);
+  const andCor=andPct>=80?'#1D9E75':andPct>=50?'#F37021':'#C24003';
+
+  // ── TEXTO NARRATIVO AUTOMÁTICO ──
+  function gerarNarrativa(){
+    const semAntNum=semAntLabel.match(/Sem (\d+)/)?.[1]||'anterior';
+    const semAtNum=semLabel.match(/Sem (\d+)/)?.[1]||'atual';
+
+    const parags=[];
+
+    // § 1 — Desempenho semana anterior
+    if(semAnterior&&despTotalPrev>0){
+      const repTotal=Object.values(despOf).reduce((s,d)=>s+d.rep,0);
+      const naoConcl=despTotalPrev-despTotalConc;
+      let p1=`Na <strong>Semana ${semAntNum}</strong> haviam <strong>${despTotalPrev} equipamento${despTotalPrev>1?'s':''}</strong> programado${despTotalPrev>1?'s':''} para conclusão. `;
+      const reprogTotal=Object.values(despOf).reduce((s,d)=>s+(d.rep||0),0);
+      const pendTotal=Object.values(despOf).reduce((s,d)=>s+(d.pend||0),0);
+      if(despTotalConc===0){
+        p1+=`Nenhum foi concluído no período. `;
+        if(reprogTotal>0)p1+=`<strong>${reprogTotal}</strong> foram reprogramados para semanas posteriores. `;
+        if(pendTotal>0)p1+=`<strong>${pendTotal}</strong> permaneceram sem movimentação. `;
+      } else if(despTotalConc===despTotalPrev){
+        p1+=`Todos os <strong>${despTotalConc}</strong> foram concluídos — desempenho de <strong style="color:#1D9E75">100%</strong>. `;
+      } else {
+        p1+=`Apenas <strong>${despTotalConc}</strong> foram concluído${despTotalConc>1?'s':''}, representando um desempenho de <strong style="color:${despCorTotal}">${despTotalPct}%</strong>. `;
+        if(reprogTotal>0&&pendTotal>0){
+          p1+=`Dos <strong>${naoConcl}</strong> não concluídos: <strong>${reprogTotal}</strong> foram reprogramados para a Semana ${semAtNum} e <strong style="color:#C24003">${pendTotal}</strong> permanecem sem movimentação. `;
+        } else if(reprogTotal>0){
+          p1+=`Os demais <strong>${naoConcl}</strong> foram reprogramados para a <strong>Semana ${semAtNum}</strong>. `;
+        } else if(pendTotal>0){
+          p1+=`Os demais <strong>${naoConcl}</strong> não foram concluídos e <strong style="color:#C24003">permanecem pendentes sem reprogramação</strong>. `;
+        }
+      }
+      // Pior oficina
+      const ofOrdenadas=Object.entries(despOf).sort((a,b)=>a[1].pct-b[1].pct);
+      const [piorOf,piorD]=ofOrdenadas[0]||[];
+      if(piorOf&&piorD&&piorD.prev>0&&piorD.pct<100){
+        const melhor=ofOrdenadas[ofOrdenadas.length-1];
+        p1+=`A oficina de <strong>${piorOf}</strong> registrou o menor desempenho (<strong style="color:#C24003">${piorD.pct}%</strong>, ${piorD.conc}/${piorD.prev} concluídos)`;
+        if(melhor&&melhor[0]!==piorOf&&melhor[1].pct>piorD.pct)
+          p1+=`, enquanto <strong>${melhor[0]}</strong> se destacou com <strong style="color:#1D9E75">${melhor[1].pct}%</strong>`;
+        p1+='.';
+      }
+      parags.push(p1);
+    } else if(semAnterior){
+      parags.push(`Não foram identificados equipamentos programados para a <strong>Semana ${semAntNum}</strong>.`);
+    }
+
+    // § 2 — Pontos de atenção: embarques da semana anterior não concluídos
+    const embAtrasados=ativos.filter(e=>{
+      if(!e.dataEmbarque||e.etapa==='pronto')return false;
+      const semEmb=ativos.find(x=>x.id===e.id)?.semana;
+      // embarque que já passou ou está na semana atual e o equip ainda não está pronto
+      const dtEmb=new Date(e.dataEmbarque+'T12:00:00');
+      const diasEmb=Math.ceil((dtEmb-hoje)/(1000*60*60*24));
+      return diasEmb<=7; // embarque iminente e não concluído
+    });
+
+    // Equipamentos com embarque na semana anterior que não foram concluídos
+    const embSemAnt=semAnterior?ativos.filter(e=>{
+      if(!e.dataEmbarque||e.etapa==='pronto')return false;
+      const semAntObj=SEMANAS_LISTA.find(s=>s.value===semAnterior);
+      if(!semAntObj)return false;
+      return e.dataEmbarque>=semAntObj.inicio&&e.dataEmbarque<=semAntObj.fim;
+    }):[];
+
+    if(embSemAnt.length>0){
+      // Agrupar por cliente
+      const porCliEmb={};
+      embSemAnt.forEach(e=>{
+        const cli=e.cliente||'sem cliente';
+        if(!porCliEmb[cli])porCliEmb[cli]=[];
+        porCliEmb[cli].push(e);
+      });
+      const clientesEmb=Object.entries(porCliEmb).sort((a,b)=>b[1].length-a[1].length);
+      let p2=`⚠ <strong>Ponto de atenção:</strong> `;
+      if(clientesEmb.length===1){
+        const [cli,eqs]=clientesEmb[0];
+        p2+=`${eqs.length} equipamento${eqs.length>1?'s':''} do cliente <strong>${cli}</strong> ${eqs.length>1?'tinham':'tinha'} embarque previsto para a Semana ${semAntNum} e não ${eqs.length>1?'foram concluídos':'foi concluído'}. `;
+      } else {
+        p2+=`${embSemAnt.length} equipamento${embSemAnt.length>1?'s com':'com'} embarque previsto para a Semana ${semAntNum} ainda não ${embSemAnt.length>1?'foram concluídos':'foi concluído'}: `;
+        p2+=clientesEmb.map(([cli,eqs])=>`<strong>${cli}</strong> (${eqs.length})`).join(', ')+'. ';
+      }
+      p2+=`É necessário o alinhamento imediato com o${clientesEmb.length>1?'s':''} cliente${clientesEmb.length>1?'s':''} sobre a reprogramação de entrega e a atualização do sistema com as novas datas de embarque.`;
+      parags.push(p2);
+    } else if(proxEmb.filter(e=>e.diasEmb<=3&&e.diasEmb>=0&&e.etapa!=='pronto').length>0){
+      // Embarques nos próximos 3 dias não concluídos
+      const urgentes=proxEmb.filter(e=>e.diasEmb<=3&&e.diasEmb>=0&&e.etapa!=='pronto');
+      const porCliUrg={};
+      urgentes.forEach(e=>{const cli=e.cliente||'sem cliente';if(!porCliUrg[cli])porCliUrg[cli]=[];porCliUrg[cli].push(e);});
+      const clientesUrg=Object.entries(porCliUrg);
+      let p2=`⚠ <strong>Ponto de atenção:</strong> ${urgentes.length} equipamento${urgentes.length>1?'s com':'com'} embarque nos próximos 3 dias ainda não concluído${urgentes.length>1?'s':''}`;
+      if(clientesUrg.length>0) p2+=` (${clientesUrg.map(([c,eq])=>`${c}: ${eq.length}`).join(', ')})`;
+      p2+=`. Verificar progresso e alinhar com os clientes.`;
+      parags.push(p2);
+    }
+
+    // § 3 — Semana atual
+    if(semAtualEquips.length>0){
+      const emAndamento=semAtualEquips.filter(e=>e.etapa==='manutencao'||e.etapa==='cl_entrada'||e.etapa==='cl_saida').length;
+      const aguardando=semAtualEquips.filter(e=>e.etapa==='chegada').length;
+      let p3=`Para a <strong>Semana ${semAtNum}</strong> estão programados <strong>${semAtualEquips.length} equipamento${semAtualEquips.length>1?'s':''}</strong>. `;
+      if(concAtual>0){
+        p3+=`Até o momento ${concAtual} ${concAtual>1?'foram concluídos':'foi concluído'} (${andPct}%). `;
+      }
+      if(emAndamento>0) p3+=(emAndamento)+' '+(emAndamento>1?'estão':'está')+' em andamento';
+      if(aguardando>0) p3+=(emAndamento>0?' e ':' ')+aguardando+' aguardando movimentação';
+      if(emAndamento>0||aguardando>0) p3+='.';
+      parags.push(p3);
+    }
+
+    return parags;
+  }
+  const narrativa=gerarNarrativa();
+
+  const logoSrc=document.querySelector('.hlogo')?.src||'';
+  const dtFmt=hoje.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  const hrFmt=hoje.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+
   const w=window.open('','_blank');
   w.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
 <title>Mills — Relatório Diário ${hoje.toLocaleDateString('pt-BR')}</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;background:#fff;color:#1a1a1a;font-size:12px}
-  @page{size:A4;margin:15mm 12mm}
-  @media print{.page-break{page-break-before:always;padding-top:0!important}.no-print{display:none!important}body{font-size:11px}}
-  .page{width:210mm;min-height:297mm;padding:12mm 14mm;background:#fff;position:relative}
-  .header{display:flex;align-items:center;justify-content:space-between;padding-bottom:10px;border-bottom:3px solid #F37021;margin-bottom:16px}
-  .logo{height:36px}
-  .header-right{text-align:right}
-  .header-title{font-size:18px;font-weight:700;color:#004042}
-  .header-sub{font-size:11px;color:#888;margin-top:2px}
-  .section{margin-bottom:16px}
-  .section-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#888;padding-bottom:4px;border-bottom:1.5px solid #F37021;margin-bottom:10px}
-  .kpi-row{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:16px}
-  .kpi{background:#F8F7F4;border-radius:7px;padding:10px 12px;border-left:3px solid #F37021}
+  @page{size:A4;margin:12mm 11mm}
+  @media print{.page-break{page-break-before:always}.no-print{display:none!important}body{font-size:11px}}
+  .page{width:210mm;min-height:297mm;padding:11mm 13mm;background:#fff;position:relative}
+  .header{display:flex;align-items:center;justify-content:space-between;padding-bottom:8px;border-bottom:3px solid #F37021;margin-bottom:14px}
+  .logo{height:32px}
+  .header-title{font-size:17px;font-weight:700;color:#004042}
+  .header-sub{font-size:10px;color:#888;margin-top:2px}
+  .section{margin-bottom:14px}
+  .section-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#888;padding-bottom:4px;border-bottom:1.5px solid #F37021;margin-bottom:8px}
+  .kpi-row{display:grid;grid-template-columns:repeat(6,1fr);gap:7px;margin-bottom:14px}
+  .kpi{background:#F8F7F4;border-radius:7px;padding:9px 11px;border-left:3px solid #F37021}
   .kpi.verde{border-left-color:#1D9E75}.kpi.terra{border-left-color:#C24003}.kpi.roxo{border-left-color:#7F77DD}
   .kpi-label{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#888;margin-bottom:3px}
-  .kpi-value{font-size:22px;font-weight:700;color:#1a1a1a;line-height:1}
+  .kpi-value{font-size:21px;font-weight:700;color:#1a1a1a;line-height:1}
   .kpi-value.orange{color:#F37021}.kpi-value.verde{color:#1D9E75}.kpi-value.terra{color:#C24003}
   .kpi-sub{font-size:9px;color:#888;margin-top:2px}
   table{width:100%;border-collapse:collapse}
-  th{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#888;padding:5px 8px;background:#F8F7F4;border-bottom:1.5px solid #E0D9C8;text-align:left}
-  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-  .footer{position:absolute;bottom:8mm;left:14mm;right:14mm;display:flex;justify-content:space-between;align-items:center;padding-top:6px;border-top:1px solid #E0D9C8}
+  th{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#888;padding:4px 8px;background:#F8F7F4;border-bottom:1.5px solid #E0D9C8;text-align:left}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .footer{position:absolute;bottom:7mm;left:13mm;right:13mm;display:flex;justify-content:space-between;align-items:center;padding-top:5px;border-top:1px solid #E0D9C8}
   .footer-text{font-size:9px;color:#aaa}
-  .badge-critica{background:#FDE8E8;color:#7B1515;padding:2px 6px;border-radius:3px;font-size:9px;font-weight:700}
-  .badge-alta{background:#FDEEE6;color:#7B3300;padding:2px 6px;border-radius:3px;font-size:9px;font-weight:700}
+  .desp-total{display:flex;align-items:center;gap:16px;background:#F8F7F4;border-radius:8px;padding:10px 14px;margin-bottom:10px;border-left:4px solid ${despCorTotal}}
+  .desp-big{font-size:28px;font-weight:800;color:${despCorTotal}}
+  .desp-label{font-size:10px;color:#888;font-weight:600;text-transform:uppercase}
+  .desp-detail{font-size:11px;color:#555}
+  .and-total{display:flex;align-items:center;gap:16px;background:#F8F7F4;border-radius:8px;padding:10px 14px;margin-bottom:10px;border-left:4px solid ${andCor}}
+  .and-big{font-size:28px;font-weight:800;color:${andCor}}
   .no-print{margin-bottom:12px;display:flex;gap:8px;justify-content:center;padding:10px;background:#004042}
   .btn-print{padding:10px 24px;background:#F37021;color:#fff;border:none;border-radius:7px;font-size:14px;font-weight:600;cursor:pointer}
   .btn-close{padding:10px 20px;background:transparent;color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:7px;font-size:14px;cursor:pointer}
@@ -1689,19 +1888,19 @@ function gerarRelatorio(){
   <button class="btn-close" onclick="window.close()">✕ Fechar</button>
 </div>
 
-<!-- PÁGINA 1 -->
+<!-- PÁGINA 1: VISÃO GERAL + SEMANA ANTERIOR -->
 <div class="page">
   <div class="header">
     <div style="display:flex;align-items:center;gap:12px">
-      <img src="${document.querySelector('.hlogo').src}" class="logo" alt="Mills">
+      <img src="${logoSrc}" class="logo" alt="Mills">
       <div>
         <div class="header-title">Relatório Diário de Frota</div>
         <div class="header-sub">Kanban de Oficinas — Mills Estruturas e Serviços</div>
       </div>
     </div>
-    <div class="header-right">
-      <div style="font-size:14px;font-weight:700;color:#004042">${hoje.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</div>
-      <div style="font-size:10px;color:#888;margin-top:2px">Gerado às ${hoje.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})} por ${currentUser?.nome||'sistema'}</div>
+    <div style="text-align:right">
+      <div style="font-size:13px;font-weight:700;color:#004042">${dtFmt}</div>
+      <div style="font-size:10px;color:#888;margin-top:2px">Gerado às ${hrFmt} por ${currentUser?.nome||'sistema'}</div>
     </div>
   </div>
 
@@ -1710,9 +1909,15 @@ function gerarRelatorio(){
     <div class="kpi verde"><div class="kpi-label">Disponíveis</div><div class="kpi-value verde">${disp}</div><div class="kpi-sub">${dp}% da frota</div></div>
     <div class="kpi terra"><div class="kpi-label">Manutenção</div><div class="kpi-value terra">${manut}</div><div class="kpi-sub">${mp}% da frota</div></div>
     <div class="kpi"><div class="kpi-label">Reservados</div><div class="kpi-value orange">${res}</div><div class="kpi-sub">${Math.round(res/total*100)}% da frota</div></div>
-    <div class="kpi roxo"><div class="kpi-label">Programados</div><div class="kpi-value" style="color:#7F77DD">${prog}</div><div class="kpi-sub">com semana</div></div>
+    <div class="kpi roxo"><div class="kpi-label">Prog. c/ Reserva</div><div class="kpi-value" style="color:#7F77DD">${progRes}</div><div class="kpi-sub">${res>0?Math.round(progRes/res*100):0}% dos reservados</div></div>
     <div class="kpi terra"><div class="kpi-label">Retrabalhos</div><div class="kpi-value terra">${retrab}</div><div class="kpi-sub">ocorrências</div></div>
   </div>
+
+  ${narrativa.length>0?`
+  <div style="margin-bottom:14px;background:#FDFCFA;border:1px solid #E8E0D4;border-left:4px solid #F37021;border-radius:8px;padding:12px 16px">
+    <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#F37021;margin-bottom:8px">📋 Resumo da Semana</div>
+    ${narrativa.map((p,i)=>`<p style="font-size:11px;color:#333;line-height:1.65;margin-bottom:${i<narrativa.length-1?'8px':'0'};padding-bottom:${i<narrativa.length-1?'8px':'0'};border-bottom:${i<narrativa.length-1?'1px solid #EDE8E0':'none'}">${p}</p>`).join('')}
+  </div>`:''}
 
   <div class="grid2">
     <div>
@@ -1724,6 +1929,37 @@ function gerarRelatorio(){
         </table>
       </div>
       <div class="section">
+        <div class="section-title">Disponibilidade por oficina — disp / manut / total</div>
+        <table><tbody>${barrasOf}</tbody></table>
+      </div>
+    </div>
+    <div>
+      <div class="section">
+        <div class="section-title">📊 Desempenho — ${semAntLabel}</div>
+        <div class="desp-total">
+          <div class="desp-big">${despTotalPct}%</div>
+          <div>
+            <div class="desp-label">Desempenho consolidado</div>
+            <div class="desp-detail">${despTotalConc} concluídos de ${despTotalPrev} programados</div>
+            ${semAnterior&&Object.values(despOf).some(d=>d.rep>0)?`<div style="font-size:10px;color:#7F77DD;margin-top:3px">↻ ${Object.values(despOf).reduce((s,d)=>s+d.rep,0)} reprogramados</div>`:''}
+          </div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Oficina</th>
+              <th style="text-align:center">Prev.</th>
+              <th style="text-align:center;color:#1D9E75">✓ Conc.</th>
+              <th style="text-align:center;color:#C24003">↻ Reprog.</th>
+              <th style="text-align:center;color:#888">≡ Pend.</th>
+              <th style="text-align:center;width:70px">Barra</th>
+              <th style="text-align:center">Desemp.</th>
+            </tr>
+          </thead>
+          <tbody>${despRows}</tbody>
+        </table>
+      </div>
+      <div class="section">
         <div class="section-title">Top clientes com reservas ativas</div>
         <table>
           <thead><tr><th>Cliente</th><th style="text-align:center">Equip.</th><th style="text-align:right">% reservas</th></tr></thead>
@@ -1731,20 +1967,6 @@ function gerarRelatorio(){
         </table>
       </div>
     </div>
-    <div>
-      <div class="section">
-        <div class="section-title">Disponibilidade por oficina — disp / manut / total</div>
-        <table><tbody>${barrasOf}</tbody></table>
-      </div>
-    </div>
-  </div>
-
-  <div class="section">
-    <div class="section-title">⚠ Embarques próximos (7 dias) — ${proxEmb.length} equipamentos</div>
-    <table>
-      <thead><tr><th>ID</th><th>Equipamento</th><th>Cliente</th><th style="text-align:center">Data Embarque</th><th style="text-align:center">Prazo</th></tr></thead>
-      <tbody>${embRows}</tbody>
-    </table>
   </div>
 
   <div class="footer">
@@ -1754,36 +1976,51 @@ function gerarRelatorio(){
   </div>
 </div>
 
-<!-- PÁGINA 2 -->
-<div class="page page-break" style="padding-top:12mm">
+<!-- PÁGINA 2: SEMANA ATUAL + OPERACIONAL -->
+<div class="page page-break" style="padding-top:11mm">
   <div class="header">
     <div style="display:flex;align-items:center;gap:12px">
-      <img src="${document.querySelector('.hlogo').src}" class="logo" alt="Mills">
+      <img src="${logoSrc}" class="logo" alt="Mills">
       <div>
         <div class="header-title">Relatório Diário — Operacional</div>
         <div class="header-sub">Kanban de Oficinas — Mills Estruturas e Serviços</div>
       </div>
     </div>
-    <div class="header-right">
-      <div style="font-size:14px;font-weight:700;color:#004042">${hoje.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</div>
+    <div style="text-align:right">
+      <div style="font-size:13px;font-weight:700;color:#004042">${dtFmt}</div>
       <div style="font-size:10px;color:#888;margin-top:2px">Página 2 de 2</div>
     </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">📅 Andamento semana atual — ${semLabel} (${semAtualEquips.length} equipamentos)</div>
+    <div class="and-total">
+      <div class="and-big">${andPct}%</div>
+      <div>
+        <div class="desp-label">Concluídos até agora</div>
+        <div class="desp-detail">${concAtual} concluídos · ${semAtualEquips.filter(e=>e.etapa==='manutencao'||e.etapa==='cl_entrada'||e.etapa==='cl_saida').length} em andamento · ${semAtualEquips.filter(e=>e.etapa==='chegada').length} aguardando</div>
+      </div>
+    </div>
+    <table>
+      <thead><tr><th>Oficina</th><th style="text-align:center">Total</th><th style="text-align:center;color:#1D9E75">✓ Conc.</th><th style="text-align:center;color:#C24003">⚙ Em andamento</th><th style="text-align:center;color:#888">⏳ Aguardando</th><th style="text-align:center;width:70px">Progresso</th><th style="text-align:center">%</th></tr></thead>
+      <tbody>${andRows}</tbody>
+    </table>
   </div>
 
   <div class="grid2">
     <div>
       <div class="section">
-        <div class="section-title">🔴 Prioridade crítica / alta em aberto (top 10)</div>
+        <div class="section-title">⚠ Embarques próximos 7 dias — ${proxEmb.length} equip.</div>
         <table>
-          <thead><tr><th>ID</th><th>Equipamento</th><th>Oficina</th><th>Prio</th><th>Etapa</th></tr></thead>
-          <tbody>${criticoRows||'<tr><td colspan="5" style="padding:8px;color:#999;font-size:10px;text-align:center">Nenhum equipamento crítico</td></tr>'}</tbody>
+          <thead><tr><th>ID</th><th>Equipamento</th><th>Cliente</th><th style="text-align:center">Embarque</th><th style="text-align:center">Prazo</th></tr></thead>
+          <tbody>${embRows}</tbody>
         </table>
       </div>
       <div class="section">
-        <div class="section-title">📅 Programação semana atual — ${semLabel} (${semAtualEquips.length} equip.)</div>
+        <div class="section-title">🔴 Prioridade crítica / alta (top 10)</div>
         <table>
-          <thead><tr><th>ID</th><th>Equipamento</th><th>Oficina</th><th>Etapa</th><th>Cliente</th></tr></thead>
-          <tbody>${semRows||'<tr><td colspan="5" style="padding:8px;color:#999;font-size:10px;text-align:center">Nenhum programado para esta semana</td></tr>'}</tbody>
+          <thead><tr><th>ID</th><th>Equipamento</th><th>Oficina</th><th>Prio</th><th>Etapa</th></tr></thead>
+          <tbody>${criticoRows||'<tr><td colspan="5" style="padding:8px;color:#999;font-size:10px;text-align:center">Nenhum equipamento crítico</td></tr>'}</tbody>
         </table>
       </div>
     </div>
@@ -1796,9 +2033,9 @@ function gerarRelatorio(){
         </table>
       </div>
       <div class="section">
-        <div class="section-title">⏰ Atrasados (${atrasados.length} equip. além da semana prevista)</div>
+        <div class="section-title">⏰ Não concluídos de semanas anteriores (${atrasados.length})</div>
         <table>
-          <thead><tr><th>ID</th><th>Equipamento</th><th>Oficina</th><th>Semana prev.</th><th>Etapa atual</th></tr></thead>
+          <thead><tr><th>ID</th><th>Equipamento</th><th>Oficina</th><th>Sem. prev.</th><th>Etapa atual</th></tr></thead>
           <tbody>${atrasados.slice(0,8).map(e=>`<tr class="alert-row" style="border-bottom:1px solid #F0EDE8">
             <td style="padding:4px 8px;font-size:10px;font-weight:600;color:#004042">${e.id}</td>
             <td style="padding:4px 8px;font-size:10px;color:#333">${e.equipamento.substring(0,22)}</td>
@@ -2082,6 +2319,7 @@ function updateKpisDinamicos(){
   const ativos=todos.filter(e=>!e.baixado);
   const res=ativos.filter(e=>e.reservado).length;
   const prog=ativos.filter(e=>e.semana).length;
+  const progRes=ativos.filter(e=>e.semana&&e.reservado).length;
   const retrab=ativos.filter(e=>e.retrabalho>0).length;
   const disp=ativos.filter(e=>e.etapa==='chegada'||e.etapa==='pronto').length;
   const manut=ativos.filter(e=>e.etapa==='manutencao'||e.etapa==='cl_entrada'||e.etapa==='cl_saida').length;
@@ -2780,17 +3018,26 @@ function renderLinhaChart(){
   let labels=[],previsto=[],realizado=[],cores=[];
 
   if(modo==='semana'){
-    // Group by week
+    const semAt=semanaAtual();
     const bySem={};
     todos.forEach(e=>{
-      if(!bySem[e.semana])bySem[e.semana]={prev:0,real:0};
+      if(!bySem[e.semana])bySem[e.semana]={prev:0,real:0,reprog:0,atras:0};
       bySem[e.semana].prev++;
-      if(e.etapa==='pronto')bySem[e.semana].real++;
+      if(e.etapa==='pronto'){bySem[e.semana].real++;}
+      else if(e.semana_anterior&&e.semana!==e.semana_anterior){
+        // Aparece como detrator na semana original
+        if(!bySem[e.semana_anterior])bySem[e.semana_anterior]={prev:0,real:0,reprog:0,atras:0};
+        bySem[e.semana_anterior].reprog++;
+      }
+      else if(e.semana<semAt&&e.etapa!=='pronto'){bySem[e.semana].atras++;}
     });
     const sems=Object.keys(bySem).sort();
     labels=sems.map(s=>SEMANAS_LISTA.find(x=>x.value===s)?.label?.replace(/Sem (\d+).*/,'S$1')||s);
     previsto=sems.map(s=>bySem[s].prev);
     realizado=sems.map(s=>bySem[s].real);
+    window._bySemExtra=Object.fromEntries(sems.map(s=>[s,bySem[s]]));
+    window._bySemLabels=sems;
+    window._byOfExtra=null;
     cores=['#F37021','#12c47e'];
   } else if(modo==='tipo'){
     const byTipo={};
@@ -2805,17 +3052,23 @@ function renderLinhaChart(){
     realizado=labels.map(l=>byTipo[l].real);
     cores=['#378ADD','#1D9E75'];
   } else {
-    // por oficina
+    // por oficina — inclui reprogramados/atrasados como detratores
+    const semAt=semanaAtual();
     const byOf={};
     todos.forEach(e=>{
       const o=e.oficina||'(sem oficina)';
-      if(!byOf[o])byOf[o]={prev:0,real:0};
+      if(!byOf[o])byOf[o]={prev:0,real:0,reprog:0,atras:0};
       byOf[o].prev++;
-      if(e.etapa==='pronto')byOf[o].real++;
+      if(e.etapa==='pronto'){byOf[o].real++;}
+      else if(e.semana_anterior&&e.semana!==e.semana_anterior){byOf[o].reprog++;} // reprogramado manualmente
+      else if(e.semana&&e.semana<semAt&&e.etapa!=='pronto'){byOf[o].atras++;} // atrasado
     });
     labels=Object.keys(byOf).sort();
     previsto=labels.map(l=>byOf[l].prev);
     realizado=labels.map(l=>byOf[l].real);
+    // Dados extras para tooltip
+    window._byOfExtra=byOf;
+    window._bySemExtra=null;
     cores=['#7F77DD','#EF9F27'];
   }
 
@@ -2856,8 +3109,25 @@ function renderLinhaChart(){
     ctx.fillText(lbl.substring(0,8),x,H-pad.bottom+12);
   });
 
+  // Calcular detratores (reprog + atras) por posição
+  const detratores=labels.map((lbl,i)=>{
+    if(modo==='semana'&&window._bySemExtra&&window._bySemLabels){
+      const sem=window._bySemLabels[i];
+      const d=window._bySemExtra?.[sem];
+      return d?(d.reprog||0)+(d.atras||0):0;
+    }
+    if(modo==='oficina'&&window._byOfExtra){
+      const d=window._byOfExtra?.[Object.keys(window._byOfExtra).sort()[i]];
+      return d?(d.reprog||0)+(d.atras||0):0;
+    }
+    return 0;
+  });
+  const temDetrat=detratores.some(v=>v>0);
+
   // Draw lines
-  [[previsto,cores[0],'Previsto'],[realizado,cores[1],'Realizado']].forEach(([vals,cor,nome],si)=>{
+  const linhas=[[previsto,cores[0],'Previsto'],[realizado,cores[1],'Realizado']];
+  if(temDetrat)linhas.push([detratores,'#C24003','Não concluídos']);
+  linhas.forEach(([vals,cor,nome],si)=>{
     ctx.beginPath();ctx.strokeStyle=cor;ctx.lineWidth=2.5;ctx.lineJoin='round';
     vals.forEach((v,i)=>{
       const x=pad.left+(n===1?cW/2:i*cW/(n-1));
@@ -2886,7 +3156,7 @@ function renderLinhaChart(){
     });
   });
 
-  // Aderência % labels between lines
+  // Desempenho % labels between lines
   if(modo==='semana'&&n<=16){
     labels.forEach((lbl,i)=>{
       const p=previsto[i],r=realizado[i];
@@ -2914,7 +3184,7 @@ function renderLinhaChart(){
         <strong style="color:#1a1e2e">${v}</strong>
       </div>`
     ).join('')+`<div style="display:flex;align-items:center;gap:4px;margin-left:8px;padding-left:8px;border-left:1px solid #e2e8f0">
-      <span style="color:#6b7280">Aderência total:</span>
+      <span style="color:#6b7280">Desempenho total:</span>
       <strong style="color:${aderTotal>=80?'#15803d':aderTotal>=50?'#92400e':'#991b1b'}">${aderTotal}%</strong>
     </div>`;
   }
@@ -2975,7 +3245,7 @@ function renderProgramacao(){
   if(ofFil)equips=equips.filter(e=>e.oficina===ofFil);
   if(prioFil)equips=equips.filter(e=>e.prioridade===prioFil);
   if(tipoFil)equips=equips.filter(e=>e.tipo===tipoFil);
-  if(cliFil)equips=equips.filter(e=>e.cliente===cliFil);
+  // cliFil: não filtra fora — apenas dimm os não-pertencentes (ver _dimmed nos cards)
   if(embFil)equips=equips.filter(e=>e.dataEmbarque&&e.dataEmbarque<=embFil);
 
   // Filtrar semanas visíveis
@@ -3067,8 +3337,9 @@ function renderProgramacao(){
 
   // 1. Adicionar todos os equipamentos na semana original
   equips.forEach(e=>{
+    const _dimmed=!!(cliFil&&e.cliente!==cliFil);
     if(!bySemana[e.semana])bySemana[e.semana]=[];
-    bySemana[e.semana].push({...e,_reprog:false,_semOrigem:e.semana});
+    bySemana[e.semana].push({...e,_reprog:false,_semOrigem:e.semana,_dimmed});
   });
 
   // 2. Equipamentos de semanas passadas não concluídos →
@@ -3082,8 +3353,6 @@ function renderProgramacao(){
     if(ofFil && e.oficina!==ofFil)return;
     if(prioFil && e.prioridade!==prioFil)return;
     if(tipoFil && e.tipo!==tipoFil)return;
-    if(cliFil && e.cliente!==cliFil)return;
-
     // Semana onde vai aparecer como reprogramado: semana atual
     const semDest=semAtualStr;
 
@@ -3132,16 +3401,16 @@ function renderProgramacao(){
     const nReprog=items.filter(x=>x._reprog).length;
     const nReprogAuto=items.filter(x=>x._reprogAuto).length;
     let hdCls='prog-sem-hd';if(ehAtual)hdCls+=' sem-atual';else if(nAtr>0)hdCls+=' tem-atraso';
-    // Aderência da semana
+    // Desempenho da semana
     const nPrev=itemsReais.length;
     const nReal=nConc;
-    const aderPct=nPrev>0?Math.round(nReal/nPrev*100):null;
-    let aderBadge='';
-    if(aderPct!==null&&ehPass){      const aderCls=aderPct>=80?'alta':aderPct>=50?'media':'baixa';
-      aderBadge=`<span class="sem-aderencia ${aderCls}">⊙ Aderência ${aderPct}%</span>`;
-    } else if(nPrev>0&&!ehPass&&nReal>0){      const aderPctP=Math.round(nReal/nPrev*100);
-      const aderCls=aderPctP>=80?'alta':aderPctP>=50?'media':'baixa';
-      aderBadge=`<span class="sem-aderencia ${aderCls}">⊙ ${aderPctP}% concluído</span>`;
+    const despPct=nPrev>0?Math.round(nReal/nPrev*100):null;
+    let despBadge='';
+    if(despPct!==null&&ehPass){      const despCls=despPct>=80?'alta':despPct>=50?'media':'baixa';
+      despBadge=`<span class="sem-desempenho ${despCls}">⊙ Desempenho ${despPct}%</span>`;
+    } else if(nPrev>0&&!ehPass&&nReal>0){      const despPctP=Math.round(nReal/nPrev*100);
+      const despCls=despPctP>=80?'alta':despPctP>=50?'media':'baixa';
+      despBadge=`<span class="sem-desempenho ${despCls}">⊙ ${despPctP}% concluído</span>`;
     }
     // Contar embarques urgentes na semana
     const nEmbUrg=itemsReais.filter(e=>e.dataEmbarque&&Math.ceil((new Date(e.dataEmbarque+'T12:00:00')-new Date())/(1000*60*60*24))<=7).length;
@@ -3182,7 +3451,7 @@ function renderProgramacao(){
       const hdrBg=isConc?'#1D9E75':eq.reservado?'#555':'#888';
       const hdrTxt=eq.reservado&&eq.cliente?`◈ ${eq.cliente}`:'Estoque';
       const cliHeader=`<div style="background:${hdrBg};color:#fff;font-size:10px;font-weight:700;padding:3px 8px;margin:-8px -10px 6px -10px;border-radius:5px 5px 0 0;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${hdrTxt}</div>`;
-      return`<div class="prog-card ${cardCls}" onclick="openCardModal('${eq.id}','geral')" style="${eq._reprog?'opacity:.75':''}">
+      return`<div class="prog-card ${cardCls}${eq._dimmed?' card-dimmed':''}" onclick="openCardModal('${eq.id}','geral')" style="${eq._reprog?'opacity:.75':eq._dimmed?'opacity:.35;filter:grayscale(.6)':''}">
         ${cliHeader}
         <div class="prog-card-body">
           <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:3px">
@@ -3196,7 +3465,7 @@ function renderProgramacao(){
         <div class="prog-card-footer">${embH||'<div style="height:20px"></div>'}</div>
       </div>`;
     }).join('');
-    return`<div class="prog-semana"><div class="${hdCls}"><span class="prog-sem-label">${si?si.label:sem}${ehAtual?' — atual':''}</span><span class="prog-sem-total">${itemsReais.length}</span>${aderBadge}${sub?'<span style="margin-left:4px">'+sub+'</span>':''}</div><div class="prog-sem-body">${cards}</div></div>`;
+    return`<div class="prog-semana"><div class="${hdCls}"><span class="prog-sem-label">${si?si.label:sem}${ehAtual?' — atual':''}</span><span class="prog-sem-total">${itemsReais.length}</span>${despBadge}${sub?'<span style="margin-left:4px">'+sub+'</span>':''}</div><div class="prog-sem-body">${cards}</div></div>`;
   }).join('');
 }
 
