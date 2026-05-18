@@ -1555,8 +1555,10 @@ function gerarRelatorio(){
   });
 
   // ── SEMANA ANTERIOR — Desempenho por oficina ──
-  const semAntEquips=semAnterior?ativos.filter(e=>e.semana===semAnterior):[];
-  // também incluir os que tinham semana anterior = semAnterior (foram reprogramados)
+  // prev = estava na semana anterior (semana===semAnt) OU foi reprogramado a partir dela (semana_anterior===semAnt)
+  // conc = estava na semana anterior E está pronto (concluiu dentro do prazo)
+  // rep  = foi reprogramado para outra semana (semana_anterior===semAnt && semana!==semAnt)
+  // pend = estava na semana anterior, não concluiu E não foi reprogramado (ficou parado)
   const semAntAll=semAnterior?ativos.filter(e=>
     e.semana===semAnterior||(e.semana_anterior===semAnterior&&e.semana!==semAnterior)
   ):[];
@@ -1565,13 +1567,18 @@ function gerarRelatorio(){
     const todasOfs=[...new Set(semAntAll.map(e=>e.oficina).filter(Boolean))].sort();
     todasOfs.forEach(of=>{
       const prev=semAntAll.filter(e=>e.oficina===of);
-      const conc=prev.filter(e=>e.etapa==='pronto');
-      const naoPrev=prev.filter(e=>e.semana_anterior===semAnterior&&e.semana!==semAnterior);
-      const pct=prev.length?Math.round(conc.length/prev.length*100):0;
-      const pend=Math.max(0,prev.length-conc.length-naoPrev.length);
-      despOf[of]={prev:prev.length,conc:conc.length,rep:naoPrev.length,pend,pct};
+      // Reprogramados: foram movidos para outra semana — detratores
+      const rep=prev.filter(e=>e.semana_anterior===semAnterior&&e.semana!==semAnterior);
+      // Concluídos: estavam originalmente na semana anterior E concluíram (pronto)
+      // Excluir os reprogramados do cômputo de concluídos
+      const concluidos=prev.filter(e=>!(e.semana_anterior===semAnterior&&e.semana!==semAnterior)&&e.etapa==='pronto');
+      // Pendentes: estavam na semana, não concluíram e não foram reprogramados
+      const pend=prev.filter(e=>!(e.semana_anterior===semAnterior&&e.semana!==semAnterior)&&e.etapa!=='pronto');
+      const pct=prev.length?Math.round(concluidos.length/prev.length*100):0;
+      despOf[of]={prev:prev.length,conc:concluidos.length,rep:rep.length,pend:pend.length,pct};
     });
   }
+  const semAntEquips=semAntAll;
 
   // ── SEMANA ATUAL — Andamento por oficina ──
   const semAtualEquips=ativos.filter(e=>e.semana===semAtual);
@@ -1913,60 +1920,95 @@ function gerarRelatorio(){
     <div class="kpi terra"><div class="kpi-label">Retrabalhos</div><div class="kpi-value terra">${retrab}</div><div class="kpi-sub">ocorrências</div></div>
   </div>
 
-  ${narrativa.length>0?`
-  <div style="margin-bottom:14px;background:#FDFCFA;border:1px solid #E8E0D4;border-left:4px solid #F37021;border-radius:8px;padding:12px 16px">
-    <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#F37021;margin-bottom:8px">📋 Resumo da Semana</div>
-    ${narrativa.map((p,i)=>`<p style="font-size:11px;color:#333;line-height:1.65;margin-bottom:${i<narrativa.length-1?'8px':'0'};padding-bottom:${i<narrativa.length-1?'8px':'0'};border-bottom:${i<narrativa.length-1?'1px solid #EDE8E0':'none'}">${p}</p>`).join('')}
-  </div>`:''}
-
-  <div class="grid2">
-    <div>
-      <div class="section">
-        <div class="section-title">Status por etapa do kanban</div>
-        <table>
-          <thead><tr><th>Etapa</th><th style="text-align:center">Qtd</th><th style="text-align:right">%</th></tr></thead>
-          <tbody>${etapasRows}</tbody>
-        </table>
-      </div>
-      <div class="section">
-        <div class="section-title">Disponibilidade por oficina — disp / manut / total</div>
-        <table><tbody>${barrasOf}</tbody></table>
-      </div>
+  <!-- BLOCO 1: Desempenho consolidado full-width -->
+  <div style="margin-bottom:12px;border:1px solid #E8E0D4;border-radius:8px;overflow:hidden">
+    <div style="background:#F8F7F4;padding:6px 14px;border-bottom:1.5px solid #F37021">
+      <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#F37021">📊 Desempenho consolidado — ${semAntLabel}</span>
     </div>
-    <div>
-      <div class="section">
-        <div class="section-title">📊 Desempenho — ${semAntLabel}</div>
-        <div class="desp-total">
-          <div class="desp-big">${despTotalPct}%</div>
-          <div>
-            <div class="desp-label">Desempenho consolidado</div>
-            <div class="desp-detail">${despTotalConc} concluídos de ${despTotalPrev} programados</div>
-            ${semAnterior&&Object.values(despOf).some(d=>d.rep>0)?`<div style="font-size:10px;color:#7F77DD;margin-top:3px">↻ ${Object.values(despOf).reduce((s,d)=>s+d.rep,0)} reprogramados</div>`:''}
-          </div>
-        </div>
-        <table>
+    <div style="display:flex;align-items:stretch">
+      <!-- Número grande -->
+      <div style="padding:14px 20px;display:flex;flex-direction:column;justify-content:center;align-items:center;min-width:110px;border-right:1px solid #E8E0D4;background:#fff">
+        <div style="font-size:42px;font-weight:900;color:${despCorTotal};line-height:1">${despTotalPct}%</div>
+        <div style="font-size:9px;color:#888;text-transform:uppercase;letter-spacing:.05em;margin-top:4px;text-align:center">Desempenho<br>consolidado</div>
+        <div style="font-size:10px;color:#555;margin-top:6px;text-align:center;line-height:1.4">${despTotalConc} conc. de ${despTotalPrev} prev.</div>
+        ${semAnterior&&Object.values(despOf).some(d=>d.rep>0)?`<div style="font-size:9px;color:#7F77DD;margin-top:3px;font-weight:600">↻ ${Object.values(despOf).reduce((s,d)=>s+d.rep,0)} reprog.</div>`:''}
+        ${semAnterior&&Object.values(despOf).some(d=>d.pend>0)?`<div style="font-size:9px;color:#C24003;margin-top:2px;font-weight:600">⚠ ${Object.values(despOf).reduce((s,d)=>s+(d.pend||0),0)} pend.</div>`:''}
+      </div>
+      <!-- Mini tabela por oficina -->
+      <div style="flex:1;padding:0">
+        <table style="width:100%;border-collapse:collapse;font-size:10px">
           <thead>
-            <tr>
-              <th>Oficina</th>
-              <th style="text-align:center">Prev.</th>
-              <th style="text-align:center;color:#1D9E75">✓ Conc.</th>
-              <th style="text-align:center;color:#C24003">↻ Reprog.</th>
-              <th style="text-align:center;color:#888">≡ Pend.</th>
-              <th style="text-align:center;width:70px">Barra</th>
-              <th style="text-align:center">Desemp.</th>
+            <tr style="background:#F8F7F4;border-bottom:1px solid #E8E0D4">
+              <th style="padding:5px 8px;font-weight:700;text-align:left;font-size:9px;color:#888;text-transform:uppercase">Oficina</th>
+              <th style="padding:5px 6px;text-align:center;font-size:9px;color:#888;text-transform:uppercase">Prev.</th>
+              <th style="padding:5px 6px;text-align:center;font-size:9px;color:#1D9E75;text-transform:uppercase">✓ Conc.</th>
+              <th style="padding:5px 6px;text-align:center;font-size:9px;color:#7F77DD;text-transform:uppercase">↻ Rep.</th>
+              <th style="padding:5px 6px;text-align:center;font-size:9px;color:#C24003;text-transform:uppercase">⚠ Pend.</th>
+              <th style="padding:5px 6px;text-align:center;width:60px;font-size:9px;color:#888;text-transform:uppercase">Barra</th>
+              <th style="padding:5px 8px;text-align:center;font-size:9px;color:#888;text-transform:uppercase">Desemp.</th>
             </tr>
           </thead>
-          <tbody>${despRows}</tbody>
-        </table>
-      </div>
-      <div class="section">
-        <div class="section-title">Top clientes com reservas ativas</div>
-        <table>
-          <thead><tr><th>Cliente</th><th style="text-align:center">Equip.</th><th style="text-align:right">% reservas</th></tr></thead>
-          <tbody>${cliRows||'<tr><td colspan="3" style="padding:8px;color:#999;font-size:10px;text-align:center">Nenhum cliente com reserva</td></tr>'}</tbody>
+          <tbody>
+            ${semAnterior&&Object.keys(despOf).length
+              ?Object.entries(despOf).sort((a,b)=>b[1].pct-a[1].pct).map(([of,d])=>{
+                const pend=d.pend||Math.max(0,d.prev-d.conc-d.rep);
+                const cor=d.pct>=80?'#1D9E75':d.pct>=50?'#F37021':'#C24003';
+                const wC=d.prev?Math.round(d.conc/d.prev*100):0;
+                const wR=d.prev?Math.round(d.rep/d.prev*100):0;
+                const wP=d.prev?Math.round(pend/d.prev*100):0;
+                return`<tr style="border-bottom:1px solid #F0EDE8">
+                  <td style="padding:5px 8px;font-size:10px;color:#333;white-space:nowrap">${of}</td>
+                  <td style="padding:5px 6px;text-align:center;font-weight:700;color:#333">${d.prev}</td>
+                  <td style="padding:5px 6px;text-align:center;font-weight:700;color:#1D9E75">${d.conc} <span style="font-size:8px;font-weight:400">(${wC}%)</span></td>
+                  <td style="padding:5px 6px;text-align:center;font-weight:700;color:#7F77DD">${d.rep} <span style="font-size:8px;font-weight:400">(${wR}%)</span></td>
+                  <td style="padding:5px 6px;text-align:center;font-weight:700;color:#C24003">${pend} <span style="font-size:8px;font-weight:400">(${wP}%)</span></td>
+                  <td style="padding:5px 6px">
+                    <div style="background:#F0EDE8;border-radius:3px;height:10px;overflow:hidden;display:flex">
+                      <div style="height:100%;width:${wC}%;background:#1D9E75"></div>
+                      <div style="height:100%;width:${wR}%;background:#7F77DD"></div>
+                      <div style="height:100%;width:${wP}%;background:#C24003"></div>
+                    </div>
+                  </td>
+                  <td style="padding:5px 8px;text-align:center;font-size:12px;font-weight:800;color:${cor}">${d.pct}%</td>
+                </tr>`;
+              }).join('')
+              :'<tr><td colspan="7" style="padding:10px;text-align:center;color:#999;font-size:10px">Nenhum dado para a semana anterior</td></tr>'
+            }
+          </tbody>
         </table>
       </div>
     </div>
+  </div>
+
+  <!-- BLOCO 2: Texto narrativo full-width -->
+  ${narrativa.length>0?`
+  <div style="margin-bottom:12px;background:#FDFCFA;border:1px solid #E8E0D4;border-left:4px solid #F37021;border-radius:8px;padding:11px 14px">
+    <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#F37021;margin-bottom:7px">📋 Resumo da Semana</div>
+    ${narrativa.map((p,i)=>`<p style="font-size:10.5px;color:#333;line-height:1.6;margin-bottom:${i<narrativa.length-1?'7px':'0'};padding-bottom:${i<narrativa.length-1?'7px':'0'};border-bottom:${i<narrativa.length-1?'1px solid #EDE8E0':'none'}">${p}</p>`).join('')}
+  </div>`:''}
+
+  <!-- BLOCO 3: Status Kanban + Disponibilidade por oficina side-by-side -->
+  <div class="grid2" style="margin-bottom:12px">
+    <div class="section">
+      <div class="section-title">Status por etapa do kanban</div>
+      <table>
+        <thead><tr><th>Etapa</th><th style="text-align:center">Qtd</th><th style="text-align:right">%</th></tr></thead>
+        <tbody>${etapasRows}</tbody>
+      </table>
+    </div>
+    <div class="section">
+      <div class="section-title">Disponibilidade por oficina — disp / manut / total</div>
+      <table><tbody>${barrasOf}</tbody></table>
+    </div>
+  </div>
+
+  <!-- BLOCO 4: Clientes full-width -->
+  <div class="section">
+    <div class="section-title">Top clientes com reservas ativas</div>
+    <table>
+      <thead><tr><th>Cliente</th><th style="text-align:center">Equip.</th><th style="text-align:right">% reservas</th></tr></thead>
+      <tbody>${cliRows||'<tr><td colspan="3" style="padding:8px;color:#999;font-size:10px;text-align:center">Nenhum cliente com reserva</td></tr>'}</tbody>
+    </table>
   </div>
 
   <div class="footer">
@@ -1990,6 +2032,15 @@ function gerarRelatorio(){
       <div style="font-size:13px;font-weight:700;color:#004042">${dtFmt}</div>
       <div style="font-size:10px;color:#888;margin-top:2px">Página 2 de 2</div>
     </div>
+  </div>
+
+  <!-- KPIs da semana atual -->
+  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin-bottom:12px">
+    <div class="kpi"><div class="kpi-label">Programados</div><div class="kpi-value">${semAtualEquips.length}</div><div class="kpi-sub">${semLabel}</div></div>
+    <div class="kpi verde"><div class="kpi-label">Concluídos</div><div class="kpi-value verde">${concAtual}</div><div class="kpi-sub">${andPct}% da meta</div></div>
+    <div class="kpi terra"><div class="kpi-label">Em andamento</div><div class="kpi-value terra">${semAtualEquips.filter(e=>e.etapa==='manutencao'||e.etapa==='cl_entrada'||e.etapa==='cl_saida').length}</div><div class="kpi-sub">em processo</div></div>
+    <div class="kpi"><div class="kpi-label">Aguardando</div><div class="kpi-value orange">${semAtualEquips.filter(e=>e.etapa==='chegada').length}</div><div class="kpi-sub">sem início</div></div>
+    <div class="kpi roxo"><div class="kpi-label">c/ Reserva</div><div class="kpi-value" style="color:#7F77DD">${semAtualEquips.filter(e=>e.reservado).length}</div><div class="kpi-sub">${semAtualEquips.length?Math.round(semAtualEquips.filter(e=>e.reservado).length/semAtualEquips.length*100):0}% do total</div></div>
   </div>
 
   <div class="section">
@@ -2017,10 +2068,19 @@ function gerarRelatorio(){
         </table>
       </div>
       <div class="section">
-        <div class="section-title">🔴 Prioridade crítica / alta (top 10)</div>
+        <div class="section-title">🔖 Equipamentos com reserva programados (${semAtualEquips.filter(e=>e.reservado).length})</div>
         <table>
-          <thead><tr><th>ID</th><th>Equipamento</th><th>Oficina</th><th>Prio</th><th>Etapa</th></tr></thead>
-          <tbody>${criticoRows||'<tr><td colspan="5" style="padding:8px;color:#999;font-size:10px;text-align:center">Nenhum equipamento crítico</td></tr>'}</tbody>
+          <thead><tr><th>ID</th><th>Equipamento</th><th>Oficina</th><th>Cliente</th><th>Etapa</th></tr></thead>
+          <tbody>${semAtualEquips.filter(e=>e.reservado).sort((a,b)=>{
+            const o={manutencao:0,cl_entrada:1,cl_saida:2,chegada:3,pronto:4};
+            return(o[a.etapa]??5)-(o[b.etapa]??5);
+          }).slice(0,12).map(e=>`<tr style="border-bottom:1px solid #F0EDE8">
+            <td style="padding:4px 8px;font-size:10px;font-weight:600;color:#004042">${e.id}</td>
+            <td style="padding:4px 8px;font-size:10px;color:#333">${e.equipamento.substring(0,26)}</td>
+            <td style="padding:4px 8px;font-size:10px;color:#666">${e.oficina}</td>
+            <td style="padding:4px 8px;font-size:10px;color:#7F77DD;font-weight:600">${(e.cliente||'').substring(0,22)}</td>
+            <td style="padding:4px 8px;font-size:10px;color:#333">${ETAPAS_GERAL.find(x=>x.id===e.etapa)?.label||e.etapa}</td>
+          </tr>`).join('')||'<tr><td colspan="5" style="padding:8px;color:#999;font-size:10px;text-align:center">Nenhum equipamento reservado programado</td></tr>'}</tbody>
         </table>
       </div>
     </div>
@@ -3349,7 +3409,7 @@ function renderProgramacao(){
     e.semana && !e.baixado && e.etapa!=='pronto' &&
     semanaPassada(e.semana)
   ).forEach(e=>{
-    // Aplica os filtros ativos
+    // Filtro de oficina é OBRIGATÓRIO para reprogAuto — não mostrar de outras oficinas
     if(ofFil && e.oficina!==ofFil)return;
     if(prioFil && e.prioridade!==prioFil)return;
     if(tipoFil && e.tipo!==tipoFil)return;
@@ -3366,6 +3426,7 @@ function renderProgramacao(){
   equipsReprog.forEach(e=>{
     const semAnt=e.semana_anterior;
     if(!semAnt||semAnt===e.semana)return;
+    if(ofFil && e.oficina!==ofFil)return; // respeitar filtro de oficina
     if(semVis==='futuras'&&semAnt<semAtual)return;
     if(semVis==='atual'&&semAnt!==semAtual)return;
     if(!bySemana[semAnt])bySemana[semAnt]=[];
@@ -3401,8 +3462,11 @@ function renderProgramacao(){
     const nReprog=items.filter(x=>x._reprog).length;
     const nReprogAuto=items.filter(x=>x._reprogAuto).length;
     let hdCls='prog-sem-hd';if(ehAtual)hdCls+=' sem-atual';else if(nAtr>0)hdCls+=' tem-atraso';
-    // Desempenho da semana
-    const nPrev=itemsReais.length;
+    // Desempenho da semana:
+    // Para semanas passadas, o previsto real inclui os reprogramados (que saíram como detratores)
+    // nReprog = cards fantasma (_reprog) que mostram quem foi reprogramado manualmente
+    // nReprogAuto = que apareceram como auto-reprogamados por atraso
+    const nPrev=ehPass?(itemsReais.length+nReprog+nReprogAuto):itemsReais.length;
     const nReal=nConc;
     const despPct=nPrev>0?Math.round(nReal/nPrev*100):null;
     let despBadge='';
