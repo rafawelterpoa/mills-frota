@@ -1160,12 +1160,15 @@ input.filter-sel{padding:5px 8px;height:34px}
       <div>
         <div class="mc-section-title">Reserva para locação</div>
         <div class="reserva-toggle">
-          <div class="reserva-btn" id="res-sim" onclick="setReserva(true)">✓ Sim — Reservado</div>
-          <div class="reserva-btn active-nao" id="res-nao" onclick="setReserva(false)">✗ Não disponível</div>
+          <div class="reserva-btn" id="res-sim" style="cursor:default;opacity:.7" title="Reserva definida pelo sistema">✓ Sim — Reservado</div>
+          <div class="reserva-btn active-nao" id="res-nao" style="cursor:default;opacity:.7" title="Reserva definida pelo sistema">✗ Não disponível</div>
         </div>
         <div class="mc-field" id="campo-cliente" style="margin-top:8px;display:none">
-          <label>Cliente</label>
-          <input type="text" id="mc-cliente" placeholder="Nome do cliente..." oninput="setCliente(this.value)" maxlength="80">
+          <label>Cliente (reserva do sistema)</label>
+          <div id="mc-cliente-display" style="padding:7px 10px;background:#f0faf5;border:1px solid rgba(18,196,126,.3);border-radius:7px;font-size:12px;font-weight:600;color:var(--verde2);display:flex;align-items:center;gap:6px">
+            <span>◈</span><span id="mc-cliente-texto">—</span>
+          </div>
+          <input type="hidden" id="mc-cliente">
         </div>
         <div style="margin-top:8px">
           <div class="mc-section-title">Previsão de Liberação de Oficina</div>
@@ -2358,6 +2361,10 @@ function openCardModal(eqId,visao){
   // Reserva
   updateReservaBtns(eq.reservado);
   document.getElementById('campo-cliente').style.display=eq.reservado?'flex':'none';
+  if(eq.reservado&&eq.cliente){
+    document.getElementById('mc-cliente-texto').textContent=eq.cliente;
+    document.getElementById('mc-cliente').value=eq.cliente;
+  }
   document.getElementById('mc-cliente').value=eq.cliente||'';
   document.getElementById('mc-embarque').value=eq.dataEmbarque||'';
   const prevLib=document.getElementById('mc-prev-liberacao');
@@ -2545,9 +2552,7 @@ function updateReservaBtns(r){
   document.getElementById('res-nao').className='reserva-btn'+(r?'':' active-nao');
 }
 function setReserva(v){
-  pendingCardChanges.reservado=v;
-  updateReservaBtns(v);
-  document.getElementById('campo-cliente').style.display=v?'flex':'none';
+  // Reserva agora é controlada pela base — não permite alteração manual
 }
 function desbloquearSemana(){
   requestSenha('🔐 Desbloquear semana','Requer senha master.','retroceder',{},p=>{
@@ -2687,12 +2692,17 @@ function cancelSenha(){senhaCallback=null;closeModal('modal-senha');}
 
 // PROGRAMAÇÃO
 function autoAvancarAtrasados(){
-  let av=0;
-  Object.values(state).forEach(eq=>{
-    if(!eq.semana||eq.etapa==='pronto')return;
-    if(semanaPassada(eq.semana)){const p=proximaSemana(eq.semana);if(p!==eq.semana){eq.semana_anterior=eq.semana_anterior||eq.semana;eq.semana=p;av++;}}
-  });
-  if(av>0){saveState(Object.keys(state));showToast(av+' equip. reprogramados automaticamente');}
+  // Não move mais automaticamente — a visualização cuida de mostrar na semana correta
+}
+// Retorna a semana de exibição atual de um equipamento atrasado não concluído
+// (a semana imediatamente após a semana de origem que já passou)
+function semanaExibicaoAtrasado(eq){
+  if(!eq.semana||eq.etapa==='pronto')return eq.semana;
+  const semAtual=semanaAtual();
+  if(eq.semana>=semAtual)return eq.semana; // não passou, sem mudança
+  // Calcular próxima semana após a semana atual (a semana onde deve aparecer como reprogramado)
+  const idxAtual=SEMANAS_LISTA.findIndex(s=>s.value===semAtual);
+  return semAtual; // aparece na semana atual como reprogramado
 }
 function removerDaProgramacao(eqId,event){
   if(event)event.stopPropagation();
@@ -2970,6 +2980,8 @@ function renderProgramacao(){
 
   // Filtrar semanas visíveis
   let semsVisiveis=new Set(equips.map(e=>e.semana));
+  // Sempre incluir semana atual (pode ter reprogramados automáticos)
+  semsVisiveis.add(semAtual);
   if(semVis==='futuras'){
     semsVisiveis=new Set([...semsVisiveis].filter(s=>s>=semAtual));
     equips=equips.filter(e=>e.semana>=semAtual);
@@ -3050,23 +3062,46 @@ function renderProgramacao(){
     grafDiv.innerHTML='';
   }
 
-  // Montar semanas — incluindo semana_anterior dos reprogramados
+  // Montar semanas
   const bySemana={};
+
+  // 1. Adicionar todos os equipamentos na semana original
   equips.forEach(e=>{
     if(!bySemana[e.semana])bySemana[e.semana]=[];
-    bySemana[e.semana].push({...e,_reprog:false});
+    bySemana[e.semana].push({...e,_reprog:false,_semOrigem:e.semana});
   });
-  // Adicionar entrada fantasma na semana anterior dos reprogramados
+
+  // 2. Equipamentos de semanas passadas não concluídos →
+  //    aparecem TAMBÉM na semana atual como "reprogramado automático"
+  const semAtualStr=semAtual;
+  Object.values(state).filter(e=>
+    e.semana && !e.baixado && e.etapa!=='pronto' &&
+    semanaPassada(e.semana)
+  ).forEach(e=>{
+    // Aplica os filtros ativos
+    if(ofFil && e.oficina!==ofFil)return;
+    if(prioFil && e.prioridade!==prioFil)return;
+    if(tipoFil && e.tipo!==tipoFil)return;
+    if(cliFil && e.cliente!==cliFil)return;
+
+    // Semana onde vai aparecer como reprogramado: semana atual
+    const semDest=semAtualStr;
+
+    // Só adicionar se não há já uma cópia nessa semana destino como reprog
+    if(!bySemana[semDest])bySemana[semDest]=[];
+    if(!bySemana[semDest].find(x=>x.id===e.id&&x._reprogAuto))
+      bySemana[semDest].push({...e,_reprog:false,_reprogAuto:true,_semOrigem:e.semana});
+  });
+
+  // 3. Adicionar entrada fantasma na semana anterior dos reprogramados manualmente
   equipsReprog.forEach(e=>{
     const semAnt=e.semana_anterior;
     if(!semAnt||semAnt===e.semana)return;
-    // Só mostrar se a semana anterior está no range visível
     if(semVis==='futuras'&&semAnt<semAtual)return;
     if(semVis==='atual'&&semAnt!==semAtual)return;
     if(!bySemana[semAnt])bySemana[semAnt]=[];
-    // Evitar duplicata
     if(!bySemana[semAnt].find(x=>x.id===e.id))
-      bySemana[semAnt].push({...e,_reprog:true,_novaSemana:e.semana});
+      bySemana[semAnt].push({...e,_reprog:true,_novaSemana:e.semana,_semOrigem:semAnt});
   });
 
   const semOrder=Object.keys(bySemana).sort();
@@ -3091,10 +3126,11 @@ function renderProgramacao(){
     });
     const si=SEMANAS_LISTA.find(s=>s.value===sem);
     const ehAtual=sem===semAtual,ehPass=sem<semAtual;
-    const itemsReais=items.filter(x=>!x._reprog);
+    const itemsReais=items.filter(x=>!x._reprog&&!x._reprogAuto);
     const nConc=itemsReais.filter(e=>e.etapa==='pronto').length;
     const nAtr=itemsReais.filter(e=>e.etapa!=='pronto'&&ehPass).length;
     const nReprog=items.filter(x=>x._reprog).length;
+    const nReprogAuto=items.filter(x=>x._reprogAuto).length;
     let hdCls='prog-sem-hd';if(ehAtual)hdCls+=' sem-atual';else if(nAtr>0)hdCls+=' tem-atraso';
     // Aderência da semana
     const nPrev=itemsReais.length;
@@ -3114,13 +3150,18 @@ function renderProgramacao(){
     if(nConc>0)sub+=`<span style="background:rgba(29,158,117,.15);color:var(--verde2);border-radius:6px;padding:1px 6px;font-size:10px">${nConc} concluído${nConc>1?'s':''}</span> `;
     if(nAtr>0)sub+=`<span style="background:rgba(194,64,3,.15);color:var(--terra);border-radius:6px;padding:1px 6px;font-size:10px">${nAtr} atrasado${nAtr>1?'s':''}</span> `;
     if(nReprog>0)sub+=`<span style="background:#EDE9FF;color:#5B4DB5;border-radius:6px;padding:1px 6px;font-size:10px">${nReprog} reprogramado${nReprog>1?'s':''}</span>`;
+    if(nReprogAuto>0)sub+=` <span style="background:#FFF3E0;color:#E65100;border-radius:6px;padding:1px 6px;font-size:10px">↻ ${nReprogAuto} não concluído${nReprogAuto>1?'s':''} de semanas anteriores</span>`;
 
     const cards=items.map(eq=>{
       const etLbl=ETAPAS_GERAL.find(e=>e.id===eq.etapa)?.label||eq.etapa;
       const isConc=eq.etapa==='pronto',atrD=(!isConc&&ehPass&&!eq._reprog)?diasAtraso(sem):0,isAtr=atrD>0;
       const prioPill=eq.prioridade&&!isConc?`<span class="prio-pill prio-${eq.prioridade}" style="font-size:9px">${prioLabel(eq.prioridade)}</span>`:'';
       const sBadge=isConc?'<span class="concluido-badge">✓ Concluído</span>':isAtr?`<span class="atraso-badge">⚠ ${atrD}d</span>`:'';
-      const reprogBadge=eq._reprog?`<span class="reprogramado-badge">↻ Reprogramado → ${semanaLabel(eq._novaSemana)}</span>`:'';
+      const reprogBadge=eq._reprog
+        ?`<span class="reprogramado-badge">↻ Reprogramado → ${semanaLabel(eq._novaSemana)}</span>`
+        :eq._reprogAuto
+          ?`<span class="reprogramado-badge" style="background:#FFF3E0;color:#E65100;border-color:#FFCC80">⏰ Não concluído — era ${semanaLabel(eq._semOrigem)}</span>`
+          :'';
       const assP=eq.assinaturas?.programacao;
       const assH=assP?`<div style="font-size:9px;color:var(--verde2);margin-top:2px">📅 ${assP.perfil} · ${assP.data}</div>`:'';
       const cliH=eq.reservado&&eq.cliente?`<div style="font-size:9px;color:var(--laranja);margin-top:2px;font-weight:600">◈ ${eq.cliente}</div>`:'';
@@ -3350,6 +3391,13 @@ async function doBaseUpdate(){
       const eraB=eq.baixado;
       eq.equipamento=n.equipamento||eq.equipamento;eq.modelo=n.modelo||eq.modelo;eq.tipo=n.tipo||eq.tipo;
       eq.baixado=false;
+      // Sincronizar reserva/cliente da base (fonte da verdade é o CSV)
+      const clienteAntes=eq.cliente;const reservadoAntes=eq.reservado;
+      eq.cliente=n.cliente||'';eq.reservado=!!n.cliente;
+      if(reservadoAntes!==eq.reservado||clienteAntes!==eq.cliente){
+        const logMsg=eq.reservado?`Reservado para: ${eq.cliente}`:(reservadoAntes?`Reserva liberada (era: ${clienteAntes})`:'');
+        if(logMsg){if(!eq.historico)eq.historico=[];eq.historico.push({from:reservadoAntes?`Reservado: ${clienteAntes}`:'Sem reserva',to:eq.reservado?`Reservado: ${eq.cliente}`:'Sem reserva',ts:agora,hora:new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),data:new Date().toLocaleDateString('pt-BR'),perfil:'sistema'});}
+      }
       if(eraB){
         registrarAlteracao('reativado',eq.id,eq.equipamento,n.oficina,user);
       }
@@ -3363,7 +3411,7 @@ async function doBaseUpdate(){
       }
       atualizados++;
     } else {
-      state[n.id]={...n,etapa:'chegada',etapa_desde:agora,prioridade:null,semana:null,semana_locked:false,obs:'',retrabalho:0,tempo_etapas:{},assinaturas:{},semana_anterior:null,etapa_interna:null,etapa_interna_desde:null,baixado:false,reservado:false,cliente:'',historico:[],dataEmbarque:''};
+      state[n.id]={...n,etapa:'chegada',etapa_desde:agora,prioridade:null,semana:null,semana_locked:false,obs:'',retrabalho:0,tempo_etapas:{},assinaturas:{},semana_anterior:null,etapa_interna:null,etapa_interna_desde:null,baixado:false,reservado:!!n.cliente,cliente:n.cliente||'',historico:[],dataEmbarque:''};
       fbLogMove({eqId:n.id,nome:n.equipamento,from:'—',to:'Chegada (novo na base)',ts:agora,hora:new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),data:new Date().toLocaleDateString('pt-BR'),perfil:user,oficina:n.oficina,visao:'base_entrada'});
       registrarAlteracao('entrada',n.id,n.equipamento,n.oficina,user);
       adicionados++;
@@ -3393,12 +3441,12 @@ function parseCSVToEquipamentos(csvText){
     const cols=lines[i].split(';').map(c=>c.replace(/^"|"$/g,'').trim());
     if(isNovoFormato){
       if(cols.length<16)continue;
-      const id=cols[2],familia=cols[5],grupo=cols[6],fabric=cols[7],modelo=cols[8],oficina=cols[10],status=cols[16];
+      const id=cols[2],familia=cols[5],grupo=cols[6],fabric=cols[7],modelo=cols[8],cliente_csv=(cols[9]||'').trim(),oficina=cols[10],status=cols[16];
       if(!id||id.startsWith('VLU'))continue;
       if(!status||EXCLUIR_STATUS_SET.has(status.trim().toLowerCase()))continue;
       if(SEM_MOTOR_SET.has(familia)||SEM_MOTOR_SET.has(grupo))continue;
       const sn=status.toLowerCase().includes('manutenç')||status.toLowerCase().includes('manutenc')?'Manutenção':'Disponível';
-      equips.push({id,equipamento:grupo||familia,modelo:`${fabric} ${modelo}`.trim(),tipo:familia,oficina,status:sn});
+      equips.push({id,equipamento:grupo||familia,modelo:`${fabric} ${modelo}`.trim(),tipo:familia,oficina,status:sn,cliente:cliente_csv,reservado:!!cliente_csv});
     } else {
       if(cols.length<16)continue;
       const id=cols[2],tipo=cols[7],equip=cols[8],modelo=cols[10],oficina=cols[12],status=cols[15];
