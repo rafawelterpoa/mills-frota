@@ -274,7 +274,9 @@ input:focus,select:focus,textarea:focus{
 .kanban-title{font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;flex-shrink:0;margin-right:4px}
 .search-box{padding:3px 8px;border:1px solid var(--borda);border-radius:5px;font-size:11px;background:#ffffff;outline:none;width:130px;color:var(--text);height:26px;flex-shrink:0}
 .search-box:focus{border-color:var(--laranja)}
-.filter-sel{padding:3px 4px;border:1px solid var(--borda);border-radius:5px;font-size:11px;background:#ffffff;outline:none;color:#374151;height:26px;min-width:0;flex-shrink:1;max-width:180px}
+.filter-sel{padding:5px 8px;border:1px solid var(--borda);border-radius:5px;font-size:12px;background:#ffffff;outline:none;color:#374151;height:auto;min-height:34px;box-sizing:border-box;min-width:150px;max-width:260px;flex-shrink:1;vertical-align:middle;cursor:pointer}
+.prog-filter-item{min-width:160px;max-width:260px}
+input.filter-sel{padding:5px 8px;height:34px}
 .filter-sel:focus{border-color:var(--laranja)}
 .kanban-layout{display:flex;gap:0;align-items:flex-start;width:100%;height:calc(100vh - 230px)}
 .kanban-board-wrap{flex:1;min-width:0;overflow-x:auto;overflow-y:hidden;padding-right:10px;height:100%}
@@ -318,10 +320,8 @@ input:focus,select:focus,textarea:focus{
 
 /* ══ PROGRAMAÇÃO ══ */
 .prog-wrap{padding:10px 16px;min-height:0}
-.prog-toolbar{display:flex;align-items:center;gap:5px;margin-bottom:8px;flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px}
-.prog-toolbar::-webkit-scrollbar{height:3px}
-.prog-toolbar::-webkit-scrollbar-thumb{background:#cbd5e0;border-radius:2px}
-.prog-filter-bar{display:flex;gap:8px;align-items:center;padding:6px 12px;background:#f7f9fc;border-radius:6px;border:1px solid var(--borda);margin-bottom:8px;flex-wrap:nowrap}
+.prog-toolbar{display:flex;align-items:flex-start;gap:6px;margin-bottom:10px;flex-wrap:wrap;padding-bottom:4px}
+.prog-filter-bar{display:flex;gap:8px;align-items:center;padding:6px 12px;background:#f7f9fc;border-radius:6px;border:1px solid var(--borda);margin-bottom:8px;flex-wrap:wrap}
 .prog-semanas{display:flex;flex-direction:column;gap:10px}
 .prog-semana{background:#ffffff;border-radius:10px;border:1px solid var(--borda);overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.05)}
 .prog-sem-hd{background:#f7f9fc;padding:9px 14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;border-bottom:1px solid var(--borda)}
@@ -693,24 +693,26 @@ input:focus,select:focus,textarea:focus{
 <!-- PROGRAMAÇÃO -->
 <div class="page" id="page-programacao">
 <div class="prog-wrap">
-  <div class="prog-toolbar">
+  <div style="display:flex;align-items:center;margin-bottom:6px">
     <span class="kanban-title">Programação de oficina</span>
-    <select class="filter-sel" id="prog-oficina-sel" onchange="renderProgramacao()"><option value="">Todas as oficinas</option></select>
-    <select class="filter-sel" id="prog-prio-sel" onchange="renderProgramacao()">
+  </div>
+  <div class="prog-toolbar">
+    <select class="filter-sel prog-filter-item" id="prog-oficina-sel" onchange="renderProgramacao()"><option value="">Todas as oficinas</option></select>
+    <select class="filter-sel prog-filter-item" id="prog-prio-sel" onchange="renderProgramacao()">
       <option value="">Todas as prioridades</option>
       <option value="critica">Crítica</option><option value="alta">Alta</option>
       <option value="media">Média</option><option value="baixa">Baixa</option>
     </select>
-    <select class="filter-sel" id="prog-tipo-sel" onchange="renderProgramacao()"><option value="">Todos os tipos</option></select>
-    <select class="filter-sel" id="prog-semana-vis" onchange="renderProgramacao()">
+    <select class="filter-sel prog-filter-item" id="prog-tipo-sel" onchange="renderProgramacao()"><option value="">Todos os tipos</option></select>
+    <select class="filter-sel prog-filter-item" id="prog-semana-vis" onchange="renderProgramacao()">
       <option value="futuras">Apenas semanas futuras</option>
       <option value="todas">Todas as semanas</option>
       <option value="4semanas">Últimas 4 semanas</option>
       <option value="atual">Só semana atual</option>
     </select>
-    <select class="filter-sel" id="prog-cliente-sel" onchange="renderProgramacao()"><option value="">Todos os clientes</option></select>
-    <input type="date" class="filter-sel" id="prog-embarque-ate" onchange="renderProgramacao()" title="Embarque até" style="width:130px">
-    <button class="btn btn-ghost btn-sm" onclick="document.getElementById('prog-embarque-ate').value='';renderProgramacao()" title="Limpar filtro de embarque">✕ Data</button>
+    <select class="filter-sel prog-filter-item" id="prog-cliente-sel" onchange="renderProgramacao()"><option value="">Todos os clientes</option></select>
+    <input type="date" class="filter-sel" id="prog-embarque-ate" onchange="renderProgramacao()" title="Embarque até" style="width:140px;flex-shrink:0">
+    <button class="btn btn-ghost btn-sm" onclick="document.getElementById('prog-embarque-ate').value='';renderProgramacao()" title="Limpar filtro de embarque" style="flex-shrink:0;white-space:nowrap">✕ Data</button>
   </div>
   <div class="prog-filter-bar" id="prog-stats-bar" style="display:none">
     <span id="prog-stats-text" style="font-size:12px;color:var(--text2)"></span>
@@ -3391,9 +3393,9 @@ function parseCSVToEquipamentos(csvText){
     const cols=lines[i].split(';').map(c=>c.replace(/^"|"$/g,'').trim());
     if(isNovoFormato){
       if(cols.length<16)continue;
-      const id=cols[2],familia=cols[5],grupo=cols[6],fabric=cols[7],modelo=cols[8],oficina=cols[9],status=cols[15];
+      const id=cols[2],familia=cols[5],grupo=cols[6],fabric=cols[7],modelo=cols[8],oficina=cols[10],status=cols[16];
       if(!id||id.startsWith('VLU'))continue;
-      if(EXCLUIR_STATUS_SET.has(status.toLowerCase())||!status)continue;
+      if(!status||EXCLUIR_STATUS_SET.has(status.trim().toLowerCase()))continue;
       if(SEM_MOTOR_SET.has(familia)||SEM_MOTOR_SET.has(grupo))continue;
       const sn=status.toLowerCase().includes('manutenç')||status.toLowerCase().includes('manutenc')?'Manutenção':'Disponível';
       equips.push({id,equipamento:grupo||familia,modelo:`${fabric} ${modelo}`.trim(),tipo:familia,oficina,status:sn});
@@ -3478,18 +3480,6 @@ function renderAlteracoes(){
             <div style="font-size:9px;color:var(--text3);margin-top:3px">${a.hora} · ${a.data}</div>
           </div>`).join('')}
         </div>
-        <div class="graf-bar-title" style="margin-top:16px;margin-bottom:4px">Reprogramações de liberação <span style="color:var(--terra);font-size:10px;font-weight:400">${comReprog.length} equip. (${txReprogOf}% do total c/ previsão)</span></div>
-        <div style="display:flex;flex-wrap:wrap;gap:5px">${comReprog.length?comReprog.slice(0,10).map(eq=>{
-          const dtOrig=eq.prevLiberacaoOriginal?new Date(eq.prevLiberacaoOriginal+'T12:00:00').toLocaleDateString('pt-BR'):'—';
-          const dtAtual=eq.prevLiberacao?new Date(eq.prevLiberacao+'T12:00:00').toLocaleDateString('pt-BR'):'—';
-          const diasTot=eq.reprogramacoes&&eq.reprogramacoes.length?eq.reprogramacoes.reduce((s,r)=>s+(r.dias||0),0):0;
-          return`<div style="background:#fff5f0;border-radius:6px;border:1px solid var(--borda);border-left:3px solid var(--terra);padding:6px 10px;min-width:170px" onclick="openCardModal('${eq.id}','geral')" style="cursor:pointer">
-            <div style="font-size:9px;font-weight:700;color:var(--terra)">${eq.id} — ↻ ${eq.nReprog||0}x</div>
-            <div style="font-size:10px;color:var(--text2);margin:2px 0">${eq.equipamento.substring(0,28)}</div>
-            <div style="font-size:9px;color:var(--text3)">Original: ${dtOrig}</div>
-            <div style="font-size:9px;color:var(--terra);font-weight:600">Atual: ${dtAtual} (+${diasTot}d)</div>
-          </div>`;
-        }).join(''):'<div style="font-size:11px;color:var(--text3);padding:8px">Nenhuma reprogramação.</div>'}</div>
       </div>
     </div>`
   };
