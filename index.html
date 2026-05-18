@@ -478,16 +478,13 @@ input:focus,select:focus,textarea:focus{
 .prog-linha-filters{display:flex;gap:4px;align-items:center;flex-wrap:nowrap;flex:1}
 .prog-linha-filters select{padding:2px 4px;border:1px solid var(--borda);border-radius:4px;font-size:10px;background:#fff;outline:none;color:#374151;height:22px;flex-shrink:1;min-width:0;max-width:140px}
 .prog-linha-filters .btn{height:22px;font-size:10px;padding:1px 7px;flex-shrink:0}
-/* Desempenho badge no cabeçalho da semana */
-.sem-desempenho{display:inline-flex;align-items:center;gap:4px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:6px;padding:1px 8px;font-size:10px;font-weight:700;color:#0369a1;margin-left:4px}
-.sem-desempenho.alta{background:#f0fdf4;border-color:#bbf7d0;color:#15803d}
-.sem-desempenho.media{background:#fffbeb;border-color:#fde68a;color:#92400e}
-.sem-desempenho.baixa{background:#fef2f2;border-color:#fecaca;color:#991b1b}
+/* Aderência badge no cabeçalho da semana */
+.sem-aderencia{display:inline-flex;align-items:center;gap:4px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:6px;padding:1px 8px;font-size:10px;font-weight:700;color:#0369a1;margin-left:4px}
+.sem-aderencia.alta{background:#f0fdf4;border-color:#bbf7d0;color:#15803d}
+.sem-aderencia.media{background:#fffbeb;border-color:#fde68a;color:#92400e}
+.sem-aderencia.baixa{background:#fef2f2;border-color:#fecaca;color:#991b1b}
 /* Fix graficos container no flex */
 #prog-graficos .prog-dashboard .graf-section{min-width:220px;max-width:260px}
-
-/* ══ HOME NOVO LAYOUT — 4 grandes cards ══ */
-
 </style>
 </head>
 <body>
@@ -522,7 +519,7 @@ input:focus,select:focus,textarea:focus{
     <span class="hdate" id="header-date"></span>
     <span id="sync-status" style="font-size:10px;color:#12c47e;margin-right:4px">● Conectando...</span>
     <span class="huser" id="header-user"></span>
-    <button class="btn btn-outline btn-sm" onclick="solicitarRelatorio()" title="Gerar relatório">📄 Relatório</button>
+    <button class="btn btn-outline btn-sm" onclick="solicitarRelatorio()" title="Gerar relatório diário (senha master)">📄 Relatório</button>
     <button class="btn btn-orange btn-sm" onclick="solicitarNovaBase()">Nova base</button>
     <button class="btn btn-outline btn-sm" onclick="doLogout()">Sair</button>
   </div>
@@ -597,7 +594,7 @@ input:focus,select:focus,textarea:focus{
       <div class="home-area-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/><circle cx="12" cy="16" r="1" fill="currentColor"/></svg></div>
       <div class="home-area-title">Implantação</div>
       <div class="home-area-desc">PMO de implantação — projetos, kanban de frotas e visão comercial</div>
-      <div style="margin-top:8px;font-size:9px;font-weight:700;color:#c05a10;background:rgba(243,112,33,.12);border:1px solid rgba(243,112,33,.25);border-radius:4px;padding:2px 7px;display:inline-block">🔒 Acesso restrito</div>
+      <div style="margin-top:8px;font-size:9px;font-weight:700;color:rgba(255,255,255,.5);background:rgba(243,112,33,.12);border:1px solid rgba(243,112,33,.25);border-radius:4px;padding:2px 7px;display:inline-block">🔒 Acesso restrito</div>
     </div>
     <div class="home-area-card" onclick="abrirMedicao()" style="border-color:rgba(22,86,176,.3);background:linear-gradient(160deg,#f5f8ff 0%,#eff4ff 100%)">
       <div class="home-area-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="9" y1="7" x2="15" y2="7"/><line x1="9" y1="11" x2="15" y2="11"/><line x1="9" y1="15" x2="13" y2="15"/></svg></div>
@@ -605,16 +602,12 @@ input:focus,select:focus,textarea:focus{
       <div class="home-area-desc">Kanban de Boletins de Medição — acompanhamento e aprovações</div>
       <div style="margin-top:8px;font-size:9px;font-weight:700;color:#1656b0;background:#e8f0fb;border:1px solid #b3ccf5;border-radius:4px;padding:2px 7px;display:inline-block">🔒 Login próprio</div>
     </div>
-    <div class="home-area-card" onclick="abrirConfiabilidade()" style="border-color:rgba(139,92,246,.3);background:linear-gradient(160deg,#faf5ff 0%,#f3e8ff 100%)">
-      <div class="home-area-icon" style="color:#7c3aed"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L3 7v6c0 5 4 9.3 9 10.3C17 22.3 21 18 21 13V7L12 2z"/><polyline points="9 12 11 14 15 10"/></svg></div>
-      <div class="home-area-title" style="color:#6d28d9">Confiabilidade</div>
-      <div class="home-area-desc">Indicadores de confiabilidade, MTBF, MTTR e disponibilidade da frota</div>
-      <div style="margin-top:8px;font-size:9px;font-weight:700;color:#6d28d9;background:#ede9fe;border:1px solid #c4b5fd;border-radius:4px;padding:2px 7px;display:inline-block" id="conf-badge">🔒 Restrito</div>
-    </div>
   </div>
 
   <div class="home-section-label">Oficinas — acesso direto ao Kanban</div>
-  <div class="home-oficinas-grid" id="home-oficinas-grid"></div>
+  <div class="home-oficinas-grid" id="home-oficinas-grid">
+    <!-- preenchido dinamicamente -->
+  </div>
 </div>
 </div>
 
@@ -1346,7 +1339,7 @@ function fbListen(){
             if((!state[id].ordens||state[id].ordens.length===0)&&ordensAntes.length>0)state[id].ordens=ordensAntes;
           }
           else if(d.id&&d.equipamento&&!d.baixado){
-            state[id]={id:d.id,equipamento:d.equipamento,modelo:d.modelo||'',tipo:d.tipo||'',oficina:d.oficina||'',status:d.status||'Disponível',etapa:d.etapa||'chegada',etapa_desde:d.etapa_desde||Date.now(),prioridade:d.prioridade||null,semana:d.semana||null,semana_locked:d.semana_locked||false,obs:d.obs||'',retrabalho:d.retrabalho||0,tempo_etapas:d.tempo_etapas||{},assinaturas:d.assinaturas||{},semana_anterior:d.semana_anterior||null,etapa_interna:d.etapa_interna||null,etapa_interna_desde:d.etapa_interna_desde||null,baixado:false,reservado:d.reservado||false,cliente:d.cliente||'',dataEmbarque:d.dataEmbarque||'',historico:d.historico||[],semana_conclusao:d.semana_conclusao||null,data_conclusao:d.data_conclusao||''};
+            state[id]={id:d.id,equipamento:d.equipamento,modelo:d.modelo||'',tipo:d.tipo||'',oficina:d.oficina||'',status:d.status||'Disponível',etapa:d.etapa||'chegada',etapa_desde:d.etapa_desde||Date.now(),prioridade:d.prioridade||null,semana:d.semana||null,semana_locked:d.semana_locked||false,obs:d.obs||'',retrabalho:d.retrabalho||0,tempo_etapas:d.tempo_etapas||{},assinaturas:d.assinaturas||{},semana_anterior:d.semana_anterior||null,etapa_interna:d.etapa_interna||null,etapa_interna_desde:d.etapa_interna_desde||null,baixado:false,reservado:d.reservado||false,cliente:d.cliente||'',dataEmbarque:d.dataEmbarque||'',historico:d.historico||[]};
           }
         });
       }
@@ -1534,545 +1527,292 @@ function gerarRelatorio(){
   const manut=ativos.filter(e=>e.etapa==='manutencao'||e.etapa==='cl_entrada'||e.etapa==='cl_saida').length;
   const res=ativos.filter(e=>e.reservado).length;
   const prog=ativos.filter(e=>e.semana).length;
+  const retrab=ativos.filter(e=>e.retrabalho>0).length;
+  const dp=Math.round(disp/total*100),mp=Math.round(manut/total*100);
   const semAtual=semanaAtual();
 
-  // Oficinas
+  // Etapas
+  const cntEt={};ETAPAS_GERAL.forEach(e=>cntEt[e.id]={label:e.label,n:0,cor:CORES_ET_G[e.id]||'#888'});
+  ativos.forEach(e=>{if(cntEt[e.etapa])cntEt[e.etapa].n++;});
+
+  // Por oficina
   const oficinas=[...new Set(ativos.map(e=>e.oficina).filter(Boolean))].sort();
-
-  // ── SEMANAS: atual + próximas 8 para gráfico previsto/realizado ──
-  const idxAtual=SEMANAS_LISTA.findIndex(s=>s.value===semAtual);
-  const semsRange=SEMANAS_LISTA.slice(Math.max(0,idxAtual-4),idxAtual+9);
-
-  // Previsto e realizado por semana
-  const byWeek={};
-  semsRange.forEach(s=>{byWeek[s.value]={label:s.label.split(' (')[0],prev:0,real:0,atraso:0};});
-  ativos.filter(e=>e.semana).forEach(e=>{
-    if(byWeek[e.semana])byWeek[e.semana].prev++;
-    if(e.etapa==='pronto'){
-      const sc=e.semana_conclusao||e.semana;
-      if(byWeek[sc])byWeek[sc].real++;
-    }
-    if(e.etapa!=='pronto'&&e.semana<semAtual&&byWeek[e.semana])byWeek[e.semana].atraso++;
-  });
-  const semKeys=Object.keys(byWeek).sort();
-  const maxPR=Math.max(...semKeys.map(k=>byWeek[k].prev),1);
-
-  // Previsto/realizado por oficina
-  const byOfWeek={};
+  const porOf={};
   oficinas.forEach(of=>{
-    byOfWeek[of]={};
-    semsRange.forEach(s=>{byOfWeek[of][s.value]={prev:0,real:0};});
-    ativos.filter(e=>e.oficina===of&&e.semana).forEach(e=>{
-      if(byOfWeek[of][e.semana])byOfWeek[of][e.semana].prev++;
-      if(e.etapa==='pronto'){
-        const sc=e.semana_conclusao||e.semana;
-        if(byOfWeek[of][sc])byOfWeek[of][sc].real++;
-      }
-    });
+    const lst=ativos.filter(e=>e.oficina===of);
+    const nd=lst.filter(e=>e.etapa==='pronto'||e.etapa==='chegada').length;
+    const nm=lst.filter(e=>e.etapa==='manutencao'||e.etapa==='cl_entrada'||e.etapa==='cl_saida').length;
+    porOf[of]={total:lst.length,disp:nd,manut:nm,pct:lst.length?Math.round(nd/lst.length*100):0};
   });
 
-  // ── ATRASADOS: por semana E por data de liberação ──
-  const atrasados=ativos.filter(e=>{
-    if(e.etapa==='pronto')return false;
-    if(e.semana&&e.semana<semAtual)return true;
-    if(e.prevLiberacao&&new Date(e.prevLiberacao+'T23:59:59')<hoje)return true;
-    return false;
-  }).sort((a,b)=>{
-    const dA=a.prevLiberacao?new Date(a.prevLiberacao+'T12:00:00'):new Date(0);
-    const dB=b.prevLiberacao?new Date(b.prevLiberacao+'T12:00:00'):new Date(0);
-    return dA-dB;
+  // Embarques próximos 7 dias
+  const proxEmb=ativos.filter(e=>e.dataEmbarque).map(e=>{
+    const dt=new Date(e.dataEmbarque+'T12:00:00');
+    const dias=Math.ceil((dt-hoje)/(1000*60*60*24));
+    return{...e,diasEmb:dias,dtFmt:dt.toLocaleDateString('pt-BR')};
+  }).filter(e=>e.diasEmb<=7&&e.diasEmb>=-1).sort((a,b)=>a.diasEmb-b.diasEmb);
+
+  // Atrasados
+  const atrasados=ativos.filter(e=>e.semana&&e.semana<semAtual&&e.etapa!=='pronto');
+
+  // Críticos/Alta prioridade
+  const criticos=ativos.filter(e=>e.prioridade==='critica'||e.prioridade==='alta').sort((a,b)=>{
+    const o={critica:0,alta:1};return(o[a.prioridade]??2)-(o[b.prioridade]??2);
   });
-  const atrasadosPorOf={};
-  oficinas.forEach(of=>{atrasadosPorOf[of]=atrasados.filter(e=>e.oficina===of);});
 
-  // ── PRÓXIMAS 2 SEMANAS ──
-  const proxSem1=SEMANAS_LISTA[idxAtual]||SEMANAS_LISTA[0];
-  const proxSem2=SEMANAS_LISTA[idxAtual+1]||proxSem1;
-  const eqSem1=ativos.filter(e=>e.semana===proxSem1.value);
-  const eqSem2=ativos.filter(e=>e.semana===proxSem2.value);
-
-  // ── PROGRAMAÇÃO SEMANAL CONSOLIDADA (todas as semanas com dados) ──
-  const semsComDados=semsRange.filter(s=>ativos.some(e=>e.semana===s.value));
-
-  // ── HELPERS ──
-  const logoSrc=document.querySelector('.hlogo')?.src||'';
-  const dtStr=hoje.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-  const hrStr=hoje.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-  const usuario=currentUser?.nome||'sistema';
-
-  function header(titulo,sub,pag,total){
-    return`<div class="header">
-      <div style="display:flex;align-items:center;gap:12px">
-        <img src="${logoSrc}" class="logo" alt="Mills">
-        <div><div class="header-title">${titulo}</div><div class="header-sub">${sub}</div></div>
-      </div>
-      <div class="header-right">
-        <div style="font-size:13px;font-weight:700;color:#004042">${dtStr}</div>
-        <div style="font-size:10px;color:#888;margin-top:2px">Gerado ${hrStr} — ${usuario} &nbsp;|&nbsp; Pág. ${pag} de ${total}</div>
-      </div>
-    </div>`;
-  }
-  function footer(pag,total){
-    return`<div class="footer">
-      <div class="footer-text">Mills Estruturas e Serviços — Uso interno</div>
-      <div class="footer-text">Página ${pag} de ${total}</div>
-      <div class="footer-text">${hoje.toLocaleDateString('pt-BR')}</div>
-    </div>`;
-  }
-
-  // ── GRÁFICO DE BARRAS SVG previsto×realizado por semana ──
-  function grafBarSvg(semKeysG,dataObj,maxVal,w,h){
-    const pad={l:30,r:8,t:14,b:28};
-    const cW=w-pad.l-pad.r,cH=h-pad.t-pad.b;
-    const n=semKeysG.length,gW=Math.floor(cW/n),bW=Math.max(4,Math.floor(gW*0.35));
-    let svg=`<svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg" style="display:block">`;
-    // Y grid
-    for(let i=0;i<=4;i++){
-      const y=pad.t+cH*(1-i/4);
-      const val=Math.round(maxVal*i/4);
-      svg+=`<line x1="${pad.l}" y1="${y}" x2="${w-pad.r}" y2="${y}" stroke="#E8ECF0" stroke-width="1"/>`;
-      svg+=`<text x="${pad.l-3}" y="${y+3}" text-anchor="end" font-size="7" fill="#aaa">${val}</text>`;
-    }
-    semKeysG.forEach((k,i)=>{
-      const d=dataObj[k];
-      const xC=pad.l+i*gW+gW/2;
-      const yP=pad.t+cH*(1-d.prev/maxVal);
-      const yR=pad.t+cH*(1-d.real/maxVal);
-      const hP=cH*(d.prev/maxVal),hR=cH*(d.real/maxVal);
-      // Previsto bar
-      svg+=`<rect x="${xC-bW-1}" y="${yP}" width="${bW}" height="${hP}" fill="#93c5fd" rx="2"/>`;
-      // Realizado bar
-      svg+=`<rect x="${xC+1}" y="${yR}" width="${bW}" height="${hR}" fill="#34d399" rx="2"/>`;
-      // Desempenho %
-      if(d.prev>0&&(d.real>0||(dataObj[k]&&k<=semAtual))){
-        const pct=Math.round(d.real/d.prev*100);
-        const cor=pct>=80?'#15803d':pct>=50?'#92400e':'#b91c1c';
-        svg+=`<text x="${xC}" y="${Math.min(yP,yR)-3}" text-anchor="middle" font-size="7" font-weight="bold" fill="${cor}">${pct}%</text>`;
-      }
-      // Label
-      const lbl=dataObj[k].label||k.split('W')[1]||k;
-      svg+=`<text x="${xC}" y="${h-pad.b+10}" text-anchor="middle" font-size="7" fill="${k===semAtual?'#F37021':'#888'}" font-weight="${k===semAtual?'bold':'normal'}">${lbl.replace('Sem ','S')}</text>`;
-      if(d.prev>0)svg+=`<text x="${xC-bW/2-1}" y="${yP-2}" text-anchor="middle" font-size="7" fill="#3b82f6">${d.prev}</text>`;
-      if(d.real>0)svg+=`<text x="${xC+bW/2+1}" y="${yR-2}" text-anchor="middle" font-size="7" fill="#10b981">${d.real}</text>`;
-    });
-    // Legend
-    svg+=`<rect x="${pad.l}" y="${pad.t-10}" width="8" height="8" fill="#93c5fd" rx="1"/>
-    <text x="${pad.l+10}" y="${pad.t-3}" font-size="8" fill="#555">Previsto</text>
-    <rect x="${pad.l+60}" y="${pad.t-10}" width="8" height="8" fill="#34d399" rx="1"/>
-    <text x="${pad.l+70}" y="${pad.t-3}" font-size="8" fill="#555">Realizado</text>`;
-    svg+='</svg>';
-    return svg;
-  }
-
-  // ── TABELA PROGRAMAÇÃO POR OFICINA (uma semana) ──
-  function tabelaProgOf(semVal,semLbl){
-    const eqs=ativos.filter(e=>e.semana===semVal);
-    if(!eqs.length)return`<div style="color:#999;font-size:11px;padding:8px">Nenhum equipamento programado.</div>`;
-    let html=`<div style="font-size:11px;font-weight:700;color:#004042;margin-bottom:6px">
-      ${semLbl} — ${eqs.length} equipamentos
-      <span style="color:#1D9E75;margin-left:8px">${eqs.filter(e=>e.etapa==='pronto').length} concluídos</span>
-      <span style="color:#C24003;margin-left:8px">${eqs.filter(e=>e.etapa!=='pronto'&&e.semana<semAtual).length} atrasados</span>
-    </div>`;
-    oficinas.forEach(of=>{
-      const ofs=eqs.filter(e=>e.oficina===of);
-      if(!ofs.length)return;
-      const nConc=ofs.filter(e=>e.etapa==='pronto').length;
-      const aderOf=Math.round(nConc/ofs.length*100);
-      const corAder=aderOf>=80?'#15803d':aderOf>=50?'#92400e':'#b91c1c';
-      html+=`<div style="margin-bottom:10px">
-        <div style="font-size:10px;font-weight:700;color:#004042;background:#F0F4F8;padding:3px 8px;border-radius:4px;display:flex;justify-content:space-between;align-items:center">
-          <span>🏭 ${of}</span>
-          <span style="font-size:9px">
-            <span style="color:#1D9E75">${nConc} ✓</span>
-            <span style="color:#888"> de ${ofs.length}</span>
-            <span style="color:${corAder};font-weight:700;margin-left:5px">${aderOf}% desemp.</span>
-          </span>
-        </div>
-        <table style="width:100%;border-collapse:collapse;font-size:10px">
-          <thead><tr style="background:#F8FAFB">
-            <th style="padding:3px 6px;text-align:left;border-bottom:1px solid #E2E8F0">ID</th>
-            <th style="padding:3px 6px;text-align:left;border-bottom:1px solid #E2E8F0">Equipamento</th>
-            <th style="padding:3px 6px;text-align:left;border-bottom:1px solid #E2E8F0">Tipo</th>
-            <th style="padding:3px 6px;text-align:left;border-bottom:1px solid #E2E8F0">Etapa</th>
-            <th style="padding:3px 6px;text-align:center;border-bottom:1px solid #E2E8F0">Prev. Lib.</th>
-            <th style="padding:3px 6px;text-align:left;border-bottom:1px solid #E2E8F0">Cliente</th>
-          </tr></thead>
-          <tbody>
-          ${ofs.sort((a,b)=>{
-            if(a.etapa==='pronto'&&b.etapa!=='pronto')return 1;
-            if(a.etapa!=='pronto'&&b.etapa==='pronto')return -1;
-            return 0;
-          }).map(e=>{
-            const isConc=e.etapa==='pronto';
-            const isAtr=!isConc&&(e.prevLiberacao&&new Date(e.prevLiberacao+'T23:59:59')<hoje);
-            const rowBg=isConc?'#F0FDF4':isAtr?'#FEF2F2':'';
-            const etLbl=ETAPAS_GERAL.find(x=>x.id===e.etapa)?.label||e.etapa;
-            const prevLib=e.prevLiberacao?new Date(e.prevLiberacao+'T12:00:00').toLocaleDateString('pt-BR'):'—';
-            const prevLibCor=isAtr?'#C24003':'#333';
-            return`<tr style="border-bottom:1px solid #F0F4F8;background:${rowBg}">
-              <td style="padding:3px 6px;font-weight:600;color:#004042">${e.id}</td>
-              <td style="padding:3px 6px;color:#333;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e.equipamento}</td>
-              <td style="padding:3px 6px;color:#666">${e.tipo||'—'}</td>
-              <td style="padding:3px 6px;color:${isConc?'#1D9E75':isAtr?'#C24003':'#333'};font-weight:${isConc||isAtr?'600':'400'}">${isConc?'✓ '+etLbl:isAtr?'⚠ '+etLbl:etLbl}</td>
-              <td style="padding:3px 6px;text-align:center;color:${prevLibCor};font-weight:${isAtr?'700':'400'}">${prevLib}</td>
-              <td style="padding:3px 6px;color:#F37021">${e.reservado&&e.cliente?'◈ '+e.cliente:'Estoque'}</td>
-            </tr>`;
-          }).join('')}
-          </tbody>
-        </table>
-      </div>`;
-    });
-    return html;
-  }
-
-  // ═══════════════════════════════════════════
-  // MONTAR HTML DAS 4 PÁGINAS
-  // ═══════════════════════════════════════════
-  const totalPags=4;
-  const ESTILO=`
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;background:#F4F6F9;color:#1a1a1a;font-size:11px}
-  @page{size:A4 landscape;margin:10mm 12mm}
-  @media print{
-    .no-print{display:none!important}
-    .page-break{page-break-before:always}
-    body{background:#fff;font-size:10px}
-    .page{box-shadow:none!important;margin:0!important;padding:10mm 12mm!important}
-  }
-  .page{width:277mm;min-height:190mm;padding:8mm 12mm;background:#fff;position:relative;margin-bottom:16px;box-shadow:0 2px 12px rgba(0,0,0,.08)}
-  .header{display:flex;align-items:center;justify-content:space-between;padding-bottom:8px;border-bottom:3px solid #F37021;margin-bottom:12px}
-  .logo{height:30px}
-  .header-right{text-align:right}
-  .header-title{font-size:16px;font-weight:700;color:#004042}
-  .header-sub{font-size:9px;color:#888;margin-top:2px}
-  .section{margin-bottom:12px}
-  .section-title{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#888;padding-bottom:4px;border-bottom:1.5px solid #F37021;margin-bottom:8px}
-  .kpi-row{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:12px}
-  .kpi{background:#F8F9FC;border-radius:6px;padding:8px 10px;border-left:3px solid #F37021}
-  .kpi.verde{border-left-color:#1D9E75}.kpi.terra{border-left-color:#C24003}.kpi.roxo{border-left-color:#7F77DD}
-  .kpi-label{font-size:8px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#888;margin-bottom:2px}
-  .kpi-value{font-size:20px;font-weight:700;color:#1a1a1a;line-height:1}
-  .kpi-value.orange{color:#F37021}.kpi-value.verde{color:#1D9E75}.kpi-value.terra{color:#C24003}
-  .kpi-sub{font-size:8px;color:#888;margin-top:2px}
-  table{width:100%;border-collapse:collapse}
-  th{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#888;padding:4px 6px;background:#F8FAFB;border-bottom:1.5px solid #E0D9C8;text-align:left}
-  td{padding:3px 6px;font-size:10px;border-bottom:1px solid #F0EDE8}
-  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
-  .footer{position:absolute;bottom:6mm;left:12mm;right:12mm;display:flex;justify-content:space-between;align-items:center;padding-top:5px;border-top:1px solid #E0D9C8}
-  .footer-text{font-size:8px;color:#aaa}
-  .alert-row{background:#FFF5F3}
-  .no-print{padding:12px 16px;background:#004042;display:flex;gap:8px;position:sticky;top:0;z-index:100}
-  .btn-print{padding:8px 20px;background:#F37021;color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer}
-  .btn-close{padding:8px 16px;background:transparent;color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:6px;font-size:13px;cursor:pointer}
-  .badge-ok{background:#DCFCE7;color:#15803d;padding:1px 5px;border-radius:3px;font-size:8px;font-weight:700}
-  .badge-atr{background:#FEE2E2;color:#b91c1c;padding:1px 5px;border-radius:3px;font-size:8px;font-weight:700}
-  .badge-warn{background:#FEF9C3;color:#92400e;padding:1px 5px;border-radius:3px;font-size:8px;font-weight:700}
-  `;
-
-  // ──────────────────────────────────────────────
-  // PÁG 1: PROGRAMAÇÃO SEMANAL CONSOLIDADA
-  // ──────────────────────────────────────────────
-  const semAtualInfo=SEMANAS_LISTA.find(s=>s.value===semAtual);
+  // Programação semana atual
   const semAtualEquips=ativos.filter(e=>e.semana===semAtual);
-  const semAtualLbl=semAtualInfo?.label||semAtual;
-  const nConc1=semAtualEquips.filter(e=>e.etapa==='pronto').length;
-  const nAtr1=semAtualEquips.filter(e=>e.etapa!=='pronto'&&(e.semana<semAtual||(e.prevLiberacao&&new Date(e.prevLiberacao+'T23:59:59')<hoje))).length;
-  const aderGeral=semAtualEquips.length?Math.round(nConc1/semAtualEquips.length*100):0;
+  const semLabel=SEMANAS_LISTA.find(s=>s.value===semAtual)?.label||semAtual;
 
-  // KPIs consolidados de todas as semanas com dados
-  const totalProg=ativos.filter(e=>e.semana).length;
-  const totalConc=ativos.filter(e=>e.etapa==='pronto'&&e.semana).length;
-  const totalAtr=atrasados.length;
+  // Por cliente
+  const porCli={};ativos.filter(e=>e.reservado&&e.cliente).forEach(e=>{porCli[e.cliente]=(porCli[e.cliente]||0)+1;});
+  const topCli=Object.entries(porCli).sort((a,b)=>b[1]-a[1]).slice(0,8);
 
-  // Tabela resumo por semana (todas visíveis no range)
-  const resumoSemanas=(()=>{
-    const rows=semsComDados.map(s=>{
-      const eqs=ativos.filter(e=>e.semana===s.value);
-      const conc=eqs.filter(e=>e.etapa==='pronto').length;
-      const atr=eqs.filter(e=>e.etapa!=='pronto'&&(s.value<semAtual||(e.prevLiberacao&&new Date(e.prevLiberacao+'T23:59:59')<hoje))).length;
-      const ader=eqs.length?Math.round(conc/eqs.length*100):0;
-      const corAder=ader>=80?'#15803d':ader>=50?'#92400e':'#b91c1c';
-      // Semana atual: mostra desempenho parcial; passada: desempenho final; futura: só "prev."
-      const isPass=s.value<semAtual, isAtual=s.value===semAtual;
-      const badge=isAtual
-        ?`<span class="badge-warn">${ader}% ▶</span>`
-        :isPass
-          ?`<span class="badge-ok" style="color:${corAder};background:${ader>=80?'#dcfce7':ader>=50?'#fef9c3':'#fee2e2'}">${ader}%</span>`
-          :'';
-      return{s,eqs,conc,atr,ader,badge,isPass,isAtual};
-    });
-    // Totais
-    const totPrev=rows.reduce((s,r)=>s+r.eqs.length,0);
-    const totConc=rows.reduce((s,r)=>s+r.conc,0);
-    const totAtr=rows.reduce((s,r)=>s+r.atr,0);
-    const totAder=totPrev>0?Math.round(totConc/totPrev*100):0;
-    const corTotAder=totAder>=80?'#15803d':totAder>=50?'#92400e':'#b91c1c';
-    const totOf=oficinas.map(of=>{
-      const n=rows.reduce((s,r)=>s+r.eqs.filter(e=>e.oficina===of).length,0);
-      return`<td style="text-align:center;font-weight:700;color:${n?'#004042':'#ccc'};background:#F0F4F8">${n||'—'}</td>`;
-    }).join('');
-    const rowsHtml=rows.map(({s,eqs,conc,atr,ader,badge,isPass,isAtual})=>`
-      <tr style="background:${isAtual?'#FFFBEB':''}">
-        <td style="font-weight:600;color:#004042;white-space:nowrap">${s.label.split(' (')[0]}${isAtual?' ◀':''}</td>
-        <td style="text-align:center;font-weight:700">${eqs.length}</td>
-        <td style="text-align:center;color:#1D9E75;font-weight:${conc?'700':'400'}">${conc}</td>
-        <td style="text-align:center;color:${atr?'#C24003':'#999'};font-weight:${atr?'700':'400'}">${atr}</td>
-        <td style="text-align:center">${badge||'—'}</td>
-        ${oficinas.map(of=>{const n=eqs.filter(e=>e.oficina===of).length;return`<td style="text-align:center;color:${n?'#004042':'#ccc'}">${n||'—'}</td>`;}).join('')}
-      </tr>`).join('');
-    const totalRow=`
-      <tr style="background:#F0F4F8;border-top:2px solid #CBD5E0">
-        <td style="font-weight:700;color:#004042">TOTAL</td>
-        <td style="text-align:center;font-weight:700;background:#F0F4F8">${totPrev}</td>
-        <td style="text-align:center;font-weight:700;color:#1D9E75;background:#F0F4F8">${totConc}</td>
-        <td style="text-align:center;font-weight:700;color:${totAtr?'#C24003':'#999'};background:#F0F4F8">${totAtr}</td>
-        <td style="text-align:center;background:#F0F4F8"><span style="font-weight:700;color:${corTotAder};background:${totAder>=80?'#dcfce7':totAder>=50?'#fef9c3':'#fee2e2'};padding:1px 6px;border-radius:3px">${totAder}%</span></td>
-        ${totOf}
-      </tr>`;
-    return rowsHtml+totalRow;
-  })();
+  // Movimentações 24h
+  const h24=Date.now()-86400000;
+  const movs24=alteracoesBase.filter(a=>a.ts>=h24);
 
-  // Pre-compute KPI taxa values — APENAS ACUMULADO (semanas passadas + atual, sem futuras)
-  const eqsAcumulados=ativos.filter(e=>e.semana&&e.semana<=semAtual); // só até semana atual
-  const totalAcum=eqsAcumulados.length||1;
-  // Taxa de conclusão = entregues (pronto) / total programados até hoje
-  const concAcum=eqsAcumulados.filter(e=>e.etapa==='pronto').length;
-  const txConc=Math.round(concAcum/totalAcum*100);
-  // Taxa de atraso = (atrasados abertos + concluídos fora da semana) / total acumulado
-  const atrasadosComConc=eqsAcumulados.filter(e=>{
-    if(e.etapa==='pronto'&&e.semana_conclusao&&e.semana_conclusao>e.semana)return true;
-    if(e.etapa!=='pronto'&&(e.semana<semAtual||(e.prevLiberacao&&new Date(e.prevLiberacao+'T23:59:59')<hoje)))return true;
-    return false;
-  }).length;
-  const txAtr=Math.round(atrasadosComConc/totalAcum*100);
-  const corConc=txConc>=80?'#15803d':txConc>=50?'#d97706':'#b91c1c';
-  const corAtr=txAtr<=10?'#15803d':txAtr<=25?'#d97706':'#b91c1c';
-  // Sub-labels descritivos
-  const subConc=concAcum+' entregues / '+totalAcum+' acumulados';
-  const subAtr=atrasadosComConc+' atrasados / '+totalAcum+' acumulados';
-
-  const PAG1=`
-  <div class="page">
-    ${header('Programação Semanal das Oficinas','Consolidado por semana — Kanban Mills',1,totalPags)}
-    <div class="kpi-row">
-        <div class="kpi"><div class="kpi-label">Total frota</div><div class="kpi-value">${ativos.length}</div><div class="kpi-sub">equipamentos ativos</div></div>
-        <div class="kpi verde"><div class="kpi-label">Disponíveis</div><div class="kpi-value verde">${disp}</div><div class="kpi-sub">${Math.round(disp/total*100)}% da frota</div></div>
-        <div class="kpi terra"><div class="kpi-label">Em manutenção</div><div class="kpi-value terra">${manut}</div><div class="kpi-sub">${Math.round(manut/total*100)}% da frota</div></div>
-        <div class="kpi roxo"><div class="kpi-label">Programados</div><div class="kpi-value" style="color:#7F77DD">${totalProg}</div><div class="kpi-sub">com semana definida</div></div>
-        <div class="kpi" style="border-left-color:${corConc}"><div class="kpi-label">Taxa de Conclusão</div><div class="kpi-value" style="color:${corConc}">${txConc}%</div><div class="kpi-sub">${subConc}</div></div>
-        <div class="kpi" style="border-left-color:${corAtr}"><div class="kpi-label">Taxa de Atraso</div><div class="kpi-value" style="color:${corAtr}">${txAtr}%</div><div class="kpi-sub">${subAtr}</div></div>
-      </div>
-    <div class="section">
-      <div class="section-title">Resumo por semana — consolidado todas as oficinas</div>
-      <table>
-        <thead><tr>
-          <th>Semana</th>
-          <th style="text-align:center">Prev.</th>
-          <th style="text-align:center">Conc.</th>
-          <th style="text-align:center">Atr.</th>
-          <th style="text-align:center">Desempenho</th>
-          ${oficinas.map(of=>`<th style="text-align:center;max-width:70px;overflow:hidden;text-overflow:ellipsis">${of.split(' ')[0]}</th>`).join('')}
-        </tr></thead>
-        <tbody>${resumoSemanas}</tbody>
-      </table>
-    </div>
-    <div class="section">
-      <div class="section-title">Semana atual — ${semAtualLbl} — Previsto: ${semAtualEquips.length} | Concluído: ${nConc1} | Atrasado: ${nAtr1} | Desempenho: ${aderGeral}%</div>
-      ${tabelaProgOf(semAtual,semAtualLbl)}
-    </div>
-    ${footer(1,totalPags)}
-  </div>`;
-
-  // ──────────────────────────────────────────────
-  // PÁG 2: GRÁFICO PREVISTO × REALIZADO
-  // ──────────────────────────────────────────────
-  const grafConsolidado=grafBarSvg(semKeys,byWeek,maxPR,760,160);
-
-  // Mini gráficos por oficina
-  const grafPorOf=oficinas.map(of=>{
-    const maxOf=Math.max(...semKeys.map(k=>byOfWeek[of][k]?.prev||0),1);
-    return`<div style="margin-bottom:12px">
-      <div style="font-size:10px;font-weight:700;color:#004042;margin-bottom:4px">🏭 ${of}</div>
-      ${grafBarSvg(semKeys,byOfWeek[of],maxOf,360,100)}
-    </div>`;
-  }).join('');
-
-  // Tabela de desempenho por semana por oficina
-  const tabelaAderOf=`<table>
-    <thead><tr>
-      <th>Semana</th>
-      ${oficinas.map(of=>`<th style="text-align:center">${of.split(' ')[0]}</th>`).join('')}
-      <th style="text-align:center">Total</th>
-    </tr></thead>
-    <tbody>
-    ${semsComDados.map(s=>{
-      const eqsTot=ativos.filter(e=>e.semana===s.value);
-      const concTot=eqsTot.filter(e=>e.etapa==='pronto').length;
-      const aderTot=eqsTot.length?Math.round(concTot/eqsTot.length*100):null;
-      const semPass=s.value<=semAtual;
-      return`<tr style="background:${s.value===semAtual?'#FFFBEB':''}">
-        <td style="font-weight:600;white-space:nowrap">${s.label.split(' (')[0]}</td>
-        ${oficinas.map(of=>{
-          const eqsOf=ativos.filter(e=>e.semana===s.value&&e.oficina===of);
-          if(!eqsOf.length)return`<td style="text-align:center;color:#ccc">—</td>`;
-          const concOf=eqsOf.filter(e=>e.etapa==='pronto').length;
-          const aderOf=Math.round(concOf/eqsOf.length*100);
-          const cor=!semPass?'#888':aderOf>=80?'#15803d':aderOf>=50?'#92400e':'#b91c1c';
-          const bg=!semPass?'':aderOf>=80?'#dcfce7':aderOf>=50?'#fef9c3':'#fee2e2';
-          return`<td style="text-align:center;background:${bg};color:${cor};font-weight:${semPass?'700':'400'}">${semPass?aderOf+'%':eqsOf.length+' prev.'}</td>`;
-        }).join('')}
-        <td style="text-align:center;font-weight:700;color:${!semPass?'#888':aderTot>=80?'#15803d':aderTot>=50?'#92400e':'#b91c1c'}">${aderTot!==null?(semPass?aderTot+'%':eqsTot.length+' prev.'):'—'}</td>
-      </tr>`;
-    }).join('')}
-    </tbody>
-  </table>`;
-
-  const PAG2=`
-  <div class="page page-break">
-    ${header('Previsto × Realizado — Gráfico de Desempenho','Consolidado e por oficina',2,totalPags)}
-    <div class="section">
-      <div class="section-title">Consolidado — todas as oficinas &nbsp;·&nbsp; <span style="color:#93c5fd">■ Previsto</span> &nbsp; <span style="color:#34d399">■ Realizado</span> &nbsp; <small>% = desempenho da semana</small></div>
-      ${grafConsolidado}
-    </div>
-    <div class="grid2" style="margin-top:12px">
-      <div>
-        <div class="section-title">Desempenho por semana × oficina</div>
-        ${tabelaAderOf}
-      </div>
-      <div>
-        <div class="section-title">Detalhamento por oficina</div>
-        ${grafPorOf}
-      </div>
-    </div>
-    ${footer(2,totalPags)}
-  </div>`;
-
-  // ──────────────────────────────────────────────
-  // PÁG 3: EQUIPAMENTOS ATRASADOS
-  // ──────────────────────────────────────────────
-  function diasAtrasoEq(e){
-    let d=0;
-    if(e.prevLiberacao&&new Date(e.prevLiberacao+'T23:59:59')<hoje)
-      d=Math.max(d,Math.floor((hoje-new Date(e.prevLiberacao+'T23:59:59'))/86400000));
-    if(e.semana&&e.semana<semAtual){
-      const s=SEMANAS_LISTA.find(x=>x.value===e.semana);
-      if(s)d=Math.max(d,Math.floor((hoje-new Date(s.fim+'T23:59:59'))/86400000));
-    }
-    return d;
-  }
-
-  const atrasadosRows=atrasados.length?atrasados.map(e=>{
-    const dias=diasAtrasoEq(e);
-    const etLbl=ETAPAS_GERAL.find(x=>x.id===e.etapa)?.label||e.etapa;
-    const prevLib=e.prevLiberacao?new Date(e.prevLiberacao+'T12:00:00').toLocaleDateString('pt-BR'):'—';
-    const semProg=e.semana?semanaLabel(e.semana):'—';
-    const prio=e.prioridade?`<span class="${e.prioridade==='critica'?'badge-atr':'badge-warn'}">${e.prioridade.toUpperCase()}</span>`:'';
-    return`<tr class="alert-row">
-      <td style="font-weight:700;color:#004042;white-space:nowrap">${e.id}</td>
-      <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e.equipamento}</td>
-      <td>${e.tipo||'—'}</td>
-      <td>${e.oficina}</td>
-      <td>${etLbl}</td>
-      <td style="text-align:center;white-space:nowrap">${semProg}</td>
-      <td style="text-align:center;white-space:nowrap">${prevLib}</td>
-      <td style="text-align:center;font-weight:700;color:#b91c1c">${dias}d</td>
-      <td>${prio}</td>
-      <td style="color:#F37021">${e.reservado&&e.cliente?'◈ '+e.cliente:'Estoque'}</td>
+  // Barras SVG inline
+  const maxOf=Math.max(...Object.values(porOf).map(x=>x.total),1);
+  const barrasOf=oficinas.map(of=>{
+    const d=porOf[of];
+    const wp=Math.round(d.disp/d.total*100);
+    return`<tr>
+      <td style="padding:4px 8px 4px 0;font-size:11px;color:#333;white-space:nowrap;width:180px">${of}</td>
+      <td style="padding:4px 0;width:100%">
+        <div style="background:#F0EDE8;border-radius:3px;height:16px;position:relative;overflow:hidden">
+          <div style="position:absolute;left:0;top:0;height:100%;width:${wp}%;background:#1D9E75;border-radius:3px"></div>
+          <div style="position:absolute;left:0;top:0;height:100%;width:${Math.round(d.manut/d.total*100)}%;background:#C24003;border-radius:3px;left:${wp}%"></div>
+        </div>
+      </td>
+      <td style="padding:4px 0 4px 8px;font-size:10px;color:#666;white-space:nowrap;text-align:right">
+        <span style="color:#1D9E75;font-weight:600">${d.disp}</span> / <span style="color:#C24003;font-weight:600">${d.manut}</span> / ${d.total} &nbsp; ${wp}%
+      </td>
     </tr>`;
-  }).join(''):`<tr><td colspan="10" style="padding:12px;text-align:center;color:#999">Nenhum equipamento atrasado 🎉</td></tr>`;
-
-  // Resumo atrasados por oficina
-  const resumoAtrOf=oficinas.map(of=>{
-    const lst=atrasadosPorOf[of];
-    if(!lst.length)return`<div style="display:flex;justify-content:space-between;padding:4px 8px;font-size:10px;border-bottom:1px solid #F0EDE8"><span>${of}</span><span style="color:#1D9E75;font-weight:600">✓ Sem atrasos</span></div>`;
-    const maxDias=Math.max(...lst.map(e=>diasAtrasoEq(e)));
-    return`<div style="display:flex;justify-content:space-between;padding:4px 8px;font-size:10px;border-bottom:1px solid #F0EDE8;background:#FFF5F3">
-      <span style="font-weight:600">${of}</span>
-      <span>
-        <span style="color:#C24003;font-weight:700">${lst.length} equip.</span>
-        <span style="color:#888;margin-left:6px">máx ${maxDias}d atraso</span>
-      </span>
-    </div>`;
   }).join('');
 
-  const PAG3=`
-  <div class="page page-break">
-    ${header('Equipamentos Atrasados','Não entregues na data ou semana prevista',3,totalPags)}
-    <div class="grid2" style="margin-bottom:12px">
-      <div>
-        <div class="section-title">Resumo por oficina</div>
-        <div style="border:1px solid #E2E8F0;border-radius:6px;overflow:hidden">${resumoAtrOf}</div>
-      </div>
-      <div class="kpi-row" style="grid-template-columns:repeat(3,1fr)">
-        <div class="kpi terra"><div class="kpi-label">Total atrasados</div><div class="kpi-value terra">${atrasados.length}</div><div class="kpi-sub">equipamentos</div></div>
-        <div class="kpi terra"><div class="kpi-label">Atraso médio</div><div class="kpi-value terra">${atrasados.length?Math.round(atrasados.reduce((s,e)=>s+diasAtrasoEq(e),0)/atrasados.length):0}d</div><div class="kpi-sub">dias</div></div>
-        <div class="kpi terra"><div class="kpi-label">Atraso máx.</div><div class="kpi-value terra">${atrasados.length?Math.max(...atrasados.map(e=>diasAtrasoEq(e))):0}d</div><div class="kpi-sub">dias</div></div>
-        <div class="kpi"><div class="kpi-label">Com prev. lib.</div><div class="kpi-value">${atrasados.filter(e=>e.prevLiberacao).length}</div><div class="kpi-sub">data definida</div></div>
-        <div class="kpi roxo"><div class="kpi-label">Reservados</div><div class="kpi-value" style="color:#7F77DD">${atrasados.filter(e=>e.reservado).length}</div><div class="kpi-sub">com cliente</div></div>
-        <div class="kpi"><div class="kpi-label">Críticos/Alta</div><div class="kpi-value orange">${atrasados.filter(e=>e.prioridade==='critica'||e.prioridade==='alta').length}</div><div class="kpi-sub">alta prioridade</div></div>
-      </div>
-    </div>
-    <div class="section">
-      <div class="section-title">Lista completa — ${atrasados.length} equipamentos atrasados</div>
-      <table>
-        <thead><tr>
-          <th>ID</th><th>Equipamento</th><th>Tipo</th><th>Oficina</th><th>Etapa atual</th>
-          <th style="text-align:center">Sem. prog.</th><th style="text-align:center">Prev. lib.</th>
-          <th style="text-align:center">Atraso</th><th>Prio</th><th>Cliente</th>
-        </tr></thead>
-        <tbody>${atrasadosRows}</tbody>
-      </table>
-    </div>
-    ${footer(3,totalPags)}
-  </div>`;
+  const etapasRows=ETAPAS_GERAL.map(et=>{
+    const x=cntEt[et.id];
+    const pct=Math.round(x.n/total*100);
+    return`<tr style="border-bottom:1px solid #F0EDE8">
+      <td style="padding:5px 8px;font-size:11px;color:#333">${et.label}</td>
+      <td style="padding:5px 8px;text-align:center">
+        <div style="width:8px;height:8px;border-radius:50%;background:${x.cor};display:inline-block;margin-right:4px"></div>
+        <span style="font-size:13px;font-weight:700;color:#1a1a1a">${x.n}</span>
+      </td>
+      <td style="padding:5px 8px;font-size:11px;color:#666;text-align:right">${pct}%</td>
+    </tr>`;
+  }).join('');
 
-  // ──────────────────────────────────────────────
-  // PÁG 4: PRÓXIMAS 2 SEMANAS
-  // ──────────────────────────────────────────────
-  const PAG4=`
-  <div class="page page-break">
-    ${header('Programação — Próximas 2 Semanas','Planejamento semanal por oficina',4,totalPags)}
-    <div class="grid2">
-      <div>
-        <div class="section-title">📅 ${proxSem1.label}</div>
-        ${tabelaProgOf(proxSem1.value,proxSem1.label)}
-      </div>
-      <div>
-        <div class="section-title">📅 ${proxSem2.label}${proxSem2.value===proxSem1.value?' (mesma semana)':''}</div>
-        ${proxSem2.value!==proxSem1.value?tabelaProgOf(proxSem2.value,proxSem2.label):'<div style="color:#999;font-size:11px;padding:8px">Mesma semana exibida ao lado.</div>'}
-      </div>
-    </div>
-    ${footer(4,totalPags)}
-  </div>`;
+  const embRows=proxEmb.length?proxEmb.map(e=>`<tr style="border-bottom:1px solid #F0EDE8">
+    <td style="padding:4px 8px;font-size:10px;font-weight:600;color:#004042">${e.id}</td>
+    <td style="padding:4px 8px;font-size:10px;color:#333">${e.equipamento.substring(0,30)}</td>
+    <td style="padding:4px 8px;font-size:10px;color:#666">${e.cliente||'—'}</td>
+    <td style="padding:4px 8px;font-size:10px;font-weight:700;color:${e.diasEmb<=0?'#C24003':e.diasEmb<=3?'#F37021':'#7F77DD'};text-align:center">${e.dtFmt}</td>
+    <td style="padding:4px 8px;font-size:10px;text-align:center;font-weight:600;color:${e.diasEmb<=0?'#C24003':e.diasEmb<=3?'#F37021':'#666'}">${e.diasEmb<=0?'HOJE':e.diasEmb+'d'}</td>
+  </tr>`).join(''):'<tr><td colspan="5" style="padding:10px;text-align:center;color:#999;font-size:11px">Nenhum embarque nos próximos 7 dias</td></tr>';
+
+  const criticoRows=criticos.slice(0,10).map(e=>`<tr style="border-bottom:1px solid #F0EDE8">
+    <td style="padding:4px 8px;font-size:10px;font-weight:600;color:#004042">${e.id}</td>
+    <td style="padding:4px 8px;font-size:10px;color:#333">${e.equipamento.substring(0,28)}</td>
+    <td style="padding:4px 8px;font-size:10px;color:#666">${e.oficina}</td>
+    <td style="padding:4px 8px;text-align:center"><span style="font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;background:${e.prioridade==='critica'?'#FDE8E8':'#FDEEE6'};color:${e.prioridade==='critica'?'#7B1515':'#7B3300'}">${e.prioridade==='critica'?'CRÍTICA':'ALTA'}</span></td>
+    <td style="padding:4px 8px;font-size:10px;color:#666">${ETAPAS_GERAL.find(x=>x.id===e.etapa)?.label||e.etapa}</td>
+  </tr>`).join('');
+
+  const semRows=semAtualEquips.map(e=>`<tr style="border-bottom:1px solid #F0EDE8">
+    <td style="padding:4px 8px;font-size:10px;font-weight:600;color:#004042">${e.id}</td>
+    <td style="padding:4px 8px;font-size:10px;color:#333">${e.equipamento.substring(0,25)}</td>
+    <td style="padding:4px 8px;font-size:10px;color:#666">${e.oficina}</td>
+    <td style="padding:4px 8px;font-size:10px;color:${e.etapa==='pronto'?'#1D9E75':'#333'}">${ETAPAS_GERAL.find(x=>x.id===e.etapa)?.label||e.etapa}</td>
+    <td style="padding:4px 8px;font-size:10px;color:#F37021;font-weight:500">${e.cliente||'—'}</td>
+  </tr>`).join('');
+
+  const movRows=movs24.length?movs24.slice(0,15).map(m=>`<tr style="border-bottom:1px solid #F0EDE8">
+    <td style="padding:4px 8px;font-size:10px;color:#666;white-space:nowrap">${m.data} ${m.hora}</td>
+    <td style="padding:4px 8px;font-size:10px;font-weight:600;color:#004042">${m.id}</td>
+    <td style="padding:4px 8px;font-size:10px;color:#333">${(m.nome||'').substring(0,25)}</td>
+    <td style="padding:4px 8px;font-size:10px;color:#666">${m.from||'—'} → ${m.to||'—'}</td>
+    <td style="padding:4px 8px;font-size:10px;color:#F37021;font-weight:500">${m.perfil||'—'}</td>
+  </tr>`).join(''):'<tr><td colspan="5" style="padding:10px;text-align:center;color:#999;font-size:11px">Nenhuma movimentação nas últimas 24h</td></tr>';
+
+  const cliRows=topCli.map(([c,n])=>`<tr style="border-bottom:1px solid #F0EDE8">
+    <td style="padding:5px 8px;font-size:11px;color:#333">${c}</td>
+    <td style="padding:5px 8px;text-align:center;font-size:13px;font-weight:700;color:#F37021">${n}</td>
+    <td style="padding:5px 8px;font-size:10px;color:#666;text-align:right">${Math.round(n/res*100)}% das reservas</td>
+  </tr>`).join('');
 
   const w=window.open('','_blank');
   w.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
-<title>Mills — Relatório de Programação ${hoje.toLocaleDateString('pt-BR')}</title>
-<style>${ESTILO}</style></head><body>
+<title>Mills — Relatório Diário ${hoje.toLocaleDateString('pt-BR')}</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;background:#fff;color:#1a1a1a;font-size:12px}
+  @page{size:A4;margin:15mm 12mm}
+  @media print{.page-break{page-break-before:always;padding-top:0!important}.no-print{display:none!important}body{font-size:11px}}
+  .page{width:210mm;min-height:297mm;padding:12mm 14mm;background:#fff;position:relative}
+  .header{display:flex;align-items:center;justify-content:space-between;padding-bottom:10px;border-bottom:3px solid #F37021;margin-bottom:16px}
+  .logo{height:36px}
+  .header-right{text-align:right}
+  .header-title{font-size:18px;font-weight:700;color:#004042}
+  .header-sub{font-size:11px;color:#888;margin-top:2px}
+  .section{margin-bottom:16px}
+  .section-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#888;padding-bottom:4px;border-bottom:1.5px solid #F37021;margin-bottom:10px}
+  .kpi-row{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:16px}
+  .kpi{background:#F8F7F4;border-radius:7px;padding:10px 12px;border-left:3px solid #F37021}
+  .kpi.verde{border-left-color:#1D9E75}.kpi.terra{border-left-color:#C24003}.kpi.roxo{border-left-color:#7F77DD}
+  .kpi-label{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#888;margin-bottom:3px}
+  .kpi-value{font-size:22px;font-weight:700;color:#1a1a1a;line-height:1}
+  .kpi-value.orange{color:#F37021}.kpi-value.verde{color:#1D9E75}.kpi-value.terra{color:#C24003}
+  .kpi-sub{font-size:9px;color:#888;margin-top:2px}
+  table{width:100%;border-collapse:collapse}
+  th{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#888;padding:5px 8px;background:#F8F7F4;border-bottom:1.5px solid #E0D9C8;text-align:left}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .footer{position:absolute;bottom:8mm;left:14mm;right:14mm;display:flex;justify-content:space-between;align-items:center;padding-top:6px;border-top:1px solid #E0D9C8}
+  .footer-text{font-size:9px;color:#aaa}
+  .badge-critica{background:#FDE8E8;color:#7B1515;padding:2px 6px;border-radius:3px;font-size:9px;font-weight:700}
+  .badge-alta{background:#FDEEE6;color:#7B3300;padding:2px 6px;border-radius:3px;font-size:9px;font-weight:700}
+  .no-print{margin-bottom:12px;display:flex;gap:8px;justify-content:center;padding:10px;background:#004042}
+  .btn-print{padding:10px 24px;background:#F37021;color:#fff;border:none;border-radius:7px;font-size:14px;font-weight:600;cursor:pointer}
+  .btn-close{padding:10px 20px;background:transparent;color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:7px;font-size:14px;cursor:pointer}
+  .alert-row{background:#FFF5F3;border-left:3px solid #C24003}
+</style>
+</head><body>
+
 <div class="no-print">
   <button class="btn-print" onclick="window.print()">🖨 Imprimir / Salvar PDF</button>
   <button class="btn-close" onclick="window.close()">✕ Fechar</button>
-  <span style="color:rgba(255,255,255,.6);font-size:12px;margin-left:8px">Layout: A4 paisagem — 4 páginas</span>
 </div>
-${PAG1}${PAG2}${PAG3}${PAG4}
 
-<!-- OVERLAY CONFIABILIDADE -->
-<div id="overlay-confiabilidade" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);z-index:250;align-items:center;justify-content:center">
-  <div style="background:#fff;border-radius:12px;width:min(780px,94vw);max-height:88vh;overflow-y:auto;border:1px solid #e2e8f0;border-top:4px solid #7c3aed;box-shadow:0 20px 60px rgba(0,0,0,.25)">
-    <div style="background:#faf5ff;padding:14px 18px;border-bottom:1px solid #ede9fe;display:flex;align-items:center;justify-content:space-between;border-radius:12px 12px 0 0">
-      <div style="display:flex;align-items:center;gap:10px">
-        <span style="font-size:20px">🛡️</span>
-        <div>
-          <div style="font-size:14px;font-weight:700;color:#6d28d9">Confiabilidade da Frota</div>
-          <div style="font-size:10px;color:#8b5cf6">Indicadores de desempenho e confiabilidade — Em desenvolvimento</div>
-        </div>
+<!-- PÁGINA 1 -->
+<div class="page">
+  <div class="header">
+    <div style="display:flex;align-items:center;gap:12px">
+      <img src="${document.querySelector('.hlogo').src}" class="logo" alt="Mills">
+      <div>
+        <div class="header-title">Relatório Diário de Frota</div>
+        <div class="header-sub">Kanban de Oficinas — Mills Estruturas e Serviços</div>
       </div>
-      <button onclick="fecharConfiabilidade()" style="background:transparent;border:1px solid #c4b5fd;border-radius:6px;padding:5px 12px;cursor:pointer;color:#6d28d9;font-size:12px">✕ Fechar</button>
     </div>
-    <div id="conf-content" style="padding:18px"></div>
+    <div class="header-right">
+      <div style="font-size:14px;font-weight:700;color:#004042">${hoje.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</div>
+      <div style="font-size:10px;color:#888;margin-top:2px">Gerado às ${hoje.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})} por ${currentUser?.nome||'sistema'}</div>
+    </div>
+  </div>
+
+  <div class="kpi-row">
+    <div class="kpi"><div class="kpi-label">Total frota</div><div class="kpi-value">${total}</div><div class="kpi-sub">equipamentos ativos</div></div>
+    <div class="kpi verde"><div class="kpi-label">Disponíveis</div><div class="kpi-value verde">${disp}</div><div class="kpi-sub">${dp}% da frota</div></div>
+    <div class="kpi terra"><div class="kpi-label">Manutenção</div><div class="kpi-value terra">${manut}</div><div class="kpi-sub">${mp}% da frota</div></div>
+    <div class="kpi"><div class="kpi-label">Reservados</div><div class="kpi-value orange">${res}</div><div class="kpi-sub">${Math.round(res/total*100)}% da frota</div></div>
+    <div class="kpi roxo"><div class="kpi-label">Programados</div><div class="kpi-value" style="color:#7F77DD">${prog}</div><div class="kpi-sub">com semana</div></div>
+    <div class="kpi terra"><div class="kpi-label">Retrabalhos</div><div class="kpi-value terra">${retrab}</div><div class="kpi-sub">ocorrências</div></div>
+  </div>
+
+  <div class="grid2">
+    <div>
+      <div class="section">
+        <div class="section-title">Status por etapa do kanban</div>
+        <table>
+          <thead><tr><th>Etapa</th><th style="text-align:center">Qtd</th><th style="text-align:right">%</th></tr></thead>
+          <tbody>${etapasRows}</tbody>
+        </table>
+      </div>
+      <div class="section">
+        <div class="section-title">Top clientes com reservas ativas</div>
+        <table>
+          <thead><tr><th>Cliente</th><th style="text-align:center">Equip.</th><th style="text-align:right">% reservas</th></tr></thead>
+          <tbody>${cliRows||'<tr><td colspan="3" style="padding:8px;color:#999;font-size:10px;text-align:center">Nenhum cliente com reserva</td></tr>'}</tbody>
+        </table>
+      </div>
+    </div>
+    <div>
+      <div class="section">
+        <div class="section-title">Disponibilidade por oficina — disp / manut / total</div>
+        <table><tbody>${barrasOf}</tbody></table>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">⚠ Embarques próximos (7 dias) — ${proxEmb.length} equipamentos</div>
+    <table>
+      <thead><tr><th>ID</th><th>Equipamento</th><th>Cliente</th><th style="text-align:center">Data Embarque</th><th style="text-align:center">Prazo</th></tr></thead>
+      <tbody>${embRows}</tbody>
+    </table>
+  </div>
+
+  <div class="footer">
+    <div class="footer-text">Mills Estruturas e Serviços — Uso interno</div>
+    <div class="footer-text">Página 1 de 2</div>
+    <div class="footer-text">${hoje.toLocaleDateString('pt-BR')}</div>
   </div>
 </div>
+
+<!-- PÁGINA 2 -->
+<div class="page page-break" style="padding-top:12mm">
+  <div class="header">
+    <div style="display:flex;align-items:center;gap:12px">
+      <img src="${document.querySelector('.hlogo').src}" class="logo" alt="Mills">
+      <div>
+        <div class="header-title">Relatório Diário — Operacional</div>
+        <div class="header-sub">Kanban de Oficinas — Mills Estruturas e Serviços</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div style="font-size:14px;font-weight:700;color:#004042">${hoje.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</div>
+      <div style="font-size:10px;color:#888;margin-top:2px">Página 2 de 2</div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div>
+      <div class="section">
+        <div class="section-title">🔴 Prioridade crítica / alta em aberto (top 10)</div>
+        <table>
+          <thead><tr><th>ID</th><th>Equipamento</th><th>Oficina</th><th>Prio</th><th>Etapa</th></tr></thead>
+          <tbody>${criticoRows||'<tr><td colspan="5" style="padding:8px;color:#999;font-size:10px;text-align:center">Nenhum equipamento crítico</td></tr>'}</tbody>
+        </table>
+      </div>
+      <div class="section">
+        <div class="section-title">📅 Programação semana atual — ${semLabel} (${semAtualEquips.length} equip.)</div>
+        <table>
+          <thead><tr><th>ID</th><th>Equipamento</th><th>Oficina</th><th>Etapa</th><th>Cliente</th></tr></thead>
+          <tbody>${semRows||'<tr><td colspan="5" style="padding:8px;color:#999;font-size:10px;text-align:center">Nenhum programado para esta semana</td></tr>'}</tbody>
+        </table>
+      </div>
+    </div>
+    <div>
+      <div class="section">
+        <div class="section-title">🔄 Movimentações últimas 24h (${movs24.length})</div>
+        <table>
+          <thead><tr><th>Hora</th><th>ID</th><th>Equipamento</th><th>Movimentação</th><th>Usuário</th></tr></thead>
+          <tbody>${movRows}</tbody>
+        </table>
+      </div>
+      <div class="section">
+        <div class="section-title">⏰ Atrasados (${atrasados.length} equip. além da semana prevista)</div>
+        <table>
+          <thead><tr><th>ID</th><th>Equipamento</th><th>Oficina</th><th>Semana prev.</th><th>Etapa atual</th></tr></thead>
+          <tbody>${atrasados.slice(0,8).map(e=>`<tr class="alert-row" style="border-bottom:1px solid #F0EDE8">
+            <td style="padding:4px 8px;font-size:10px;font-weight:600;color:#004042">${e.id}</td>
+            <td style="padding:4px 8px;font-size:10px;color:#333">${e.equipamento.substring(0,22)}</td>
+            <td style="padding:4px 8px;font-size:10px;color:#666">${e.oficina}</td>
+            <td style="padding:4px 8px;font-size:10px;color:#C24003;font-weight:600">${semanaLabel(e.semana)}</td>
+            <td style="padding:4px 8px;font-size:10px;color:#333">${ETAPAS_GERAL.find(x=>x.id===e.etapa)?.label||e.etapa}</td>
+          </tr>`).join('')||'<tr><td colspan="5" style="padding:8px;color:#999;font-size:10px;text-align:center">Nenhum equipamento atrasado</td></tr>'}</tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div class="footer-text">Mills Estruturas e Serviços — Uso interno — Documento gerado automaticamente pelo sistema Kanban</div>
+    <div class="footer-text">Página 2 de 2</div>
+    <div class="footer-text">${hoje.toLocaleDateString('pt-BR')}</div>
+  </div>
+</div>
+
 </body></html>`);
   w.document.close();
 }
@@ -2313,62 +2053,6 @@ function abrirMedicao(){
   document.getElementById('overlay-medicao').style.display='block';
   if(!window._bmInited){ window._bmInited=true; bmInit(); }
 }
-function abrirConfiabilidade(){
-  // Apenas usuário rafael pode acessar por enquanto
-  if(!currentUser||currentUser.login!=='rafael'){
-    requestSenha('🔒 Confiabilidade','Módulo em desenvolvimento — acesso restrito ao administrador.','retroceder',{},p=>{
-      if(p&&p.nivel==='master'){
-        document.getElementById('overlay-confiabilidade').style.display='flex';
-        renderConfiabilidade();
-      }
-    });
-    return;
-  }
-  document.getElementById('overlay-confiabilidade').style.display='flex';
-  renderConfiabilidade();
-}
-function fecharConfiabilidade(){
-  document.getElementById('overlay-confiabilidade').style.display='none';
-}
-function renderConfiabilidade(){
-  // Placeholder — módulo em construção
-  const el=document.getElementById('conf-content');
-  if(!el)return;
-  const ativos=Object.values(state).filter(e=>!e.baixado);
-  const emManut=ativos.filter(e=>e.etapa==='manutencao'||e.etapa==='cl_entrada'||e.etapa==='cl_saida');
-  const prontos=ativos.filter(e=>e.etapa==='pronto');
-  const total=ativos.length||1;
-  const disp=ativos.filter(e=>e.etapa==='pronto'||e.etapa==='chegada').length;
-  const dispPct=Math.round(disp/total*100);
-  // MTTR estimado: média de dias nas etapas de manutenção
-  const tempoManut=emManut.map(e=>Math.floor((Date.now()-(e.etapa_desde||Date.now()))/86400000));
-  const mttr=tempoManut.length?Math.round(tempoManut.reduce((a,b)=>a+b,0)/tempoManut.length*10)/10:0;
-  // Retrabalho
-  const comRetrab=ativos.filter(e=>e.retrabalho>0).length;
-  const txRetrab=Math.round(comRetrab/total*100);
-  el.innerHTML=`
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px">
-      ${[
-        ['Disponibilidade','#1D9E75',dispPct+'%','equip. prontos ou chegada'],
-        ['Em Manutenção','#C24003',emManut.length,'equip. em oficina agora'],
-        ['MTTR Estimado','#F37021',mttr+'d','média dias em manutenção'],
-        ['Taxa Retrabalho','#7F77DD',txRetrab+'%',comRetrab+' equip. com ocorrência'],
-      ].map(([lbl,cor,val,sub])=>`
-        <div style="background:#fff;border-radius:8px;border:1px solid #e2e8f0;padding:14px 16px;border-left:3px solid ${cor}">
-          <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#718096">${lbl}</div>
-          <div style="font-size:24px;font-weight:700;color:${cor};margin:4px 0">${val}</div>
-          <div style="font-size:10px;color:#718096">${sub}</div>
-        </div>`).join('')}
-    </div>
-    <div style="background:#ede9fe;border-radius:8px;padding:16px;border:1px solid #c4b5fd;text-align:center">
-      <div style="font-size:13px;font-weight:600;color:#6d28d9;margin-bottom:6px">🚧 Módulo em Desenvolvimento</div>
-      <div style="font-size:11px;color:#7c3aed;line-height:1.6">
-        Este módulo irá incluir: MTBF por tipo de equipamento, curvas de falha,<br>
-        análise de Weibull, histórico de manutenções, indicadores por oficina e mais.<br>
-        <strong>Compartilhe o que precisa gerar para continuarmos.</strong>
-      </div>
-    </div>`;
-}
 function fecharMedicao(){
   document.getElementById('overlay-medicao').style.display='none';
 }
@@ -2389,17 +2073,6 @@ function renderBiEtapas(){
   }).join('');
 }
 function updateKpisDinamicos(){
-  // Update confiabilidade badge based on user
-  const badge=document.getElementById('conf-badge');
-  if(badge){
-    if(currentUser&&currentUser.login==='rafael'){
-      badge.textContent='✓ Disponível';
-      badge.style.cssText='margin-top:8px;font-size:9px;font-weight:700;color:#15803d;background:#dcfce7;border:1px solid #86efac;border-radius:4px;padding:2px 7px;display:inline-block';
-    } else {
-      badge.textContent='🔒 Restrito';
-      badge.style.cssText='margin-top:8px;font-size:9px;font-weight:700;color:#6d28d9;background:#ede9fe;border:1px solid #c4b5fd;border-radius:4px;padding:2px 7px;display:inline-block';
-    }
-  }
   const todos=Object.values(state),total=todos.length||1;
   const ativos=todos.filter(e=>!e.baixado);
   const res=ativos.filter(e=>e.reservado).length;
@@ -2584,10 +2257,6 @@ function applyMove(eq,from,toId,sid,visao,perfil){
   const d=Math.floor((Date.now()-(eq.etapa_desde||Date.now()))/86400000);
   eq.tempo_etapas[from]=(eq.tempo_etapas[from]||0)+d;
   eq.etapa=toId;eq.etapa_desde=Date.now();
-  if(toId==='pronto'&&!eq.semana_conclusao){
-    eq.semana_conclusao=semanaAtual();
-    eq.data_conclusao=new Date().toLocaleDateString('pt-BR');
-  }
   if(toId==='manutencao'&&!eq.etapa_interna){eq.etapa_interna='lavagem';eq.etapa_interna_desde=Date.now();}
   if(toId!=='manutencao'){eq.etapa_interna=null;eq.etapa_interna_desde=null;}
   if(perfil){if(!eq.assinaturas)eq.assinaturas={};eq.assinaturas[toId]={perfil:perfil.perfil,nivel:perfil.nivel,ts:Date.now(),hora:new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),data:new Date().toLocaleDateString('pt-BR')};}
@@ -3104,12 +2773,7 @@ function renderLinhaChart(){
     todos.forEach(e=>{
       if(!bySem[e.semana])bySem[e.semana]={prev:0,real:0};
       bySem[e.semana].prev++;
-      // Realizado conta na semana_conclusao, não na semana programada
-      if(e.etapa==='pronto'){
-        const semConc=e.semana_conclusao||e.semana;
-        if(!bySem[semConc])bySem[semConc]={prev:0,real:0};
-        bySem[semConc].real++;
-      }
+      if(e.etapa==='pronto')bySem[e.semana].real++;
     });
     const sems=Object.keys(bySem).sort();
     labels=sems.map(s=>SEMANAS_LISTA.find(x=>x.value===s)?.label?.replace(/Sem (\d+).*/,'S$1')||s);
@@ -3122,7 +2786,7 @@ function renderLinhaChart(){
       const t=e.tipo||'(sem tipo)';
       if(!byTipo[t])byTipo[t]={prev:0,real:0};
       byTipo[t].prev++;
-      if(e.etapa==='pronto'){const semConc=e.semana_conclusao||e.semana;if(semsFilter===null||semsFilter.includes(semConc))byTipo[t].real++;}
+      if(e.etapa==='pronto')byTipo[t].real++;
     });
     labels=Object.keys(byTipo).sort();
     previsto=labels.map(l=>byTipo[l].prev);
@@ -3135,7 +2799,7 @@ function renderLinhaChart(){
       const o=e.oficina||'(sem oficina)';
       if(!byOf[o])byOf[o]={prev:0,real:0};
       byOf[o].prev++;
-      if(e.etapa==='pronto'){const semConc=e.semana_conclusao||e.semana;if(semsFilter===null||semsFilter.includes(semConc))byOf[o].real++;}
+      if(e.etapa==='pronto')byOf[o].real++;
     });
     labels=Object.keys(byOf).sort();
     previsto=labels.map(l=>byOf[l].prev);
@@ -3210,7 +2874,7 @@ function renderLinhaChart(){
     });
   });
 
-  // Desempenho % labels between lines
+  // Aderência % labels between lines
   if(modo==='semana'&&n<=16){
     labels.forEach((lbl,i)=>{
       const p=previsto[i],r=realizado[i];
@@ -3238,7 +2902,7 @@ function renderLinhaChart(){
         <strong style="color:#1a1e2e">${v}</strong>
       </div>`
     ).join('')+`<div style="display:flex;align-items:center;gap:4px;margin-left:8px;padding-left:8px;border-left:1px solid #e2e8f0">
-      <span style="color:#6b7280">Desempenho total:</span>
+      <span style="color:#6b7280">Aderência total:</span>
       <strong style="color:${aderTotal>=80?'#15803d':aderTotal>=50?'#92400e':'#991b1b'}">${aderTotal}%</strong>
     </div>`;
   }
@@ -3426,46 +3090,20 @@ function renderProgramacao(){
     const si=SEMANAS_LISTA.find(s=>s.value===sem);
     const ehAtual=sem===semAtual,ehPass=sem<semAtual;
     const itemsReais=items.filter(x=>!x._reprog);
-    // Concluídos NA semana = semana_conclusao === sem (ou pronto sem semana_conclusao, fallback)
-    const nConc=itemsReais.filter(e=>{
-      if(e.etapa!=='pronto')return false;
-      return e.semana_conclusao?e.semana_conclusao===sem:true;
-    }).length;
-    // Concluídos de OUTRAS semanas que chegaram nesta = "bônus" de conclusão
-    const nConcDeOutras=Object.values(state).filter(e=>
-      e.etapa==='pronto'&&e.semana_conclusao===sem&&e.semana!==sem&&!e.baixado
-    ).length;
-    // Atrasados: não concluídos na semana, semana já passou, ou atrasados por data
-    const nAtr=itemsReais.filter(e=>{
-      if(e.etapa==='pronto')return false;
-      // Atrasado por data de liberação
-      if(isAtrasadoPorData(e))return true;
-      // Atrasado por semana passada
-      return ehPass;
-    }).length;
+    const nConc=itemsReais.filter(e=>e.etapa==='pronto').length;
+    const nAtr=itemsReais.filter(e=>e.etapa!=='pronto'&&ehPass).length;
     const nReprog=items.filter(x=>x._reprog).length;
     let hdCls='prog-sem-hd';if(ehAtual)hdCls+=' sem-atual';else if(nAtr>0)hdCls+=' tem-atraso';
-    // Desempenho: previsto = n programados, realizado = concluídos COM semana_conclusao === sem
+    // Aderência da semana
     const nPrev=itemsReais.length;
-    const nReal=nConc; // já filtrado por semana_conclusao
+    const nReal=nConc;
     const aderPct=nPrev>0?Math.round(nReal/nPrev*100):null;
     let aderBadge='';
-    if(aderPct!==null&&ehPass){
-      // Semana passada — desempenho final
-      const aderCls=aderPct>=80?'alta':aderPct>=50?'media':'baixa';
-      const extraStr=nConcDeOutras>0?` <span style="font-size:9px;color:#0369a1" title="Incluindo ${nConcDeOutras} de outras semanas">+${nConcDeOutras}↗</span>`:'';
-      aderBadge=`<span class="sem-desempenho ${aderCls}">⊙ Desempenho ${aderPct}%${extraStr}</span>`;
-    } else if(nPrev>0&&ehAtual){
-      // Semana atual — sempre mostra desempenho parcial em tempo real
-      const aderPctP=Math.round(nReal/nPrev*100);
+    if(aderPct!==null&&ehPass){      const aderCls=aderPct>=80?'alta':aderPct>=50?'media':'baixa';
+      aderBadge=`<span class="sem-aderencia ${aderCls}">⊙ Aderência ${aderPct}%</span>`;
+    } else if(nPrev>0&&!ehPass&&nReal>0){      const aderPctP=Math.round(nReal/nPrev*100);
       const aderCls=aderPctP>=80?'alta':aderPctP>=50?'media':'baixa';
-      aderBadge=`<span class="sem-desempenho ${aderCls}" title="${nReal} de ${nPrev} concluídos">📊 ${aderPctP}% — ${nReal}/${nPrev}</span>`;
-    } else if(nPrev>0&&!ehPass&&!ehAtual){
-      // Semana futura — só mostra se já tem algum concluído antecipado
-      if(nReal>0){
-        const aderPctP=Math.round(nReal/nPrev*100);
-        aderBadge=`<span class="sem-desempenho alta" title="Concluídos antecipadamente">✓ ${aderPctP}% antecipado</span>`;
-      }
+      aderBadge=`<span class="sem-aderencia ${aderCls}">⊙ ${aderPctP}% concluído</span>`;
     }
     // Contar embarques urgentes na semana
     const nEmbUrg=itemsReais.filter(e=>e.dataEmbarque&&Math.ceil((new Date(e.dataEmbarque+'T12:00:00')-new Date())/(1000*60*60*24))<=7).length;
@@ -3477,15 +3115,9 @@ function renderProgramacao(){
 
     const cards=items.map(eq=>{
       const etLbl=ETAPAS_GERAL.find(e=>e.id===eq.etapa)?.label||eq.etapa;
-      const isConc=eq.etapa==='pronto';
-      const atrDataDias=isAtrasadoPorData(eq)?diasAtrasadoPorData(eq):0;
-      const atrSemDias=(!isConc&&ehPass&&!eq._reprog)?diasAtraso(sem):0;
-      const atrD=Math.max(atrDataDias,atrSemDias),isAtr=atrD>0;
+      const isConc=eq.etapa==='pronto',atrD=(!isConc&&ehPass&&!eq._reprog)?diasAtraso(sem):0,isAtr=atrD>0;
       const prioPill=eq.prioridade&&!isConc?`<span class="prio-pill prio-${eq.prioridade}" style="font-size:9px">${prioLabel(eq.prioridade)}</span>`:'';
-      const atrTxt=atrDataDias>0?`⚠ ${atrD}d (data)`:atrSemDias>0?`⚠ ${atrD}d (semana)`:'';
-      const sBadge=isConc
-        ?`<span class="concluido-badge">✓ Concluído${eq.semana_conclusao&&eq.semana_conclusao!==sem?' → '+semanaLabel(eq.semana_conclusao).split(' ')[0]+' '+eq.semana_conclusao.split('W')[1]:''}</span>`
-        :isAtr?`<span class="atraso-badge">${atrTxt}</span>`:'';
+      const sBadge=isConc?'<span class="concluido-badge">✓ Concluído</span>':isAtr?`<span class="atraso-badge">⚠ ${atrD}d</span>`:'';
       const reprogBadge=eq._reprog?`<span class="reprogramado-badge">↻ Reprogramado → ${semanaLabel(eq._novaSemana)}</span>`:'';
       const assP=eq.assinaturas?.programacao;
       const assH=assP?`<div style="font-size:9px;color:var(--verde2);margin-top:2px">📅 ${assP.perfil} · ${assP.data}</div>`:'';
@@ -3499,7 +3131,7 @@ function renderProgramacao(){
         embH=`<div style="font-size:11px;color:${corEmb};margin-top:5px;font-weight:700;padding:3px 6px;background:${diasEmb<=3?'rgba(194,64,3,.08)':diasEmb<=7?'rgba(243,112,33,.08)':'rgba(127,119,221,.08)'};border-radius:4px;border-left:2px solid ${corEmb}">🚢 ${dtEmb.toLocaleDateString('pt-BR')}${urgEmb}</div>`;
       }
       const cardCls=[
-        isConc?'concluido':isAtr?'atrasado':(isAtrasadoPorData(eq)&&!isConc)?'atrasado':'',
+        isConc?'concluido':isAtr?'atrasado':'',
         (eq.reservado&&!isConc)?'reservado':'',
         eq._reprog?'reprogramado':'',
       ].filter(Boolean).join(' ');
@@ -5200,12 +4832,12 @@ function parseFrotaPaste(){if(!pmoCanEdit()){pmoCheckUser('importar frota',funct
 function handleFrotaFile(file){
   if(!file)return;
   const reader=new FileReader();
-  redesemp.onload=e=>{
+  reader.onload=e=>{
     const text=e.target.result;
     document.getElementById('paste-frota').value=text;
     parseFrotaPaste();
   };
-  redesemp.readAsText(file);
+  reader.readAsText(file);
 }
 function renderFrotaTable(){
   const el=document.getElementById('frota-result');
@@ -5228,7 +4860,7 @@ function parseFiliais(){if(!pmoCanEdit()){pmoCheckUser('importar filiais',functi
   if(!raw){alert('Cole as filiais antes de importar.');return;}
   const lines=raw.split('\n').map(l=>l.trim()).filter(Boolean);
   const header=lines[0].toLowerCase();
-  const startIdx=header==='filial'||hedesemp.includes('filial')||hedesemp.includes('operação')?1:0;
+  const startIdx=header==='filial'||header.includes('filial')||header.includes('operação')?1:0;
   FILIAIS_LIST=lines.slice(startIdx).filter(Boolean);
   document.getElementById('filiais-result').innerHTML=
     '<div style="background:var(--green-bg);border:1px solid #b8e4d0;border-radius:7px;padding:10px 14px;font-size:12px;color:var(--green);">'
@@ -5693,7 +5325,7 @@ function parseFrotaPaste(){
   if(!raw){alert('Cole os dados antes de importar.');return;}
   const lines=raw.split('\n').map(l=>l.trim()).filter(Boolean);
   const header=lines[0].toLowerCase();
-  const startIdx=hedesemp.includes('num')||hedesemp.includes('tipo')||hedesemp.includes('model')?1:0;
+  const startIdx=header.includes('num')||header.includes('tipo')||header.includes('model')?1:0;
   const catalog=[];
   for(let i=startIdx;i<lines.length;i++){
     const parts=lines[i].split(/\t|;|,/);
@@ -5716,7 +5348,7 @@ function parseFrotaPaste(){
 function handleFrotaFile(file){
   if(!file)return;
   if(file.name.endsWith('.csv')||file.name.endsWith('.tsv')){
-    const reader=new FileReader();redesemp.onload=e=>{document.getElementById('paste-frota').value=e.target.result;parseFrotaPaste();};redesemp.readAsText(file);
+    const reader=new FileReader();reader.onload=e=>{document.getElementById('paste-frota').value=e.target.result;parseFrotaPaste();};reader.readAsText(file);
   } else {
     document.getElementById('frota-result').innerHTML='<div style="background:var(--amber-bg);border:1px solid #e8c090;border-radius:7px;padding:10px 14px;font-size:12px;color:var(--amber);">⚠ Para .xlsx, copie os dados da planilha e cole na área de texto acima. O suporte nativo a .xlsx está sendo preparado.</div>';
   }
@@ -5726,7 +5358,7 @@ function parseFiliais(){
   if(!raw){alert('Cole as filiais antes de importar.');return;}
   const lines=raw.split('\n').map(l=>l.trim()).filter(Boolean);
   const header=lines[0].toLowerCase();
-  const startIdx=header==='filial'||hedesemp.includes('filial')||hedesemp.includes('operação')?1:0;
+  const startIdx=header==='filial'||header.includes('filial')||header.includes('operação')?1:0;
   FILIAIS_LIST=lines.slice(startIdx).filter(Boolean);
   document.getElementById('filiais-result').innerHTML=
     '<div style="background:var(--green-bg);border:1px solid #b8e4d0;border-radius:7px;padding:10px 14px;font-size:12px;color:var(--green);">'
@@ -5739,7 +5371,7 @@ function parseCargos(){
   if(!raw){alert('Cole os cargos antes de importar.');return;}
   const lines=raw.split('\n').map(l=>l.trim()).filter(Boolean);
   const header=lines[0].toLowerCase();
-  const startIdx=header==='cargo'||hedesemp.includes('cargo')?1:0;
+  const startIdx=header==='cargo'||header.includes('cargo')?1:0;
   CARGOS_LIST=lines.slice(startIdx).filter(Boolean);
   document.getElementById('cargos-result').innerHTML=
     `<div style="background:var(--green-bg);border:1px solid #b8e4d0;border-radius:7px;padding:10px 14px;font-size:12px;color:var(--green);">
