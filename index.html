@@ -1858,22 +1858,22 @@ function gerarRelatorio(){
   body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;background:#fff;color:#1a1a1a;font-size:12px}
   @page{size:A4;margin:12mm 11mm}
   @media print{.page-break{page-break-before:always}.no-print{display:none!important}body{font-size:11px}}
-  .page{width:210mm;min-height:297mm;padding:11mm 13mm;background:#fff;position:relative}
-  .header{display:flex;align-items:center;justify-content:space-between;padding-bottom:8px;border-bottom:3px solid #F37021;margin-bottom:14px}
+  .page{width:210mm;min-height:297mm;padding:8mm 10mm;background:#fff;position:relative}
+  .header{display:flex;align-items:center;justify-content:space-between;padding-bottom:6px;border-bottom:3px solid #F37021;margin-bottom:8px}
   .logo{height:32px}
   .header-title{font-size:17px;font-weight:700;color:#004042}
   .header-sub{font-size:10px;color:#888;margin-top:2px}
-  .section{margin-bottom:14px}
-  .section-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#888;padding-bottom:4px;border-bottom:1.5px solid #F37021;margin-bottom:8px}
-  .kpi-row{display:grid;grid-template-columns:repeat(6,1fr);gap:7px;margin-bottom:14px}
-  .kpi{background:#F8F7F4;border-radius:7px;padding:9px 11px;border-left:3px solid #F37021}
+  .section{margin-bottom:8px}
+  .section-title{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#888;padding-bottom:3px;border-bottom:1.5px solid #F37021;margin-bottom:5px}
+  .kpi-row{display:grid;grid-template-columns:repeat(6,1fr);gap:5px;margin-bottom:8px}
+  .kpi{background:#F8F7F4;border-radius:6px;padding:6px 9px;border-left:3px solid #F37021}
   .kpi.verde{border-left-color:#1D9E75}.kpi.terra{border-left-color:#C24003}.kpi.roxo{border-left-color:#7F77DD}
   .kpi-label{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#888;margin-bottom:3px}
-  .kpi-value{font-size:21px;font-weight:700;color:#1a1a1a;line-height:1}
+  .kpi-value{font-size:18px;font-weight:700;color:#1a1a1a;line-height:1}
   .kpi-value.orange{color:#F37021}.kpi-value.verde{color:#1D9E75}.kpi-value.terra{color:#C24003}
   .kpi-sub{font-size:9px;color:#888;margin-top:2px}
   table{width:100%;border-collapse:collapse}
-  th{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#888;padding:4px 8px;background:#F8F7F4;border-bottom:1.5px solid #E0D9C8;text-align:left}
+  th{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#888;padding:3px 6px;background:#F8F7F4;border-bottom:1.5px solid #E0D9C8;text-align:left}
   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
   .footer{position:absolute;bottom:7mm;left:13mm;right:13mm;display:flex;justify-content:space-between;align-items:center;padding-top:5px;border-top:1px solid #E0D9C8}
   .footer-text{font-size:9px;color:#aaa}
@@ -2034,77 +2034,164 @@ function gerarRelatorio(){
     </div>
   </div>
 
-  <!-- KPIs da semana atual -->
-  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin-bottom:12px">
-    <div class="kpi"><div class="kpi-label">Programados</div><div class="kpi-value">${semAtualEquips.length}</div><div class="kpi-sub">${semLabel}</div></div>
-    <div class="kpi verde"><div class="kpi-label">Concluídos</div><div class="kpi-value verde">${concAtual}</div><div class="kpi-sub">${andPct}% da meta</div></div>
-    <div class="kpi terra"><div class="kpi-label">Em andamento</div><div class="kpi-value terra">${semAtualEquips.filter(e=>e.etapa==='manutencao'||e.etapa==='cl_entrada'||e.etapa==='cl_saida').length}</div><div class="kpi-sub">em processo</div></div>
-    <div class="kpi"><div class="kpi-label">Aguardando</div><div class="kpi-value orange">${semAtualEquips.filter(e=>e.etapa==='chegada').length}</div><div class="kpi-sub">sem início</div></div>
-    <div class="kpi roxo"><div class="kpi-label">c/ Reserva</div><div class="kpi-value" style="color:#7F77DD">${semAtualEquips.filter(e=>e.reservado).length}</div><div class="kpi-sub">${semAtualEquips.length?Math.round(semAtualEquips.filter(e=>e.reservado).length/semAtualEquips.length*100):0}% do total</div></div>
+  <!-- KPIs da semana atual — compactos -->
+  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-bottom:8px">
+    <div style="background:#F8F7F4;border-radius:6px;padding:6px 10px;border-left:3px solid #F37021">
+      <div style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#888">Programados</div>
+      <div style="font-size:18px;font-weight:800;color:#1a1a1a;line-height:1.1">${semAtualEquips.length}</div>
+      <div style="font-size:8px;color:#888">${semLabel}</div>
+    </div>
+    <div style="background:#F8F7F4;border-radius:6px;padding:6px 10px;border-left:3px solid #1D9E75">
+      <div style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#888">Concluídos</div>
+      <div style="font-size:18px;font-weight:800;color:#1D9E75;line-height:1.1">${concAtual}</div>
+      <div style="font-size:8px;color:#888">${andPct}% da meta</div>
+    </div>
+    <div style="background:#F8F7F4;border-radius:6px;padding:6px 10px;border-left:3px solid #C24003">
+      <div style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#888">Em andamento</div>
+      <div style="font-size:18px;font-weight:800;color:#C24003;line-height:1.1">${semAtualEquips.filter(e=>e.etapa==='manutencao'||e.etapa==='cl_entrada'||e.etapa==='cl_saida').length}</div>
+      <div style="font-size:8px;color:#888">em processo</div>
+    </div>
+    <div style="background:#F8F7F4;border-radius:6px;padding:6px 10px;border-left:3px solid #F37021">
+      <div style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#888">Aguardando</div>
+      <div style="font-size:18px;font-weight:800;color:#F37021;line-height:1.1">${semAtualEquips.filter(e=>e.etapa==='chegada').length}</div>
+      <div style="font-size:8px;color:#888">sem início</div>
+    </div>
+    <div style="background:#F8F7F4;border-radius:6px;padding:6px 10px;border-left:3px solid #7F77DD">
+      <div style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#888">c/ Reserva</div>
+      <div style="font-size:18px;font-weight:800;color:#7F77DD;line-height:1.1">${semAtualEquips.filter(e=>e.reservado).length}</div>
+      <div style="font-size:8px;color:#888">${semAtualEquips.length?Math.round(semAtualEquips.filter(e=>e.reservado).length/semAtualEquips.length*100):0}% do total</div>
+    </div>
   </div>
 
-  <div class="section">
-    <div class="section-title">📅 Andamento semana atual — ${semLabel} (${semAtualEquips.length} equipamentos)</div>
-    <div class="and-total">
-      <div class="and-big">${andPct}%</div>
-      <div>
-        <div class="desp-label">Concluídos até agora</div>
-        <div class="desp-detail">${concAtual} concluídos · ${semAtualEquips.filter(e=>e.etapa==='manutencao'||e.etapa==='cl_entrada'||e.etapa==='cl_saida').length} em andamento · ${semAtualEquips.filter(e=>e.etapa==='chegada').length} aguardando</div>
+  <!-- Andamento semana atual + Reservados lado a lado -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px">
+    <div>
+      <div class="section-title">📅 Andamento — ${semLabel}</div>
+      <div style="display:flex;align-items:center;gap:10px;background:#F8F7F4;border-radius:6px;padding:6px 10px;margin-bottom:6px;border-left:3px solid ${andCor}">
+        <div style="font-size:24px;font-weight:900;color:${andCor};line-height:1">${andPct}%</div>
+        <div style="font-size:9px;color:#555">${concAtual} conc. · ${semAtualEquips.filter(e=>e.etapa==='manutencao'||e.etapa==='cl_entrada'||e.etapa==='cl_saida').length} andamento · ${semAtualEquips.filter(e=>e.etapa==='chegada').length} aguard.</div>
       </div>
+      <table>
+        <thead><tr><th>Oficina</th><th style="text-align:center">Prev.</th><th style="text-align:center;color:#1D9E75">Conc.</th><th style="text-align:center;color:#C24003">And.</th><th style="text-align:center;color:#888">Ag.</th><th style="text-align:center">%</th></tr></thead>
+        <tbody>${andRows}</tbody>
+      </table>
     </div>
-    <table>
-      <thead><tr><th>Oficina</th><th style="text-align:center">Total</th><th style="text-align:center;color:#1D9E75">✓ Conc.</th><th style="text-align:center;color:#C24003">⚙ Em andamento</th><th style="text-align:center;color:#888">⏳ Aguardando</th><th style="text-align:center;width:70px">Progresso</th><th style="text-align:center">%</th></tr></thead>
-      <tbody>${andRows}</tbody>
-    </table>
+    <div>
+      <div class="section-title">🔖 Reservados programados (${semAtualEquips.filter(e=>e.reservado).length})</div>
+      <table>
+        <thead><tr><th>ID</th><th>Equipamento</th><th>Cliente</th><th>Etapa</th></tr></thead>
+        <tbody>${semAtualEquips.filter(e=>e.reservado).sort((a,b)=>{
+          const o={manutencao:0,cl_entrada:1,cl_saida:2,chegada:3,pronto:4};
+          return(o[a.etapa]??5)-(o[b.etapa]??5);
+        }).slice(0,10).map(e=>`<tr style="border-bottom:1px solid #F0EDE8">
+          <td style="padding:3px 6px;font-size:9px;font-weight:600;color:#004042">${e.id}</td>
+          <td style="padding:3px 6px;font-size:9px;color:#333">${e.equipamento.substring(0,22)}</td>
+          <td style="padding:3px 6px;font-size:9px;color:#7F77DD;font-weight:600">${(e.cliente||'').substring(0,18)}</td>
+          <td style="padding:3px 6px;font-size:9px;color:#333">${ETAPAS_GERAL.find(x=>x.id===e.etapa)?.label||e.etapa}</td>
+        </tr>`).join('')||'<tr><td colspan="4" style="padding:6px;color:#999;font-size:9px;text-align:center">Nenhum</td></tr>'}</tbody>
+      </table>
+    </div>
   </div>
 
-  <div class="grid2">
-    <div>
-      <div class="section">
-        <div class="section-title">⚠ Embarques próximos 7 dias — ${proxEmb.length} equip.</div>
-        <table>
-          <thead><tr><th>ID</th><th>Equipamento</th><th>Cliente</th><th style="text-align:center">Embarque</th><th style="text-align:center">Prazo</th></tr></thead>
-          <tbody>${embRows}</tbody>
-        </table>
-      </div>
-      <div class="section">
-        <div class="section-title">🔖 Equipamentos com reserva programados (${semAtualEquips.filter(e=>e.reservado).length})</div>
-        <table>
-          <thead><tr><th>ID</th><th>Equipamento</th><th>Oficina</th><th>Cliente</th><th>Etapa</th></tr></thead>
-          <tbody>${semAtualEquips.filter(e=>e.reservado).sort((a,b)=>{
-            const o={manutencao:0,cl_entrada:1,cl_saida:2,chegada:3,pronto:4};
-            return(o[a.etapa]??5)-(o[b.etapa]??5);
-          }).slice(0,12).map(e=>`<tr style="border-bottom:1px solid #F0EDE8">
-            <td style="padding:4px 8px;font-size:10px;font-weight:600;color:#004042">${e.id}</td>
-            <td style="padding:4px 8px;font-size:10px;color:#333">${e.equipamento.substring(0,26)}</td>
-            <td style="padding:4px 8px;font-size:10px;color:#666">${e.oficina}</td>
-            <td style="padding:4px 8px;font-size:10px;color:#7F77DD;font-weight:600">${(e.cliente||'').substring(0,22)}</td>
-            <td style="padding:4px 8px;font-size:10px;color:#333">${ETAPAS_GERAL.find(x=>x.id===e.etapa)?.label||e.etapa}</td>
-          </tr>`).join('')||'<tr><td colspan="5" style="padding:8px;color:#999;font-size:10px;text-align:center">Nenhum equipamento reservado programado</td></tr>'}</tbody>
-        </table>
-      </div>
-    </div>
-    <div>
-      <div class="section">
-        <div class="section-title">🔄 Movimentações últimas 24h (${movs24.length})</div>
-        <table>
-          <thead><tr><th>Hora</th><th>ID</th><th>Equipamento</th><th>Movimentação</th><th>Usuário</th></tr></thead>
-          <tbody>${movRows}</tbody>
-        </table>
-      </div>
-      <div class="section">
-        <div class="section-title">⏰ Não concluídos de semanas anteriores (${atrasados.length})</div>
-        <table>
-          <thead><tr><th>ID</th><th>Equipamento</th><th>Oficina</th><th>Sem. prev.</th><th>Etapa atual</th></tr></thead>
-          <tbody>${atrasados.slice(0,8).map(e=>`<tr class="alert-row" style="border-bottom:1px solid #F0EDE8">
-            <td style="padding:4px 8px;font-size:10px;font-weight:600;color:#004042">${e.id}</td>
-            <td style="padding:4px 8px;font-size:10px;color:#333">${e.equipamento.substring(0,22)}</td>
-            <td style="padding:4px 8px;font-size:10px;color:#666">${e.oficina}</td>
-            <td style="padding:4px 8px;font-size:10px;color:#C24003;font-weight:600">${semanaLabel(e.semana)}</td>
-            <td style="padding:4px 8px;font-size:10px;color:#333">${ETAPAS_GERAL.find(x=>x.id===e.etapa)?.label||e.etapa}</td>
-          </tr>`).join('')||'<tr><td colspan="5" style="padding:8px;color:#999;font-size:10px;text-align:center">Nenhum equipamento atrasado</td></tr>'}</tbody>
-        </table>
-      </div>
+  <!-- 4 Gráficos individuais por oficina -->
+  <div style="margin-top:8px">
+    <div class="section-title">📈 Evolução de desempenho por oficina — últimas semanas</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+    ${(()=>{
+      const OFS=[
+        {nome:'Assis (SP)',      cor:'#F37021', corFill:'#FFF5EC'},
+        {nome:'Sumaré (SP)',     cor:'#1D9E75', corFill:'#EDFAF4'},
+        {nome:'Contagem (MG)',   cor:'#7F77DD', corFill:'#F0EFFE'},
+        {nome:'São José dos Pinhais (PR)', cor:'#C24003', corFill:'#FFF0EB'},
+      ];
+      const semsComDados=[...new Set(Object.values(state)
+        .filter(e=>e.semana||e.semana_anterior)
+        .flatMap(e=>[e.semana,e.semana_anterior].filter(Boolean))
+      )].sort().slice(-8);
+      if(semsComDados.length<1)return '<div style="grid-column:span 2;text-align:center;color:#999;font-size:10px;padding:20px">Sem dados históricos suficientes</div>';
+      // Calcular desempenho por semana por oficina
+      function calcDesemp(of,sem){
+        const prev=Object.values(state).filter(e=>
+          (e.semana===sem||(e.semana_anterior===sem&&e.semana!==sem))&&e.oficina===of
+        );
+        const rep=prev.filter(e=>e.semana_anterior===sem&&e.semana!==sem);
+        const conc=prev.filter(e=>!rep.includes(e)&&e.etapa==='pronto');
+        return prev.length>0?{pct:Math.round(conc.length/prev.length*100),prev:prev.length,conc:conc.length,rep:rep.length}:null;
+      }
+      function mkGraf(of,cor,corFill){
+        const nomeShort=of.replace(' (SP)','').replace(' (MG)','').replace(' (PR)','');
+        const W=320,H=110,padL=28,padR=8,padT=18,padB=22;
+        const gW=W-padL-padR,gH=H-padT-padB;
+        const dados=semsComDados.map(sem=>({sem,d:calcDesemp(of,sem)}));
+        const comDados=dados.filter(x=>x.d!==null);
+        const semAtualIdx=dados.findIndex(x=>x.sem===semAtual);
+        const nS=semsComDados.length;
+        const xStep=nS>1?gW/(nS-1):gW;
+        const xOf=i=>padL+i*xStep;
+        const yOf=v=>padT+gH-(v/100)*gH;
+        // Média
+        const media=comDados.length?Math.round(comDados.reduce((s,x)=>s+x.d.pct,0)/comDados.length):0;
+        const corMedia=media>=80?'#1D9E75':media>=50?'#F37021':'#C24003';
+        let svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" style="width:100%;height:auto;display:block">`;
+        // Fundo
+        svg+=`<rect x="${padL}" y="${padT}" width="${gW}" height="${gH}" fill="${corFill}" rx="2"/>`;
+        // Linha de referência 100%
+        svg+=`<line x1="${padL}" y1="${padT}" x2="${W-padR}" y2="${padT}" stroke="${cor}" stroke-width=".5" stroke-dasharray="2,3" opacity=".4"/>`;
+        // Grid
+        [0,50,100].forEach(v=>{
+          const y=yOf(v);
+          svg+=`<line x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}" stroke="#E0D9C8" stroke-width="${v===0||v===100?.8:.4}" stroke-dasharray="${v===50?'2,3':''}"/>`;
+          svg+=`<text x="${padL-3}" y="${y+3}" text-anchor="end" font-size="6.5" fill="#bbb">${v}%</text>`;
+        });
+        // Área preenchida
+        if(comDados.length>=2){
+          const pts=dados.map((x,i)=>x.d?`${xOf(i)},${yOf(x.d.pct)}`:null).filter(Boolean);
+          const first=dados.findIndex(x=>x.d!==null);
+          const last=dados.map((x,i)=>x.d?i:-1).filter(v=>v>=0).pop();
+          if(first>=0&&last>=0){
+            const areaPath=`M${xOf(first)},${yOf(dados[first].d.pct)} `+
+              dados.slice(first,last+1).filter(x=>x.d).map((x,ri)=>{
+                const i=first+ri;
+                return`L${xOf(i)},${yOf(x.d.pct)}`;
+              }).join(' ')+
+              ` L${xOf(last)},${padT+gH} L${xOf(first)},${padT+gH} Z`;
+            svg+=`<path d="${areaPath}" fill="${cor}" opacity=".1"/>`;
+          }
+        }
+        // Linha de média
+        const yMedia=yOf(media);
+        svg+=`<line x1="${padL}" y1="${yMedia}" x2="${W-padR}" y2="${yMedia}" stroke="${corMedia}" stroke-width=".8" stroke-dasharray="3,2" opacity=".6"/>`;
+        svg+=`<text x="${W-padR+1}" y="${yMedia+3}" font-size="6" fill="${corMedia}" font-weight="700">${media}%</text>`;
+        // Linhas e pontos
+        for(let i=0;i<dados.length-1;i++){
+          if(dados[i].d&&dados[i+1].d)
+            svg+=`<line x1="${xOf(i)}" y1="${yOf(dados[i].d.pct)}" x2="${xOf(i+1)}" y2="${yOf(dados[i+1].d.pct)}" stroke="${cor}" stroke-width="2"/>`;
+        }
+        dados.forEach((x,i)=>{
+          if(!x.d)return;
+          const isAtual=x.sem===semAtual;
+          svg+=`<circle cx="${xOf(i)}" cy="${yOf(x.d.pct)}" r="${isAtual?4.5:3}" fill="${cor}" stroke="#fff" stroke-width="${isAtual?2:1.5}"/>`;
+          // valor acima ou abaixo
+          const acima=x.d.pct<85;
+          svg+=`<text x="${xOf(i)}" y="${yOf(x.d.pct)+(acima?-5:9)}" text-anchor="middle" font-size="7.5" font-weight="800" fill="${cor}">${x.d.pct}%</text>`;
+          // label semana embaixo
+          const lbl=(SEMANAS_LISTA.find(s=>s.value===x.sem)?.label||x.sem).replace(/Sem (\d+).*/,'S$1');
+          svg+=`<text x="${xOf(i)}" y="${H-4}" text-anchor="middle" font-size="6.5" fill="${isAtual?cor:'#aaa'}" font-weight="${isAtual?'700':'400'}">${lbl}</text>`;
+        });
+        svg+='</svg>';
+        // Linha resumo
+        const ult=comDados[comDados.length-1];
+        const resumo=ult?`${ult.d.conc}/${ult.d.prev} conc. · ↻${ult.d.rep} reprog.`:'sem dados';
+        return`<div style="background:#fff;border:1px solid #E0D9C8;border-radius:6px;overflow:hidden">
+          <div style="background:${corFill};padding:4px 8px;border-bottom:2px solid ${cor};display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:8.5px;font-weight:700;color:${cor};text-transform:uppercase;letter-spacing:.04em">${nomeShort}</span>
+            <span style="font-size:9px;color:#555">${resumo}</span>
+          </div>
+          <div style="padding:4px 6px">${svg}</div>
+        </div>`;
+      }
+      return OFS.map(o=>mkGraf(o.nome,o.cor,o.corFill)).join('');
+    })()}
     </div>
   </div>
 
