@@ -5284,14 +5284,7 @@ function renderCarga(){
   const cr=document.getElementById('cargos-result');
   if(cr&&CARGOS_LIST.length>0)renderCargosTable();
 }
-function setImportTab(i){
-  importTab=i;
-  [0,1].forEach(j=>{
-    document.getElementById('itab-'+j)?.classList.toggle('active',j===i);
-    const el=document.getElementById('icontent-'+j);
-    if(el)el.style.display=j===i?'block':'none';
-  });
-}
+// setImportTab defined below (supports 3 tabs)
 function parseFrotaPaste(){if(!pmoCanEdit()){pmoCheckUser('importar frota',function(){parseFrotaPaste();});return;}
   const raw=document.getElementById('paste-frota').value.trim();
   if(!raw)return;
@@ -5800,65 +5793,7 @@ function setImportTab(i){
   document.getElementById('icontent-1').style.display=i===1?'block':'none';
   document.getElementById('icontent-2').style.display=i===2?'block':'none';
 }
-function parseFrotaPaste(){
-  const raw=document.getElementById('paste-frota').value.trim();
-  if(!raw){alert('Cole os dados antes de importar.');return;}
-  const lines=raw.split('\n').map(l=>l.trim()).filter(Boolean);
-  const header=lines[0].toLowerCase();
-  const startIdx=header.includes('num')||header.includes('tipo')||header.includes('model')?1:0;
-  const catalog=[];
-  for(let i=startIdx;i<lines.length;i++){
-    const parts=lines[i].split(/\t|;|,/);
-    if(parts.length>=3){
-      catalog.push({numAtivo:(parts[0]||'').trim(),tipo:(parts[1]||'').trim(),modelo:(parts[2]||'').trim()});
-    } else if(parts.length===2){
-      catalog.push({numAtivo:'',tipo:(parts[0]||'').trim(),modelo:(parts[1]||'').trim()});
-    }
-  }
-  FROTA_CATALOG=catalog;
-  document.getElementById('frota-result').innerHTML=
-    `<div style="background:var(--green-bg);border:1px solid #b8e4d0;border-radius:7px;padding:10px 14px;font-size:12px;color:var(--green);">
-      ✓ <strong>${catalog.length} ativos</strong> importados com sucesso.<br>
-      <div style="margin-top:6px;max-height:120px;overflow-y:auto;">
-        ${catalog.slice(0,8).map(c=>`<span style="font-size:10px;background:var(--white);border:1px solid var(--border-soft);border-radius:4px;padding:1px 6px;margin:2px;display:inline-block;">${c.numAtivo?c.numAtivo+' · ':''}${c.tipo} ${c.modelo}</span>`).join('')}
-        ${catalog.length>8?`<span style="font-size:10px;color:var(--text-muted);"> ...e mais ${catalog.length-8}</span>`:''}
-      </div>
-    </div>`;
-}
-function handleFrotaFile(file){
-  if(!file)return;
-  if(file.name.endsWith('.csv')||file.name.endsWith('.tsv')){
-    const reader=new FileReader();reader.onload=e=>{document.getElementById('paste-frota').value=e.target.result;parseFrotaPaste();};reader.readAsText(file);
-  } else {
-    document.getElementById('frota-result').innerHTML='<div style="background:var(--amber-bg);border:1px solid #e8c090;border-radius:7px;padding:10px 14px;font-size:12px;color:var(--amber);">⚠ Para .xlsx, copie os dados da planilha e cole na área de texto acima. O suporte nativo a .xlsx está sendo preparado.</div>';
-  }
-}
-function parseFiliais(){
-  const raw=document.getElementById('paste-filiais').value.trim();
-  if(!raw){alert('Cole as filiais antes de importar.');return;}
-  const lines=raw.split('\n').map(l=>l.trim()).filter(Boolean);
-  const header=lines[0].toLowerCase();
-  const startIdx=header==='filial'||header.includes('filial')||header.includes('operação')?1:0;
-  FILIAIS_LIST=lines.slice(startIdx).filter(Boolean);
-  document.getElementById('filiais-result').innerHTML=
-    '<div style="background:var(--green-bg);border:1px solid #b8e4d0;border-radius:7px;padding:10px 14px;font-size:12px;color:var(--green);">'
-    +'<strong>'+FILIAIS_LIST.length+' filial(is)</strong> importada(s) com sucesso.<br>'
-    +'<div style="margin-top:6px;">'+FILIAIS_LIST.map(function(f){return '<span style="font-size:10px;background:var(--white);border:1px solid var(--border-soft);border-radius:4px;padding:1px 6px;margin:2px;display:inline-block;">'+f+'</span>';}).join('')+'</div>'
-    +'</div>';
-}
-function parseCargos(){
-  const raw=document.getElementById('paste-cargos').value.trim();
-  if(!raw){alert('Cole os cargos antes de importar.');return;}
-  const lines=raw.split('\n').map(l=>l.trim()).filter(Boolean);
-  const header=lines[0].toLowerCase();
-  const startIdx=header==='cargo'||header.includes('cargo')?1:0;
-  CARGOS_LIST=lines.slice(startIdx).filter(Boolean);
-  document.getElementById('cargos-result').innerHTML=
-    `<div style="background:var(--green-bg);border:1px solid #b8e4d0;border-radius:7px;padding:10px 14px;font-size:12px;color:var(--green);">
-      ✓ <strong>${CARGOS_LIST.length} cargos</strong> importados com sucesso.<br>
-      <div style="margin-top:6px;">${CARGOS_LIST.map(c=>`<span style="font-size:10px;background:var(--white);border:1px solid var(--border-soft);border-radius:4px;padding:1px 6px;margin:2px;display:inline-block;">${c}</span>`).join('')}</div>
-    </div>`;
-}
+// parseFrotaPaste / parseFiliais / parseCargos definidas acima (com verificação de permissão)
 
 // ── ADMIN: Edição de projetos ─────────────────────────────────────────
 function renderAdminProjList(){
@@ -6690,7 +6625,7 @@ function ajusteNao(){
   bmModalState.mode='fat_detail';
   renderFatDetail();
 }
-function faturamentoNao(){ ajusteNao(); }
+// faturamentoNao definida abaixo
 
 function openFaturamentoModal(bmId,fromCol){
   openValorAjusteModal(bmId,fromCol,'faturamento'); return;
@@ -6818,11 +6753,7 @@ function confirmFatDetail(){
   }
 }
 
-function openEditFatValues(bmId){
-  const b=bmDATA.bms.find(x=>x.id===bmId);
-  bmModalState={mode:'fat_detail',id:bmId,fromCol:b.col,toCol:b.col,isEdit:true};
-  renderFatDetail();
-}
+// openEditFatValues definida abaixo
 
 
 function openEditFatValues(bmId){
@@ -7119,11 +7050,7 @@ function renderCardModal(){
   </div></div>`;
 }
 
-function openDiscView(bmId){
-  const b=bmDATA.bms.find(x=>x.id===bmId);
-  bmModalState={mode:'disc',id:bmId,toCol:b.col,fromCol:b.col};
-  renderDiscModal();
-}
+// openDiscView definida acima (com isEdit:true)
 
 // ══════════════════════════════════════════════════════
 // CARD ACTIONS
@@ -9040,8 +8967,8 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){fecharTodo();fechar
   let _lu=null;
   setInterval(()=>{
     const u=window.currentUser;
-    // Usar nome como chave — consistente independente do perfil
-    const key=u?(u.nome||u.login||u.perfil||'shared').replace(/\s+/g,'_').toLowerCase():null;
+    // Usar 'shared' para que todos os usuários vejam os mesmos to-dos/KPIs
+    const key=u?'shared':null;
     if(u&&key!==_lu){_lu=key;todoInit(_lu);}
     else if(!u&&_lu){_lu=null;_todoItems=[];_kpiItems=[];todoRenderLista();tkpiRenderTabela();todoAtualizarBadge();}
   },800);
