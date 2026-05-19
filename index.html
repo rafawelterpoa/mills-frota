@@ -8958,7 +8958,9 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){fecharTodo();fechar
   let _lu=null;
   setInterval(()=>{
     const u=window.currentUser;
-    if(u&&(u.uid||u.perfil)!==_lu){_lu=u.uid||u.perfil||'usuario';todoInit(_lu);}
+    // Usar nome como chave — consistente independente do perfil
+    const key=u?(u.nome||u.login||u.perfil||'shared').replace(/\s+/g,'_').toLowerCase():null;
+    if(u&&key!==_lu){_lu=key;todoInit(_lu);}
     else if(!u&&_lu){_lu=null;_todoItems=[];_kpiItems=[];todoRenderLista();tkpiRenderTabela();todoAtualizarBadge();}
   },800);
 })();
@@ -10173,7 +10175,9 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape') fecharPortalMulta(
   let _mlastUser=null;
   setInterval(()=>{
     const u=window.currentUser;
-    if(u&&(u.uid||u.perfil)!==_mlastUser){ _mlastUser=u.uid||u.perfil||'usuario'; multaInit(_mlastUser); }
+    // Usar 'shared' para multas — todos do time veem as mesmas
+    const key=u?'shared':null;
+    if(u&&key!==_mlastUser){ _mlastUser=key; multaInit(_mlastUser); }
     else if(!u&&_mlastUser){ _mlastUser=null; _multaItems=[]; multaRenderTabela(); }
   },800);
 })();
