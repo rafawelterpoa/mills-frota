@@ -8133,13 +8133,36 @@ const SEED={"bms":[{"id":1,"bm":"BM-001","unidade":"ADECOAGRO VALE DO IVINHEMA",
       <div class="gi-page-title">Gestão de Atividades</div>
       <div class="gi-page-sub">Planejamento, prazos limites e acompanhamento de execuções.</div>
       <div class="gi-form-card">
-        <div class="gi-form-row" style="grid-template-columns:2fr 1fr 1fr 1fr 1fr auto">
+        <div class="gi-form-row" style="grid-template-columns:2fr 1fr 1fr 1fr auto">
           <div><label class="gi-label">Descrição da Tarefa</label><input class="gi-input" id="todo-nova-input" placeholder="O que precisa ser feito?" maxlength="200" onkeydown="if(event.key==='Enter')todoAdicionar()"></div>
           <div><label class="gi-label">Área</label><select class="gi-select" id="todo-area-sel" onchange="todoUpdateSubarea()"><option value="">Avarias</option><option>Garantias</option><option>PCM</option><option>MRO e Pneus</option><option>Medição</option><option>Gestão de Ativos</option><option>Performance</option></select></div>
           <div><label class="gi-label">Subárea</label><select class="gi-select" id="todo-subarea-sel"><option value="">Geral</option></select></div>
-          <div><label class="gi-label">Responsável</label><select class="gi-select" id="todo-resp-sel"><option>Rafael Welter</option><option>Luana Macedo</option><option>Lucas Dutra</option><option>Diego Soares</option><option>João Moisés</option><option>Wagner Vilar</option><option>Alex Sandro</option><option>Bruno Vinicius</option><option>Henrique Melo</option></select></div>
           <div><label class="gi-label">Prazo Limite</label><input class="gi-input" type="date" id="todo-dt-entrega"></div>
           <div style="display:flex;align-items:flex-end;gap:8px"><button class="gi-btn" onclick="todoAdicionar()">Salvar Atividade</button><button class="gi-btn sec" onclick="todoImportarPCM()" title="Importar 127 atividades do Plano de Ação PCM 2026">📥 Importar PCM 2026</button></div>
+        </div>
+        <!-- Solicitante automático + Responsáveis múltiplos -->
+        <div class="gi-form-row" style="grid-template-columns:1fr 2fr">
+          <div>
+            <label class="gi-label">Solicitante</label>
+            <div id="todo-solicitante-display" style="padding:8px 12px;background:#f0fdf4;border:1px solid #86efac;border-radius:7px;font-size:12px;font-weight:600;color:#166534;display:flex;align-items:center;gap:6px">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+              <span id="todo-solicitante-nome">Carregando...</span>
+            </div>
+          </div>
+          <div>
+            <label class="gi-label">Responsáveis</label>
+            <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap" id="todo-resp-container">
+              <select class="gi-select" id="todo-resp-sel" style="width:180px">
+                <option value="">Selecione o responsável...</option>
+                <option>Rafael Welter</option><option>Luana Macedo</option><option>Lucas Dutra</option>
+                <option>Diego Soares</option><option>João Moisés</option><option>Wagner Vilar</option>
+                <option>Alex Sandro</option><option>Bruno Vinicius</option><option>Henrique Melo</option>
+              </select>
+              <div id="todo-resp-chips" style="display:flex;gap:4px;flex-wrap:wrap"></div>
+              <button type="button" onclick="todoAddResp()" style="background:#e0f2fe;border:1px solid #7dd3fc;color:#0369a1;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap">+ Adicionar</button>
+            </div>
+            <input type="hidden" id="todo-resp-lista" value="">
+          </div>
         </div>
       </div>
       <!-- Filtros atividades -->
@@ -8179,8 +8202,9 @@ const SEED={"bms":[{"id":1,"bm":"BM-001","unidade":"ADECOAGRO VALE DO IVINHEMA",
         <thead><tr>
           <th style="width:90px">Ação Fluxo</th>
           <th>Tarefa / Atividade</th>
+          <th style="width:110px">Solicitante</th>
           <th style="width:130px">Área / Subárea</th>
-          <th style="width:120px">Responsável</th>
+          <th style="width:150px">Responsável(is)</th>
           <th style="width:100px">Prazo Limite</th>
           <th style="width:110px">Data Conclusão</th>
           <th style="width:80px">Fluxo</th>
@@ -8381,45 +8405,55 @@ const TODO_SUBAREAS={
 };
 
 let _todoItems=[],_kpiItems=[],_todoAba='todo';
+let _todoUid=null,_kpiUid=null;
 let _todoFireRef=null,_kpiFireRef=null,_tdOff=null,_kpiOff=null;
 let _giCharts={};
 
-function todoInit(uid){
+// Usa REST API igual ao resto do sistema — sem SDK firebase.database()
+async function todoInit(uid){
+  _todoUid=uid;
+  _kpiUid=uid;
+  // Carregar dados do Firebase REST
   try{
-    const db=firebase.database();
-    _todoFireRef=db.ref('todos/'+uid);
-    if(_tdOff)_tdOff();
-    _tdOff=_todoFireRef.on('value',snap=>{
-      const v=snap.val();
-      _todoItems=v?Object.values(v).sort((a,b)=>b.criadoEm-a.criadoEm):[];
-      todoRenderLista();todoAtualizarBadge();
-    });
-    _kpiFireRef=db.ref('kpis/'+uid);
-    if(_kpiOff)_kpiOff();
-    _kpiOff=_kpiFireRef.on('value',snap=>{
-      const v=snap.val();
-      _kpiItems=v?Object.values(v).sort((a,b)=>b.id-a.id):[];
-      tkpiRenderTabela();
-    });
+    const [rTodo,rKpi]=await Promise.all([
+      fetch(FB_BASE+'/gi_todos/'+uid+'.json'),
+      fetch(FB_BASE+'/gi_kpis/'+uid+'.json')
+    ]);
+    const vTodo=await rTodo.json();
+    const vKpi=await rKpi.json();
+    _todoItems=vTodo&&typeof vTodo==='object'?Object.values(vTodo).sort((a,b)=>b.criadoEm-a.criadoEm):[];
+    _kpiItems=vKpi&&typeof vKpi==='object'?Object.values(vKpi).sort((a,b)=>b.id-a.id):[];
   }catch(e){
-    try{_todoItems=JSON.parse(localStorage.getItem('todo_items')||'[]');}catch(_){}
-    try{_kpiItems=JSON.parse(localStorage.getItem('kpi_items')||'[]');}catch(_){}
-    todoRenderLista();tkpiRenderTabela();todoAtualizarBadge();
+    console.error('todoInit erro:',e);
+    try{_todoItems=JSON.parse(localStorage.getItem('todo_items_'+uid)||'[]');}catch(_){}
+    try{_kpiItems=JSON.parse(localStorage.getItem('kpi_items_'+uid)||'[]');}catch(_){}
   }
+  todoRenderLista();tkpiRenderTabela();todoAtualizarBadge();
   tkpiUpdateSub();
-  // Inicializar subárea do to-do
   const sel=document.getElementById('todo-area-sel');
   if(sel)todoUpdateSubarea();
 }
 
 function todoSalvar(){
-  if(_todoFireRef){const o={};_todoItems.forEach(t=>{o[t.id]=t;});_todoFireRef.set(o).catch(()=>{});}
-  else try{localStorage.setItem('todo_items',JSON.stringify(_todoItems));}catch(_){}
+  const uid=_todoUid;
+  if(!uid){try{localStorage.setItem('todo_items_x',JSON.stringify(_todoItems));}catch(_){}todoAtualizarBadge();return;}
+  const o={};_todoItems.forEach(t=>{o[t.id]=t;});
+  fetch(FB_BASE+'/gi_todos/'+uid+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(o)})
+    .catch(e=>{
+      console.error('todoSalvar erro:',e);
+      try{localStorage.setItem('todo_items_'+uid,JSON.stringify(_todoItems));}catch(_){}
+    });
   todoAtualizarBadge();
 }
 function kpiSalvar(){
-  if(_kpiFireRef){const o={};_kpiItems.forEach(k=>{o['k'+k.id]=k;});_kpiFireRef.set(o).catch(()=>{});}
-  else try{localStorage.setItem('kpi_items',JSON.stringify(_kpiItems));}catch(_){}
+  const uid=_kpiUid;
+  if(!uid){try{localStorage.setItem('kpi_items_x',JSON.stringify(_kpiItems));}catch(_){}return;}
+  const o={};_kpiItems.forEach(k=>{o['k'+k.id]=k;});
+  fetch(FB_BASE+'/gi_kpis/'+uid+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(o)})
+    .catch(e=>{
+      console.error('kpiSalvar erro:',e);
+      try{localStorage.setItem('kpi_items_'+uid,JSON.stringify(_kpiItems));}catch(_){}
+    });
 }
 
 // ── SUBÁREA ──
@@ -8489,24 +8523,52 @@ function dtFmt(iso){if(!iso)return'—';const[y,m,d]=iso.split('-');return d+'/'
 function escapeHtml(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
 // ── CRUD TO-DO ──
+// ── Responsáveis múltiplos ──
+let _todoResps=[];
+function todoAddResp(){
+  const sel=document.getElementById('todo-resp-sel');
+  const nome=(sel&&sel.value)||'';
+  if(!nome||_todoResps.includes(nome))return;
+  _todoResps.push(nome);sel.value='';
+  todoRenderRespChips();
+}
+function todoRemoveResp(nome){
+  _todoResps=_todoResps.filter(r=>r!==nome);
+  todoRenderRespChips();
+}
+function todoRenderRespChips(){
+  const cont=document.getElementById('todo-resp-chips');if(!cont)return;
+  cont.innerHTML=_todoResps.map((r,i)=>
+    '<span style="background:#dbeafe;color:#1e40af;border-radius:12px;padding:3px 10px;font-size:11px;font-weight:600;display:inline-flex;align-items:center;gap:5px">'
+    +escapeHtml(r)
+    +'<button data-idx="'+i+'" onclick="todoRemoveRespIdx(this)" style="background:none;border:none;color:#3b82f6;cursor:pointer;font-size:12px;padding:0;line-height:1">✕</button>'
+    +'</span>'
+  ).join('');
+}
+function todoRemoveRespIdx(btn){
+  const i=parseInt(btn.dataset.idx);
+  _todoResps.splice(i,1);
+  todoRenderRespChips();
+}
 function todoAdicionar(){
   const inp=document.getElementById('todo-nova-input');
   const txt=(inp.value||'').trim();if(!txt)return;
+  const solicitante=(currentUser&&currentUser.nome)||'';
+  const respSel=(document.getElementById('todo-resp-sel')||{}).value||'';
+  const respLista=_todoResps.length>0?[..._todoResps]:[respSel].filter(Boolean);
+  if(!respLista.length){alert('Adicione pelo menos um responsável.');return;}
   const item={
     id:'td_'+Date.now()+'_'+Math.random().toString(36).slice(2,5),
-    texto:txt,
-    prio:'media',
-    area:(document.getElementById('todo-area-sel')||{}).value||'Avarias',
+    texto:txt,prio:'media',
+    area:(document.getElementById('todo-area-sel')||{}).value||'',
     subarea:(document.getElementById('todo-subarea-sel')||{}).value||'',
-    resp:(document.getElementById('todo-resp-sel')||{}).value||'',
+    resp:respLista[0],responsaveis:respLista,solicitante:solicitante,
     dtEntrega:(document.getElementById('todo-dt-entrega')||{}).value||'',
-    dtInicio:'',obs:'',
-    feito:false,criadoEm:Date.now(),
-    criadoPor:(currentUser&&currentUser.nome)||'',
-    feitoPor:'',feitoEm:null
+    dtInicio:'',obs:'',feito:false,criadoEm:Date.now(),
+    criadoPor:solicitante,feitoPor:'',feitoEm:null
   };
   _todoItems.unshift(item);
-  inp.value='';
+  inp.value='';_todoResps=[];todoRenderRespChips();
   const de=document.getElementById('todo-dt-entrega');if(de)de.value='';
   todoSalvar();todoRenderLista();inp.focus();
 }
@@ -8567,6 +8629,18 @@ function todoRenderLista(){
   const conc=all.filter(t=>t.feito).sort((a,b)=>(b.feitoEm||0)-(a.feitoEm||0));
   const items=[...pend,...conc];
 
+  // ── Regra de visibilidade ──
+  const meuNome=(currentUser&&currentUser.nome)||'';
+  const isMaster=(currentUser&&(currentUser.perfil==='master'||currentUser.nivel==='master'));
+  [pend,conc].forEach(arr=>{
+    const vis=arr.filter(t=>{
+      if(isMaster||!t.solicitante)return true;
+      const resps=t.responsaveis||[t.resp].filter(Boolean);
+      return t.solicitante===meuNome||resps.includes(meuNome);
+    });
+    arr.length=0;arr.push(...vis);
+  });
+
   // Aplicar filtros
   const tdFilArea=(document.getElementById('td-fil-area')||{}).value||'';
   const tdFilSub=(document.getElementById('td-fil-subarea')||{}).value||'';
@@ -8590,7 +8664,7 @@ function todoRenderLista(){
   const displayItems=filteredItems;
 
   const tbody=document.getElementById('todo-lista');if(!tbody)return;
-  if(!displayItems.length){tbody.innerHTML='<tr><td colspan="9" class="gi-empty">Nenhuma atividade para os filtros aplicados</td></tr>';return;}
+  if(!displayItems.length){tbody.innerHTML='<tr><td colspan="10" class="gi-empty">Nenhuma atividade para os filtros aplicados</td></tr>';return;}
 
   tbody.innerHTML=displayItems.map(t=>{
     const st=todoStatus(t);
@@ -8601,8 +8675,9 @@ function todoRenderLista(){
       +'<td><span style="font-size:12px;font-weight:500;color:'+(t.feito?'#94a3b8':'#1e293b')+(t.feito?';text-decoration:line-through':'')+'">'
         +escapeHtml(t.texto)+'</span>'
         +(t.obs?'<br><small style="color:#94a3b8;font-size:10px">'+escapeHtml(t.obs)+'</small>':'')+'</td>'
+      +'<td style="font-size:11px"><span style="background:#f0fdf4;color:#166534;border-radius:10px;padding:1px 8px;font-size:10px;font-weight:600">'+escapeHtml(t.solicitante||t.criadoPor||'—')+'</span></td>'
       +'<td><span class="gi-badge area">'+(t.area||'—')+'</span><br><small style="color:#64748b;font-size:10px">'+(t.subarea||'')+'</small></td>'
-      +'<td style="font-size:11px;color:#475569">'+(t.resp||'—')+'</td>'
+      +'<td style="font-size:11px">'+((t.responsaveis&&t.responsaveis.length>0)?t.responsaveis.map(r=>'<span style="display:inline-block;background:#dbeafe;color:#1e40af;border-radius:10px;padding:1px 7px;font-size:10px;font-weight:600;margin:1px">'+escapeHtml(r)+'</span>').join(' '):(escapeHtml(t.resp||'—')))+'</td>'
       +'<td style="font-size:11px;color:#475569">'+dtFmt(t.dtEntrega)+'</td>'
       +'<td style="font-size:11px;color:#475569">'+feitoStr+'</td>'
       +'<td>'+fluxoHtml(st)+'</td>'
@@ -8949,7 +9024,14 @@ function todoMudarAba(aba){
   if(aba==='graficos')setTimeout(giRenderGraficos,100);
 }
 
-function abrirTodo(){document.getElementById('todo-overlay').style.display='block';setTimeout(()=>{const i=document.getElementById('todo-nova-input');if(i)i.focus();},150);}
+function abrirTodo(){
+  document.getElementById('todo-overlay').style.display='block';
+  const nome=(currentUser&&currentUser.nome)||'—';
+  const el=document.getElementById('todo-solicitante-nome');
+  if(el)el.textContent=nome;
+  if(typeof _todoResps!=='undefined'){_todoResps=[];todoRenderRespChips();}
+  setTimeout(()=>{const i=document.getElementById('todo-nova-input');if(i)i.focus();},150);
+}
 function fecharTodo(){document.getElementById('todo-overlay').style.display='none';}
 function todoOverlayClick(){}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){fecharTodo();fecharModalTodo();}});
@@ -9894,30 +9976,33 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#eef1f6;color:#1a1a2
 <script>
 // ── PORTAL DE MULTAS ──────────────────────────────────────
 let _multaItems = [];
+let _multaUid = null;
 let _multaFireRef = null;
 
 function multaInit(uid){
-  try{
-    const db = firebase.database();
-    _multaFireRef = db.ref('multas/'+uid);
-    _multaFireRef.on('value', snap=>{
-      const v = snap.val();
-      _multaItems = v ? Object.values(v).sort((a,b)=>b.criadoEm-a.criadoEm) : [];
+  _multaUid=uid;
+  fetch(FB_BASE+'/gi_multas/'+uid+'.json')
+    .then(r=>r.json())
+    .then(v=>{
+      _multaItems=v&&typeof v==='object'?Object.values(v).sort((a,b)=>b.criadoEm-a.criadoEm):[];
+      multaRenderTabela();
+    })
+    .catch(e=>{
+      console.error('multaInit erro:',e);
+      try{_multaItems=JSON.parse(localStorage.getItem('multa_items_'+uid)||'[]');}catch(_){}
       multaRenderTabela();
     });
-  } catch(e){
-    try{ _multaItems = JSON.parse(localStorage.getItem('multa_items')||'[]'); }catch(_){}
-    multaRenderTabela();
-  }
 }
 
 function multaSalvar(){
-  if(_multaFireRef){
-    const o={}; _multaItems.forEach(m=>{ o['m'+m.id]=m; });
-    _multaFireRef.set(o).catch(()=>{});
-  } else {
-    try{ localStorage.setItem('multa_items', JSON.stringify(_multaItems)); }catch(_){}
-  }
+  const uid=_multaUid;
+  if(!uid){try{localStorage.setItem('multa_items_x',JSON.stringify(_multaItems));}catch(_){}return;}
+  const o={};_multaItems.forEach(m=>{o['m'+m.id]=m;});
+  fetch(FB_BASE+'/gi_multas/'+uid+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(o)})
+    .catch(e=>{
+      console.error('multaSalvar erro:',e);
+      try{localStorage.setItem('multa_items_'+uid,JSON.stringify(_multaItems));}catch(_){}
+    });
 }
 
 // ── Upload / Drag ──
