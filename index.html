@@ -8350,6 +8350,36 @@ async function todoInit(uid){
     const vKpi=await rKpi.json();
     _todoItems=vTodo&&typeof vTodo==='object'?Object.values(vTodo).sort((a,b)=>b.criadoEm-a.criadoEm):[];
     _kpiItems=vKpi&&typeof vKpi==='object'?Object.values(vKpi).sort((a,b)=>b.id-a.id):[];
+
+    // ── Migração: se 'shared' está vazio, tenta importar dados de chaves antigas ──
+    if(uid==='shared'&&_todoItems.length===0){
+      const LEGACY_KEYS=['rafael_welter','rafael','luana_macedo','lucas_dutra','diego_soares','henrique_melo','alex_sandro','wagner_vilar','bruno_vinicius'];
+      const legacyData=await Promise.all(LEGACY_KEYS.map(k=>
+        fetch(FB_BASE+'/gi_todos/'+k+'.json').then(r=>r.json()).catch(()=>null)
+      ));
+      const allLegacy=[];
+      legacyData.forEach(d=>{if(d&&typeof d==='object')Object.values(d).forEach(t=>allLegacy.push(t));});
+      if(allLegacy.length>0){
+        const dedup={};allLegacy.forEach(t=>{dedup[t.id]=t;});
+        _todoItems=Object.values(dedup).sort((a,b)=>b.criadoEm-a.criadoEm);
+        todoSalvar(); // persiste no nó 'shared'
+        console.log('[GI] Migração: '+_todoItems.length+' to-dos migrados para shared');
+      }
+    }
+    if(uid==='shared'&&_kpiItems.length===0){
+      const LEGACY_KEYS=['rafael_welter','rafael'];
+      const legacyKpi=await Promise.all(LEGACY_KEYS.map(k=>
+        fetch(FB_BASE+'/gi_kpis/'+k+'.json').then(r=>r.json()).catch(()=>null)
+      ));
+      const allKpi=[];
+      legacyKpi.forEach(d=>{if(d&&typeof d==='object')Object.values(d).forEach(k=>allKpi.push(k));});
+      if(allKpi.length>0){
+        const dedup={};allKpi.forEach(k=>{dedup['k'+k.id]=k;});
+        _kpiItems=Object.values(dedup).sort((a,b)=>b.id-a.id);
+        kpiSalvar();
+        console.log('[GI] Migração: '+_kpiItems.length+' KPIs migrados para shared');
+      }
+    }
   }catch(e){
     console.error('todoInit erro:',e);
     try{_todoItems=JSON.parse(localStorage.getItem('todo_items_'+uid)||'[]');}catch(_){}
@@ -8967,9 +8997,9 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){fecharTodo();fechar
   let _lu=null;
   setInterval(()=>{
     const u=window.currentUser;
-    // Usar 'shared' para que todos os usuários vejam os mesmos to-dos/KPIs
-    const key=u?'shared':null;
-    if(u&&key!==_lu){_lu=key;todoInit(_lu);}
+    // Usar nome do usuário para detectar troca de login, mas carregar sempre de 'shared'
+    const key=u?(u.nome||u.login||'shared').replace(/\s+/g,'_').toLowerCase():null;
+    if(u&&key!==_lu){_lu=key;todoInit('shared');}
     else if(!u&&_lu){_lu=null;_todoItems=[];_kpiItems=[];todoRenderLista();tkpiRenderTabela();todoAtualizarBadge();}
   },800);
 })();
