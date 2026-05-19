@@ -612,6 +612,14 @@ input.filter-sel{padding:5px 8px;height:34px}
         <span id="home-todo-badge" style="display:none;font-size:9px;font-weight:700;color:#fff;background:#C24003;border-radius:10px;padding:1px 7px">0 pendentes</span>
       </div>
     </div>
+    <div class="home-area-card" onclick="abrirPortalMulta()" style="border-color:rgba(220,38,38,.3);background:linear-gradient(160deg,#fff5f5 0%,#fee2e2 100%)">
+      <div class="home-area-icon" style="color:#dc2626"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="7" x2="16" y2="7"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="17" x2="12" y2="17"/><circle cx="17" cy="17" r="3" fill="#dc2626" stroke="none"/><path d="M17 15.5v1.5l1 1" stroke="#fff" stroke-width="1.2"/></svg></div>
+      <div class="home-area-title">Portal de Multas</div>
+      <div class="home-area-desc">Upload de autuações — extração automática via IA</div>
+      <div style="margin-top:8px">
+        <span style="font-size:9px;font-weight:700;color:#dc2626;background:#fee2e2;border:1px solid #fca5a5;border-radius:4px;padding:2px 7px;display:inline-block">🤖 IA integrada</span>
+      </div>
+    </div>
   </div>
 
   <div class="home-section-label">Oficinas — acesso direto ao Kanban</div>
@@ -9765,5 +9773,413 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#eef1f6;color:#1a1a2
 <div id="main-view"></div>
 <div id="modal-area"></div>
 </div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- PORTAL DE MULTAS MODULE                                -->
+<!-- ══════════════════════════════════════════════════════ -->
+<style>
+#multa-overlay{display:none;position:fixed;inset:0;z-index:9300;background:#f8fafc;overflow:auto}
+#multa-panel{width:100%;min-height:100vh;display:flex;flex-direction:column}
+#multa-panel .mhd{background:#991b1b;color:#fff;padding:0 28px;height:52px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;position:sticky;top:0;z-index:10;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+#multa-panel .mhd-title{font-size:15px;font-weight:700;display:flex;align-items:center;gap:9px}
+#multa-panel .mclose{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:6px;padding:0 16px;height:32px;font-size:12px;color:rgba(255,255,255,.85);cursor:pointer}
+#multa-panel .mclose:hover{background:rgba(255,255,255,.22)}
+.multa-body{padding:24px 32px;max-width:1400px;width:100%;margin:0 auto;box-sizing:border-box}
+.multa-upload-zone{border:2px dashed #fca5a5;border-radius:12px;background:#fff;padding:40px;text-align:center;cursor:pointer;transition:all .2s;position:relative}
+.multa-upload-zone:hover,.multa-upload-zone.drag{border-color:#dc2626;background:#fff5f5}
+.multa-upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.multa-upload-icon{font-size:48px;margin-bottom:12px}
+.multa-upload-title{font-size:16px;font-weight:700;color:#dc2626;margin-bottom:6px}
+.multa-upload-sub{font-size:12px;color:#94a3b8}
+.multa-processing{display:none;text-align:center;padding:40px}
+.multa-spinner{width:48px;height:48px;border:4px solid #fee2e2;border-top-color:#dc2626;border-radius:50%;animation:mSpin 1s linear infinite;margin:0 auto 16px}
+@keyframes mSpin{to{transform:rotate(360deg)}}
+.multa-result-card{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:16px 20px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.multa-result-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}
+.multa-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
+.multa-field{background:#f8fafc;border-radius:7px;padding:10px 12px}
+.multa-field-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#94a3b8;margin-bottom:4px}
+.multa-field-value{font-size:13px;font-weight:600;color:#1e293b}
+.multa-field-value.red{color:#dc2626}
+.multa-field-value.orange{color:#f97316}
+.multa-table{width:100%;border-collapse:collapse;font-size:12px;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.multa-table th{background:#7f1d1d;color:#fff;padding:9px 12px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
+.multa-table td{padding:9px 12px;border-bottom:1px solid #f1f5f9;vertical-align:middle}
+.multa-table tr:last-child td{border-bottom:none}
+.multa-table tr:hover td{background:#fff5f5}
+.multa-status-p{background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700}
+.multa-status-q{background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700}
+.multa-status-r{background:#d1fae5;color:#065f46;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700}
+.mbtn{padding:8px 18px;border:none;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;transition:.15s}
+.mbtn.red{background:#dc2626;color:#fff}.mbtn.red:hover{background:#b91c1c}
+.mbtn.ghost{background:transparent;border:1px solid #e2e8f0;color:#64748b}.mbtn.ghost:hover{border-color:#dc2626;color:#dc2626}
+.mbtn.green{background:#16a34a;color:#fff}.mbtn.green:hover{background:#15803d}
+.multa-preview-img{max-width:100%;max-height:300px;border-radius:8px;object-fit:contain;border:1px solid #e2e8f0}
+.multa-error{background:#fee2e2;border:1px solid #fca5a5;border-radius:8px;padding:14px 18px;color:#991b1b;font-size:12px;margin-bottom:16px}
+</style>
+
+<div id="multa-overlay">
+  <div id="multa-panel">
+    <div class="mhd">
+      <div class="mhd-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="20" height="20"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="7" x2="16" y2="7"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="17" x2="12" y2="17"/></svg>
+        Portal de Multas
+        <span id="multa-count-hd" style="font-size:11px;opacity:.5;font-weight:400;margin-left:4px"></span>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="mbtn green" onclick="multaExportarCSV()" id="btn-exportar-multa" style="display:none">⬇ Exportar CSV</button>
+        <button class="mclose" onclick="fecharPortalMulta()">✕ Fechar</button>
+      </div>
+    </div>
+
+    <div class="multa-body">
+
+      <!-- Upload zone -->
+      <div id="multa-upload-section">
+        <div style="font-size:20px;font-weight:700;color:#7f1d1d;margin-bottom:4px">Portal de Multas</div>
+        <div style="font-size:12px;color:#64748b;margin-bottom:20px">Faça upload do PDF ou foto da autuação — a IA extrai os dados automaticamente.</div>
+
+        <div class="multa-upload-zone" id="multa-drop-zone"
+             ondragover="multaDragOver(event)" ondragleave="multaDragLeave(event)" ondrop="multaDrop(event)">
+          <input type="file" id="multa-file-input" accept=".pdf,.jpg,.jpeg,.png,.webp,.heic"
+                 onchange="multaProcessarArquivo(this.files[0])">
+          <div class="multa-upload-icon">📄</div>
+          <div class="multa-upload-title">Arraste ou clique para enviar</div>
+          <div class="multa-upload-sub">PDF, JPG, PNG, WEBP — notificações, autos de infração, boletos de multa</div>
+        </div>
+      </div>
+
+      <!-- Processing -->
+      <div class="multa-processing" id="multa-processing">
+        <div class="multa-spinner"></div>
+        <div style="font-size:14px;font-weight:600;color:#dc2626;margin-bottom:6px">Analisando documento...</div>
+        <div id="multa-proc-msg" style="font-size:12px;color:#94a3b8">Extraindo informações da multa via IA</div>
+      </div>
+
+      <!-- Resultado da última leitura -->
+      <div id="multa-resultado-novo" style="display:none"></div>
+
+      <!-- Erro -->
+      <div id="multa-erro" class="multa-error" style="display:none"></div>
+
+      <!-- Tabela acumulada -->
+      <div id="multa-tabela-section" style="display:none;margin-top:24px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <div style="font-size:14px;font-weight:700;color:#7f1d1d">Multas registradas</div>
+          <div style="display:flex;gap:8px">
+            <button class="mbtn ghost" onclick="multaLimparTudo()" style="font-size:11px">🗑 Limpar tudo</button>
+          </div>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="multa-table">
+            <thead><tr>
+              <th>#</th><th>Placa</th><th>Data Infração</th><th>Hora</th>
+              <th>Código</th><th>Descrição</th><th>Pontos</th>
+              <th>Valor (R$)</th><th>Vencimento</th><th>Local</th>
+              <th>Órgão</th><th>Status</th><th>AIT/Auto</th><th></th>
+            </tr></thead>
+            <tbody id="multa-tbody"></tbody>
+          </table>
+        </div>
+        <div id="multa-totais" style="margin-top:12px;display:flex;gap:16px;flex-wrap:wrap"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+<script>
+// ── PORTAL DE MULTAS ──────────────────────────────────────
+let _multaItems = [];
+let _multaFireRef = null;
+
+function multaInit(uid){
+  try{
+    const db = firebase.database();
+    _multaFireRef = db.ref('multas/'+uid);
+    _multaFireRef.on('value', snap=>{
+      const v = snap.val();
+      _multaItems = v ? Object.values(v).sort((a,b)=>b.criadoEm-a.criadoEm) : [];
+      multaRenderTabela();
+    });
+  } catch(e){
+    try{ _multaItems = JSON.parse(localStorage.getItem('multa_items')||'[]'); }catch(_){}
+    multaRenderTabela();
+  }
+}
+
+function multaSalvar(){
+  if(_multaFireRef){
+    const o={}; _multaItems.forEach(m=>{ o['m'+m.id]=m; });
+    _multaFireRef.set(o).catch(()=>{});
+  } else {
+    try{ localStorage.setItem('multa_items', JSON.stringify(_multaItems)); }catch(_){}
+  }
+}
+
+// ── Upload / Drag ──
+function multaDragOver(e){ e.preventDefault(); document.getElementById('multa-drop-zone').classList.add('drag'); }
+function multaDragLeave(e){ document.getElementById('multa-drop-zone').classList.remove('drag'); }
+function multaDrop(e){
+  e.preventDefault();
+  document.getElementById('multa-drop-zone').classList.remove('drag');
+  const file = e.dataTransfer.files[0];
+  if(file) multaProcessarArquivo(file);
+}
+
+async function multaProcessarArquivo(file){
+  if(!file) return;
+  const maxMB = 20;
+  if(file.size > maxMB*1024*1024){ multaMostrarErro(`Arquivo muito grande (máx ${maxMB}MB).`); return; }
+
+  // Mostrar processing
+  document.getElementById('multa-upload-section').style.display='none';
+  document.getElementById('multa-processing').style.display='block';
+  document.getElementById('multa-resultado-novo').style.display='none';
+  document.getElementById('multa-erro').style.display='none';
+
+  const msgs = ['Lendo o documento...','Identificando campos da autuação...','Extraindo placa, data e valores...','Finalizando análise...'];
+  let mi = 0;
+  const msgEl = document.getElementById('multa-proc-msg');
+  const msgInt = setInterval(()=>{ if(msgEl) msgEl.textContent=msgs[mi++ % msgs.length]; }, 1800);
+
+  try {
+    // Converter para base64
+    const b64 = await new Promise((res,rej)=>{
+      const r = new FileReader();
+      r.onload = e => res(e.target.result.split(',')[1]);
+      r.onerror = rej;
+      r.readAsDataURL(file);
+    });
+
+    const isPDF = file.type==='application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+    const mediaType = isPDF ? 'application/pdf' : (file.type || 'image/jpeg');
+
+    const prompt = `Você é um especialista em autuações de trânsito brasileiras. Analise este documento e extraia TODOS os campos disponíveis no formato JSON abaixo. Se algum campo não estiver visível, use null. Responda APENAS com o JSON, sem texto adicional, sem markdown.
+
+{
+  "placa": "ABC1234 ou ABC1D23",
+  "renavam": "número ou null",
+  "proprietario": "nome ou null",
+  "data_infracao": "DD/MM/AAAA ou null",
+  "hora_infracao": "HH:MM ou null",
+  "local_infracao": "descrição do local ou null",
+  "municipio": "cidade/UF ou null",
+  "codigo_infracao": "código numérico ex: 74550 ou null",
+  "descricao_infracao": "texto completo da infração ou null",
+  "pontos": número inteiro ou null,
+  "gravidade": "LEVE|MÉDIA|GRAVE|GRAVÍSSIMA ou null",
+  "valor_multa": número decimal ex: 293.47 ou null,
+  "valor_com_desconto": número decimal ou null,
+  "data_vencimento": "DD/MM/AAAA ou null",
+  "data_limite_recurso": "DD/MM/AAAA ou null",
+  "orgao_autuador": "nome do órgão ou null",
+  "numero_auto": "número do AIT/auto de infração ou null",
+  "agente": "nome ou matrícula do agente ou null",
+  "status": "PENDENTE|PAGO|RECURSO|CANCELADA",
+  "observacoes": "qualquer informação relevante não capturada ou null"
+}`;
+
+    const body = {
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1000,
+      messages:[{
+        role:'user',
+        content:[
+          isPDF
+            ? { type:'document', source:{ type:'base64', media_type:mediaType, data:b64 } }
+            : { type:'image',    source:{ type:'base64', media_type:mediaType, data:b64 } },
+          { type:'text', text:prompt }
+        ]
+      }]
+    };
+
+    // Proxy Cloudflare Worker — evita bloqueio CORS do browser
+    const PROXY_URL = 'https://spring-firefly-c8d7.rafa-welter-poa.workers.dev';
+    const resp = await fetch(PROXY_URL,{
+      method:'POST',
+      headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify(body)
+    });
+
+    clearInterval(msgInt);
+
+    if(!resp.ok){ const err=await resp.json(); throw new Error(err.error?.message||'Erro na API'); }
+
+    const data = await resp.json();
+    const txt = data.content.map(c=>c.text||'').join('').replace(/```json|```/g,'').trim();
+    let multa;
+    try{ multa = JSON.parse(txt); }
+    catch(e){ throw new Error('Não foi possível interpretar a resposta da IA. Verifique se o documento é uma multa válida.'); }
+
+    // Salvar
+    const item = {
+      ...multa,
+      id: Date.now(),
+      criadoEm: Date.now(),
+      arquivo: file.name,
+      status: multa.status || 'PENDENTE'
+    };
+    _multaItems.unshift(item);
+    multaSalvar();
+
+    // Mostrar resultado
+    document.getElementById('multa-processing').style.display='none';
+    document.getElementById('multa-upload-section').style.display='block';
+    document.getElementById('multa-file-input').value='';
+    multaMostrarResultadoNovo(item);
+    multaRenderTabela();
+
+  } catch(err){
+    clearInterval(msgInt);
+    document.getElementById('multa-processing').style.display='none';
+    document.getElementById('multa-upload-section').style.display='block';
+    multaMostrarErro('Erro ao processar: '+err.message);
+  }
+}
+
+function multaMostrarResultadoNovo(m){
+  const fmt = v => v!=null&&v!==''&&v!=='null' ? v : '—';
+  const fmtR = v => v!=null&&v!=='' ? 'R$ '+parseFloat(v).toFixed(2).replace('.',',') : '—';
+  const html = `
+    <div class="multa-result-card" style="border-left:4px solid #dc2626">
+      <div class="multa-result-title">
+        <span>✅ Multa extraída — ${fmt(m.arquivo)}</span>
+        <span style="font-size:11px;color:#94a3b8">${new Date(m.criadoEm).toLocaleString('pt-BR')}</span>
+      </div>
+      <div class="multa-grid">
+        <div class="multa-field"><div class="multa-field-label">Placa</div><div class="multa-field-value red">${fmt(m.placa)}</div></div>
+        <div class="multa-field"><div class="multa-field-label">Data Infração</div><div class="multa-field-value">${fmt(m.data_infracao)} ${fmt(m.hora_infracao)}</div></div>
+        <div class="multa-field"><div class="multa-field-label">Código</div><div class="multa-field-value">${fmt(m.codigo_infracao)}</div></div>
+        <div class="multa-field"><div class="multa-field-label">Pontos</div><div class="multa-field-value orange">${fmt(m.pontos)}</div></div>
+        <div class="multa-field"><div class="multa-field-label">Valor da Multa</div><div class="multa-field-value red">${fmtR(m.valor_multa)}</div></div>
+        <div class="multa-field"><div class="multa-field-label">Com desconto</div><div class="multa-field-value">${fmtR(m.valor_com_desconto)}</div></div>
+        <div class="multa-field"><div class="multa-field-label">Vencimento</div><div class="multa-field-value orange">${fmt(m.data_vencimento)}</div></div>
+        <div class="multa-field"><div class="multa-field-label">Órgão</div><div class="multa-field-value">${fmt(m.orgao_autuador)}</div></div>
+      </div>
+      <div style="margin-top:12px;padding-top:10px;border-top:1px solid #f1f5f9;font-size:11px;color:#475569">
+        <strong>Infração:</strong> ${fmt(m.descricao_infracao)}
+      </div>
+      ${m.local_infracao?`<div style="margin-top:4px;font-size:11px;color:#64748b"><strong>Local:</strong> ${m.local_infracao}</div>`:''}
+    </div>`;
+  const el = document.getElementById('multa-resultado-novo');
+  el.innerHTML = html;
+  el.style.display = 'block';
+}
+
+function multaMostrarErro(msg){
+  const el = document.getElementById('multa-erro');
+  el.textContent = '⚠ '+msg;
+  el.style.display = 'block';
+}
+
+function multaRenderTabela(){
+  const tbody = document.getElementById('multa-tbody');
+  const section = document.getElementById('multa-tabela-section');
+  const countHd = document.getElementById('multa-count-hd');
+  const btnExp = document.getElementById('btn-exportar-multa');
+
+  if(countHd) countHd.textContent = '('+_multaItems.length+' registro'+((_multaItems.length)!==1?'s':'')+')';
+  if(btnExp) btnExp.style.display = _multaItems.length?'inline-block':'none';
+
+  if(!_multaItems.length){ if(section)section.style.display='none'; return; }
+  if(section) section.style.display='block';
+  if(!tbody) return;
+
+  const fmt = v => v!=null&&v!==''&&v!=='null'?v:'—';
+  const fmtR = v => v!=null&&v!==''?'R$ '+parseFloat(v).toFixed(2).replace('.',','):'—';
+
+  tbody.innerHTML = _multaItems.map((m,i)=>{
+    const stCls = m.status==='PAGO'?'multa-status-r':m.status==='RECURSO'?'multa-status-q':'multa-status-p';
+    return `<tr>
+      <td style="font-size:10px;color:#94a3b8">${_multaItems.length-i}</td>
+      <td style="font-weight:700;color:#dc2626">${fmt(m.placa)}</td>
+      <td style="font-size:11px">${fmt(m.data_infracao)}</td>
+      <td style="font-size:11px">${fmt(m.hora_infracao)}</td>
+      <td style="font-size:11px;font-weight:600">${fmt(m.codigo_infracao)}</td>
+      <td style="font-size:11px;max-width:200px;white-space:normal">${fmt(m.descricao_infracao)}</td>
+      <td style="text-align:center;font-weight:700;color:#f97316">${fmt(m.pontos)}</td>
+      <td style="font-weight:700;color:#dc2626">${fmtR(m.valor_multa)}</td>
+      <td style="font-size:11px">${fmt(m.data_vencimento)}</td>
+      <td style="font-size:10px;max-width:150px;white-space:normal;color:#64748b">${fmt(m.local_infracao)}</td>
+      <td style="font-size:11px">${fmt(m.orgao_autuador)}</td>
+      <td><span class="${stCls}">${fmt(m.status)}</span></td>
+      <td style="font-size:11px;color:#64748b">${fmt(m.numero_auto)}</td>
+      <td><button onclick="multaDeletar(${m.id})" style="background:none;border:1px solid #fca5a5;color:#ef4444;border-radius:4px;padding:3px 8px;font-size:10px;cursor:pointer">✕</button></td>
+    </tr>`;
+  }).join('');
+
+  // Totais
+  const total = _multaItems.reduce((s,m)=>s+(parseFloat(m.valor_multa)||0),0);
+  const totalPts = _multaItems.reduce((s,m)=>s+(parseInt(m.pontos)||0),0);
+  const pend = _multaItems.filter(m=>m.status==='PENDENTE').length;
+  const totEl = document.getElementById('multa-totais');
+  if(totEl) totEl.innerHTML = `
+    <div style="background:#fee2e2;border-radius:8px;padding:10px 16px;display:flex;flex-direction:column;gap:2px">
+      <div style="font-size:9px;font-weight:700;text-transform:uppercase;color:#991b1b">Total em multas</div>
+      <div style="font-size:18px;font-weight:800;color:#dc2626">R$ ${total.toFixed(2).replace('.',',')}</div>
+    </div>
+    <div style="background:#fff7ed;border-radius:8px;padding:10px 16px;display:flex;flex-direction:column;gap:2px">
+      <div style="font-size:9px;font-weight:700;text-transform:uppercase;color:#c2410c">Total de pontos</div>
+      <div style="font-size:18px;font-weight:800;color:#f97316">${totalPts} pts</div>
+    </div>
+    <div style="background:#fef3c7;border-radius:8px;padding:10px 16px;display:flex;flex-direction:column;gap:2px">
+      <div style="font-size:9px;font-weight:700;text-transform:uppercase;color:#92400e">Pendentes</div>
+      <div style="font-size:18px;font-weight:800;color:#d97706">${pend}</div>
+    </div>
+    <div style="background:#f1f5f9;border-radius:8px;padding:10px 16px;display:flex;flex-direction:column;gap:2px">
+      <div style="font-size:9px;font-weight:700;text-transform:uppercase;color:#475569">Total registros</div>
+      <div style="font-size:18px;font-weight:800;color:#334155">${_multaItems.length}</div>
+    </div>`;
+}
+
+function multaDeletar(id){
+  if(!confirm('Remover esta multa?')) return;
+  _multaItems = _multaItems.filter(m=>m.id!==id);
+  multaSalvar(); multaRenderTabela();
+}
+
+function multaLimparTudo(){
+  if(!confirm('Remover TODAS as multas registradas? Esta ação não pode ser desfeita.')) return;
+  _multaItems = [];
+  multaSalvar(); multaRenderTabela();
+  document.getElementById('multa-resultado-novo').style.display='none';
+}
+
+function multaExportarCSV(){
+  const cols = ['Placa','Data Infração','Hora','Código','Descrição','Pontos','Valor R$','Com Desconto R$','Vencimento','Local','Município','Órgão','Nº Auto','Status','Proprietário','RENAVAM','Observações'];
+  const rows = _multaItems.map(m=>[
+    m.placa||'',m.data_infracao||'',m.hora_infracao||'',m.codigo_infracao||'',
+    (m.descricao_infracao||'').replace(/;/g,' '),
+    m.pontos||'',m.valor_multa||'',m.valor_com_desconto||'',
+    m.data_vencimento||'',(m.local_infracao||'').replace(/;/g,' '),
+    m.municipio||'',m.orgao_autuador||'',m.numero_auto||'',m.status||'',
+    m.proprietario||'',m.renavam||'',(m.observacoes||'').replace(/;/g,' ')
+  ].join(';'));
+  const csv = '\uFEFF'+[cols.join(';'),...rows].join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download = 'multas_'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();
+}
+
+function abrirPortalMulta(){ document.getElementById('multa-overlay').style.display='block'; }
+function fecharPortalMulta(){ document.getElementById('multa-overlay').style.display='none'; }
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') fecharPortalMulta(); });
+
+// Hook login
+(function(){
+  let _mlastUser=null;
+  setInterval(()=>{
+    const u=window.currentUser;
+    if(u&&(u.uid||u.perfil)!==_mlastUser){ _mlastUser=u.uid||u.perfil||'usuario'; multaInit(_mlastUser); }
+    else if(!u&&_mlastUser){ _mlastUser=null; _multaItems=[]; multaRenderTabela(); }
+  },800);
+})();
+// ── FIM PORTAL DE MULTAS ──────────────────────────────────
+
+</script>
+
 </body>
 </html>
