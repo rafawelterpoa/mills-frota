@@ -8391,9 +8391,11 @@ async function todoInit(uid){
   if(sel)todoUpdateSubarea();
 }
 
+
 function todoSalvar(){
-  const uid=_todoUid;
+  const uid=_todoUid||(window.currentUser?'shared':null);
   if(!uid){try{localStorage.setItem('todo_items_x',JSON.stringify(_todoItems));}catch(_){}todoAtualizarBadge();return;}
+  if(!_todoUid)_todoUid=uid; // garante que fica setado
   const o={};_todoItems.forEach(t=>{o[t.id]=t;});
   const url=FB_BASE+'/gi_todos/'+uid+'.json';
   fetch(url,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(o)})
@@ -8408,8 +8410,9 @@ function todoSalvar(){
   todoAtualizarBadge();
 }
 function kpiSalvar(){
-  const uid=_kpiUid;
+  const uid=_kpiUid||(window.currentUser?'shared':null);
   if(!uid){try{localStorage.setItem('kpi_items_x',JSON.stringify(_kpiItems));}catch(_){}return;}
+  if(!_kpiUid)_kpiUid=uid;
   const o={};_kpiItems.forEach(k=>{o['k'+k.id]=k;});
   const url=FB_BASE+'/gi_kpis/'+uid+'.json';
   fetch(url,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(o)})
@@ -8996,6 +8999,8 @@ function abrirTodo(){
   const nome=(currentUser&&currentUser.nome)||'—';
   const el=document.getElementById('todo-solicitante-nome');
   if(el)el.textContent=nome;
+  // Garante inicialização imediata se ainda não foi feita
+  if(!_todoUid&&window.currentUser){todoInit('shared');}
   if(typeof _todoResps!=='undefined'){_todoResps=[];todoRenderRespChips();}
   setTimeout(()=>{const i=document.getElementById('todo-nova-input');if(i)i.focus();},150);
 }
