@@ -8393,32 +8393,35 @@ async function todoInit(uid){
 
 
 function todoSalvar(){
-  const uid=_todoUid||(window.currentUser?'shared':null);
-  if(!uid){try{localStorage.setItem('todo_items_x',JSON.stringify(_todoItems));}catch(_){}todoAtualizarBadge();alert('GI DEBUG: sem uid! currentUser='+JSON.stringify(window.currentUser));return;}
+  const uid=_todoUid||(typeof currentUser!=='undefined'&&currentUser?'shared':null);
+  if(!uid){try{localStorage.setItem('todo_items_x',JSON.stringify(_todoItems));}catch(_){}todoAtualizarBadge();return;}
   if(!_todoUid)_todoUid=uid;
   const o={};_todoItems.forEach(t=>{o[t.id]=t;});
   const url=FB_BASE+'/gi_todos/'+uid+'.json';
   fetch(url,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(o)})
     .then(r=>{
-      if(!r.ok) r.text().then(t=>{alert('GI DEBUG erro HTTP '+r.status+': '+t.slice(0,80));});
-      else alert('GI DEBUG OK → '+uid+' ('+_todoItems.length+' itens)');
+      if(!r.ok) r.text().then(t=>console.error('[GI] todoSalvar HTTP '+r.status,t));
+      else console.log('[GI] todoSalvar OK →',uid,'('+_todoItems.length+' itens)');
     })
-    .catch(e=>alert('GI DEBUG erro rede: '+e.message));
+    .catch(e=>{
+      console.error('[GI] todoSalvar ERRO:',e);
+      try{localStorage.setItem('todo_items_'+uid,JSON.stringify(_todoItems));}catch(_){}
+    });
   todoAtualizarBadge();
 }
 function kpiSalvar(){
-  const uid=_kpiUid||(window.currentUser?'shared':null);
+  const uid=_kpiUid||(typeof currentUser!=='undefined'&&currentUser?'shared':null);
   if(!uid){try{localStorage.setItem('kpi_items_x',JSON.stringify(_kpiItems));}catch(_){}return;}
   if(!_kpiUid)_kpiUid=uid;
   const o={};_kpiItems.forEach(k=>{o['k'+k.id]=k;});
   const url=FB_BASE+'/gi_kpis/'+uid+'.json';
   fetch(url,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(o)})
     .then(r=>{
-      if(!r.ok) r.text().then(t=>console.error('[GI] kpiSalvar HTTP '+r.status+' em '+url+' →',t));
+      if(!r.ok) r.text().then(t=>console.error('[GI] kpiSalvar HTTP '+r.status,t));
       else console.log('[GI] kpiSalvar OK →',uid,'('+_kpiItems.length+' itens)');
     })
     .catch(e=>{
-      console.error('[GI] kpiSalvar ERRO de rede:',e);
+      console.error('[GI] kpiSalvar ERRO:',e);
       try{localStorage.setItem('kpi_items_'+uid,JSON.stringify(_kpiItems));}catch(_){}
     });
 }
@@ -8997,7 +9000,7 @@ function abrirTodo(){
   const el=document.getElementById('todo-solicitante-nome');
   if(el)el.textContent=nome;
   // Garante inicialização imediata se ainda não foi feita
-  if(!_todoUid&&window.currentUser){todoInit('shared');}
+  if(!_todoUid&&currentUser){todoInit('shared');}
   if(typeof _todoResps!=='undefined'){_todoResps=[];todoRenderRespChips();}
   setTimeout(()=>{const i=document.getElementById('todo-nova-input');if(i)i.focus();},150);
 }
@@ -9008,7 +9011,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){fecharTodo();fechar
 (function(){
   let _lu=null;
   setInterval(()=>{
-    const u=window.currentUser;
+    const u=currentUser;
     // Usar nome do usuário para detectar troca de login, mas carregar sempre de 'shared'
     const key=u?(u.nome||u.login||'shared').replace(/\s+/g,'_').toLowerCase():null;
     if(u&&key!==_lu){_lu=key;todoInit('shared');}
@@ -10228,7 +10231,7 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape') fecharPortalMulta(
 (function(){
   let _mlastUser=null;
   setInterval(()=>{
-    const u=window.currentUser;
+    const u=currentUser;
     // Usar 'shared' para multas — todos do time veem as mesmas
     const key=u?'shared':null;
     if(u&&key!==_mlastUser){ _mlastUser=key; multaInit(_mlastUser); }
@@ -10239,7 +10242,7 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape') fecharPortalMulta(
 
 </script>
 
-<div id="app-version" style="position:fixed;bottom:6px;left:8px;z-index:99999;font-size:9px;font-weight:600;color:rgba(255,255,255,0.25);letter-spacing:.05em;pointer-events:none;user-select:none;">v1.0.3</div>
+<div id="app-version" style="position:fixed;bottom:6px;left:8px;z-index:99999;font-size:9px;font-weight:600;color:rgba(255,255,255,0.25);letter-spacing:.05em;pointer-events:none;user-select:none;">v1.0.4</div>
 
 </body>
 </html>
