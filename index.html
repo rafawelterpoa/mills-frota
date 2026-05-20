@@ -392,6 +392,9 @@ input.filter-sel{padding:5px 8px;height:34px}
 .admin-field{display:flex;flex-direction:column}
 .badge-perfil{display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600}
 .perfil-master{background:rgba(243,112,33,.12);color:var(--laranja)}
+.perfil-sistemas{background:rgba(18,196,126,.1);color:var(--verde2)}
+.perfil-gestor{background:rgba(220,170,30,.12);color:#c4a020}
+.perfil-usuario{background:#eef1f6;color:#4a5568}
 .perfil-engenharia{background:rgba(18,196,126,.1);color:var(--verde2)}
 .perfil-gestao_ativos{background:rgba(220,170,30,.08);color:#c4a020}
 .perfil-oficina{background:#e8f4f0;color:#15803d}
@@ -1093,7 +1096,7 @@ input.filter-sel{padding:5px 8px;height:34px}
     </div>
     <div class="admin-body">
       <table class="user-table" id="users-table">
-        <thead><tr><th>Nome</th><th>Usuário</th><th>Setor</th><th>Perfil</th><th>Oficina</th><th>Ações</th></tr></thead>
+        <thead><tr><th>Nome</th><th>Usuário</th><th>Perfil</th><th>Setor</th><th>Oficina</th><th>Ações</th></tr></thead>
         <tbody id="users-tbody"></tbody>
       </table>
       <div style="margin-top:16px;font-size:11px;font-weight:600;color:var(--text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em">Adicionar usuário</div>
@@ -1101,16 +1104,20 @@ input.filter-sel{padding:5px 8px;height:34px}
         <div class="admin-field"><div class="admin-label">Nome completo</div><input type="text" id="new-nome" placeholder="Nome Sobrenome"></div>
         <div class="admin-field"><div class="admin-label">Login</div><input type="text" id="new-login" placeholder="nome.sobrenome"></div>
         <div class="admin-field"><div class="admin-label">Senha</div><input type="password" id="new-senha" placeholder="••••"></div>
-        <div class="admin-field"><div class="admin-label">Setor</div><input type="text" id="new-setor" placeholder="Ex: Manutenção"></div>
         <div class="admin-field"><div class="admin-label">Perfil</div>
-          <select id="new-perfil">
-            <option value="consultor">Consultor (só visualização)</option>
-            <option value="operador">Operador</option>
-            <option value="oficina">Oficina</option>
-            <option value="engenharia">Engenharia</option>
-            <option value="gestao_ativos">Gestão de Ativos</option>
-            <option value="implantacao">Implantação</option>
+          <select id="new-perfil" onchange="toggleSetorField('new-setor','new-perfil')">
+            <option value="usuario">Usuário</option>
+            <option value="gestor">Gestor</option>
+            <option value="sistemas">Sistemas</option>
             <option value="master">Master</option>
+          </select>
+        </div>
+        <div class="admin-field" id="new-setor-wrap"><div class="admin-label">Setor</div>
+          <select id="new-setor">
+            <option value="Oficinas">Oficinas</option>
+            <option value="Gestão de Ativos">Gestão de Ativos</option>
+            <option value="Implantação">Implantação</option>
+            <option value="Externos">Externos</option>
           </select>
         </div>
         <div class="admin-field"><div class="admin-label">Oficina (se Oficina)</div>
@@ -2243,7 +2250,9 @@ function doLogout(){
   document.getElementById('login-error').style.display='none';
 }
 
-function perfilLabel(p){return{master:'Master/Gerencial',engenharia:'Engenharia',gestao_ativos:'Gestão de Ativos',oficina:'Oficina',operador:'Operador',consultor:'Consultor',implantacao:'Implantação'}[p]||p;}
+function perfilLabel(p){return{master:'Master',sistemas:'Sistemas',gestor:'Gestor',usuario:'Usuário',
+  // legado
+  engenharia:'Engenharia',gestao_ativos:'Gestão de Ativos',oficina:'Oficina',operador:'Operador',consultor:'Consultor',implantacao:'Implantação'}[p]||p;}
 
 // SENHAS
 function resolverPerfil(senha){
@@ -3756,26 +3765,83 @@ function renderAdminUsers(){
   tbody.innerHTML=usuariosCache.map((u,i)=>`<tr>
     <td style="color:var(--text)">${u.nome}</td>
     <td><code style="font-size:11px;color:var(--laranja)">${u.login}</code></td>
-    <td style="color:var(--text3)">${u.setor||'—'}</td>
     <td><span class="badge-perfil perfil-${u.perfil}">${perfilLabel(u.perfil)}</span></td>
+    <td style="color:var(--text3)">${u.setor||'—'}</td>
     <td style="color:var(--text3)">${u.oficina||'Todas'}</td>
-    <td>${u.login==='rafael'?'—':`<button class="del-btn" onclick="delUser(${i})">Remover</button>`}</td>
+    <td style="display:flex;gap:4px">
+      <button class="btn btn-outline btn-sm" onclick="openEditUser(${i})">✏️ Editar</button>
+      ${u.login==='rafael'?'—':`<button class="del-btn" onclick="delUser(${i})">Remover</button>`}
+    </td>
   </tr>`).join('');
 }
 async function addUser(){
   const nome=document.getElementById('new-nome').value.trim();
   const login=document.getElementById('new-login').value.trim().toLowerCase();
   const senha=document.getElementById('new-senha').value;
-  const setor=document.getElementById('new-setor').value.trim();
   const perfil=document.getElementById('new-perfil').value;
   const oficina=document.getElementById('new-oficina').value;
+  const needsSetor=['usuario','gestor'].includes(perfil);
+  const setor=needsSetor?document.getElementById('new-setor').value:'';
   if(!nome||!login||!senha){showToast('Preencha nome, login e senha');return;}
   if(usuariosCache.find(u=>u.login===login)){showToast('Login já existe');return;}
   usuariosCache.push({nome,login,senha,setor,perfil,oficina});
   await fbSetUsers(usuariosCache);renderAdminUsers();
   document.getElementById('new-nome').value='';document.getElementById('new-login').value='';
-  document.getElementById('new-senha').value='';document.getElementById('new-setor').value='';
+  document.getElementById('new-senha').value='';
   showToast('Usuário '+nome+' adicionado');
+}
+function toggleSetorField(setorId,perfilId){
+  const perfil=document.getElementById(perfilId).value;
+  const wrap=document.getElementById(setorId+'-wrap');
+  if(wrap)wrap.style.display=['usuario','gestor'].includes(perfil)?'':'none';
+}
+function openEditUser(idx){
+  const u=usuariosCache[idx];if(!u)return;
+  const existing=document.getElementById('edit-user-modal');
+  if(existing)existing.remove();
+  const setorOpts=['Oficinas','Gestão de Ativos','Implantação','Externos'].map(s=>`<option value="${s}"${u.setor===s?' selected':''}>${s}</option>`).join('');
+  const perfilOpts=[['usuario','Usuário'],['gestor','Gestor'],['sistemas','Sistemas'],['master','Master']].map(([v,l])=>`<option value="${v}"${u.perfil===v?' selected':''}>${l}</option>`).join('');
+  const oficinas=['','Assis (SP)','Contagem (MG)','Osasco (SP)','Parauapebas (PA)','Santos (SP)','Sumaré (SP)','São José dos Pinhais (PR)'];
+  const oficOpts=oficinas.map(o=>`<option value="${o}"${u.oficina===o?' selected':''}>${o||'— Todas —'}</option>`).join('');
+  const needsSetor=['usuario','gestor'].includes(u.perfil);
+  const modal=document.createElement('div');
+  modal.id='edit-user-modal';
+  modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;display:flex;align-items:center;justify-content:center';
+  modal.innerHTML=`<div style="background:var(--card);border-radius:10px;padding:24px;width:360px;max-width:95vw;box-shadow:0 8px 32px rgba(0,0,0,.25)">
+    <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:16px">✏️ Editar usuário: <span style="color:var(--laranja)">${u.login}</span></div>
+    <div class="admin-form">
+      <div class="admin-field"><div class="admin-label">Nome completo</div><input type="text" id="edit-nome" value="${u.nome}" placeholder="Nome Sobrenome"></div>
+      <div class="admin-field"><div class="admin-label">Nova senha (deixe vazio p/ manter)</div><input type="password" id="edit-senha" placeholder="••••"></div>
+      <div class="admin-field"><div class="admin-label">Perfil</div>
+        <select id="edit-perfil" onchange="toggleSetorField('edit-setor','edit-perfil')">${perfilOpts}</select>
+      </div>
+      <div class="admin-field" id="edit-setor-wrap" style="display:${needsSetor?'':'none'}"><div class="admin-label">Setor</div>
+        <select id="edit-setor">${setorOpts}</select>
+      </div>
+      <div class="admin-field"><div class="admin-label">Oficina</div><select id="edit-oficina">${oficOpts}</select></div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+      <button class="btn btn-outline btn-sm" onclick="document.getElementById('edit-user-modal').remove()">Cancelar</button>
+      <button class="btn btn-orange" onclick="saveEditUser(${idx})">Salvar</button>
+    </div>
+  </div>`;
+  document.body.appendChild(modal);
+}
+async function saveEditUser(idx){
+  const u=usuariosCache[idx];if(!u)return;
+  const nome=document.getElementById('edit-nome').value.trim();
+  const senha=document.getElementById('edit-senha').value;
+  const perfil=document.getElementById('edit-perfil').value;
+  const needsSetor=['usuario','gestor'].includes(perfil);
+  const setor=needsSetor?document.getElementById('edit-setor').value:'';
+  const oficina=document.getElementById('edit-oficina').value;
+  if(!nome){showToast('Nome obrigatório');return;}
+  u.nome=nome;
+  if(senha)u.senha=senha;
+  u.perfil=perfil;u.setor=setor;u.oficina=oficina;
+  await fbSetUsers(usuariosCache);
+  document.getElementById('edit-user-modal').remove();
+  renderAdminUsers();showToast('Usuário atualizado');
 }
 async function delUser(idx){
   if(!confirm('Remover usuário?'))return;
