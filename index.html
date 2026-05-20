@@ -2647,20 +2647,18 @@ function renderBoard(sid,visao){
       if(!eq||eq.baixado){dragId=null;return;}
       if(visao==='geral'){
         if(eq.etapa===etapa.id){dragId=null;return;}
-        const fi=etapaGeralIndex(eq.etapa),ti=etapaGeralIndex(etapa.id);
         const ctx={oficina:eq.oficina,eq};
-        if(etapa.id==='pronto'){
-          // Gestão de Ativos ou Engenharia ou Master
-          const nv=currentUser?currentUser.perfil:'';
-          if(nv==='master'||nv==='gestao_ativos'||nv==='engenharia'){applyMove(eq,eq.etapa,etapa.id,sid,'geral',{perfil:currentUser.nome,nivel:nv});}
-          else requestSenha('🔐 Aprovação para Estoque',`Mover "${eq.id}" para Pronto/Estoque.\nGestão de Ativos, Engenharia ou Master.`,'mover_para_pronto',ctx,p=>applyMove(eq,eq.etapa,etapa.id,sid,'geral',p));
-        }else if(eq.etapa==='cl_entrada'&&etapa.id==='manutencao'){
-          const nv=currentUser?currentUser.perfil:'';
-          if(nv==='master'||nv==='engenharia'){applyMove(eq,eq.etapa,etapa.id,sid,'geral',{perfil:currentUser.nome,nivel:nv});}
-          else requestSenha('🔐 Aprovação Engenharia',`Mover "${eq.id}" para Manutenção.`,'mover_cl_entrada_catalogacao',ctx,p=>applyMove(eq,eq.etapa,etapa.id,sid,'geral',p));
-        }else if(ti<fi&&ETAPAS_BLOQUEIO.has(eq.etapa)){
-          requestSenha('🔐 Retrocesso','Requer senha master.','retroceder',ctx,p=>applyMove(eq,eq.etapa,etapa.id,sid,'geral',p));
-        }else{applyMove(eq,eq.etapa,etapa.id,sid,'geral',null);}
+        const nv=currentUser?currentUser.perfil:'';
+        const setor=currentUser?(currentUser.setor||''):'';
+        // Master e Sistemas: acesso total sem restrição
+        const isMasterSistemas=nv==='master'||nv==='sistemas';
+        // Gestor ou Usuário de Oficinas: acesso total dentro da sua oficina
+        const isOficina=(nv==='gestor'||nv==='usuario')&&setor==='Oficinas';
+        if(isMasterSistemas||isOficina){
+          applyMove(eq,eq.etapa,etapa.id,sid,'geral',{perfil:currentUser.nome,nivel:nv});
+        }else{
+          requestSenha('🔐 Aprovação necessária',`Mover "${eq.id}" requer aprovação de Oficinas, Gestor ou Master.`,'mover_geral',ctx,p=>applyMove(eq,eq.etapa,etapa.id,sid,'geral',p));
+        }
       }else{
         const fe=eq.etapa_interna||'lavagem';
         if(fe===etapa.id){dragId=null;return;}
@@ -10315,7 +10313,7 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape') fecharPortalMulta(
 
 </script>
 
-<div id="app-version" style="position:fixed;bottom:6px;left:8px;z-index:99999;font-size:9px;font-weight:600;color:rgba(255,255,255,0.25);letter-spacing:.05em;pointer-events:none;user-select:none;">v1.0.6</div>
+<div id="app-version" style="position:fixed;bottom:6px;left:8px;z-index:99999;font-size:9px;font-weight:600;color:rgba(255,255,255,0.25);letter-spacing:.05em;pointer-events:none;user-select:none;">v1.0.7</div>
 
 </body>
 </html>
