@@ -8590,26 +8590,24 @@ function todoDeletarEv(el){
 
 function todoRenderLista(){
   const all=[..._todoItems];
-  // pendentes primeiro (por prazo), depois concluídas
-  const pend=all.filter(t=>!t.feito).sort((a,b)=>{
-    if(a.dtEntrega&&b.dtEntrega)return a.dtEntrega.localeCompare(b.dtEntrega);
-    if(a.dtEntrega)return -1;if(b.dtEntrega)return 1;
-    return b.criadoEm-a.criadoEm;
-  });
-  const conc=all.filter(t=>t.feito).sort((a,b)=>(b.feitoEm||0)-(a.feitoEm||0));
-  const items=[...pend,...conc];
 
   // ── Regra de visibilidade ──
   const meuNome=(currentUser&&currentUser.nome)||'';
   const isMaster=(currentUser&&(currentUser.perfil==='master'||currentUser.nivel==='master'));
-  [pend,conc].forEach(arr=>{
-    const vis=arr.filter(t=>{
-      if(isMaster||!t.solicitante)return true;
-      const resps=t.responsaveis||[t.resp].filter(Boolean);
-      return t.solicitante===meuNome||resps.includes(meuNome);
-    });
-    arr.length=0;arr.push(...vis);
+  const visiveis=all.filter(t=>{
+    if(isMaster||!t.solicitante)return true;
+    const resps=t.responsaveis&&t.responsaveis.length>0?t.responsaveis:[t.resp].filter(Boolean);
+    return t.solicitante===meuNome||resps.includes(meuNome);
   });
+
+  // pendentes primeiro (por prazo), depois concluídas
+  const pend=visiveis.filter(t=>!t.feito).sort((a,b)=>{
+    if(a.dtEntrega&&b.dtEntrega)return a.dtEntrega.localeCompare(b.dtEntrega);
+    if(a.dtEntrega)return -1;if(b.dtEntrega)return 1;
+    return b.criadoEm-a.criadoEm;
+  });
+  const conc=visiveis.filter(t=>t.feito).sort((a,b)=>(b.feitoEm||0)-(a.feitoEm||0));
+  const items=[...pend,...conc];
 
   // Aplicar filtros
   const tdFilArea=(document.getElementById('td-fil-area')||{}).value||'';
@@ -8640,6 +8638,7 @@ function todoRenderLista(){
     const st=todoStatus(t);
     const feitoStr=t.feitoEm?new Date(t.feitoEm).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit'}):'—';
     const concluirDisabled=t.feito?'disabled style="opacity:.4;cursor:default"':'';
+    const podeEditar=isMaster||(t.solicitante&&t.solicitante===meuNome);
     return'<tr class="'+(t.feito?'done-row':'')+'">'
       +'<td><button class="concluir-btn" data-tid="'+t.id+'" onclick="todoConcluirEv(this)" '+concluirDisabled+'>'+( t.feito?'✓ Concluído':'Concluir')+'</button></td>'
       +'<td><span style="font-size:12px;font-weight:500;color:'+(t.feito?'#94a3b8':'#1e293b')+(t.feito?';text-decoration:line-through':'')+'">'
@@ -8653,8 +8652,7 @@ function todoRenderLista(){
       +'<td>'+fluxoHtml(st)+'</td>'
       +'<td>'+prazoHtml(t)+'</td>'
       +'<td style="white-space:nowrap">'
-        +'<button class="gi-edit-btn" data-tid="'+t.id+'" onclick="todoAbrirEditarEv(this)">Editar</button> '
-        +'<button class="gi-del" data-tid="'+t.id+'" onclick="todoDeletarEv(this)">✕</button>'
+        +(podeEditar?'<button class="gi-edit-btn" data-tid="'+t.id+'" onclick="todoAbrirEditarEv(this)">Editar</button> <button class="gi-del" data-tid="'+t.id+'" onclick="todoDeletarEv(this)">✕</button>':'<span style="font-size:10px;color:#94a3b8">—</span>')
       +'</td>'
       +'</tr>';
   }).join('');
@@ -8665,7 +8663,14 @@ function todoRenderLista(){
 }
 
 function todoAtualizarBadge(){
-  const pend=_todoItems.filter(t=>!t.feito).length;
+  const meuNome=(currentUser&&currentUser.nome)||'';
+  const isMaster=(currentUser&&(currentUser.perfil==='master'||currentUser.nivel==='master'));
+  const pend=_todoItems.filter(t=>{
+    if(t.feito)return false;
+    if(isMaster||!t.solicitante)return true;
+    const resps=t.responsaveis&&t.responsaveis.length>0?t.responsaveis:[t.resp].filter(Boolean);
+    return t.solicitante===meuNome||resps.includes(meuNome);
+  }).length;
   const b=document.getElementById('home-todo-badge');
   if(b){b.style.display=pend>0?'inline':'none';b.textContent=pend+' pendente'+(pend!==1?'s':'');}
 }
@@ -8964,6 +8969,9 @@ function tkpiRenderTabela(){
       return'<td style="text-align:center;font-size:11px;'+(isCur?'background:#eff6ff;font-weight:700;':'')+cor+'">'+(v||'—')+'<br><small style="font-size:8px;color:#94a3b8">'+unitLabel+'</small></td>';
     }).join('');
 
+    const meuNomeKpi=(currentUser&&currentUser.nome)||'';
+    const isMasterKpi=(currentUser&&(currentUser.perfil==='master'||currentUser.nivel==='master'));
+    const podeEditarKpi=isMasterKpi||(k.user&&k.user===meuNomeKpi);
     return'<tr>'
       +'<td><span class="gi-badge area" style="margin-bottom:3px;display:block">'+escapeHtml(k.sector)+'</span>'
         +'<small style="color:#64748b;font-size:9px">'+escapeHtml(k.subarea||'')+'</small><br>'
@@ -8976,8 +8984,7 @@ function tkpiRenderTabela(){
       +'<td style="text-align:center"><span class="kpi-acomp '+acompCls+'">'+acomp+'</span></td>'
       +'<td style="text-align:center"><span class="kpi-farol '+fClass+'">'+fText+'</span></td>'
       +'<td style="text-align:center;white-space:nowrap">'
-        +'<button class="gi-edit-btn" data-kid="'+k.id+'" onclick="tkpiEditar(this.dataset.kid)">Editar</button> '
-        +'<button class="gi-del" data-kid="'+k.id+'" onclick="tkpiDeletar(this.dataset.kid)">✕</button>'
+        +(podeEditarKpi?'<button class="gi-edit-btn" data-kid="'+k.id+'" onclick="tkpiEditar(this.dataset.kid)">Editar</button> <button class="gi-del" data-kid="'+k.id+'" onclick="tkpiDeletar(this.dataset.kid)">✕</button>':'<span style="font-size:10px;color:#94a3b8">—</span>')
       +'</td></tr>';
   }).join('');
   const hd=document.getElementById('todo-count-hd');
@@ -10242,7 +10249,7 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape') fecharPortalMulta(
 
 </script>
 
-<div id="app-version" style="position:fixed;bottom:6px;left:8px;z-index:99999;font-size:9px;font-weight:600;color:rgba(255,255,255,0.25);letter-spacing:.05em;pointer-events:none;user-select:none;">v1.0.4</div>
+<div id="app-version" style="position:fixed;bottom:6px;left:8px;z-index:99999;font-size:9px;font-weight:600;color:rgba(255,255,255,0.25);letter-spacing:.05em;pointer-events:none;user-select:none;">v1.0.5</div>
 
 </body>
 </html>
