@@ -8395,9 +8395,14 @@ function todoSalvar(){
   const uid=_todoUid;
   if(!uid){try{localStorage.setItem('todo_items_x',JSON.stringify(_todoItems));}catch(_){}todoAtualizarBadge();return;}
   const o={};_todoItems.forEach(t=>{o[t.id]=t;});
-  fetch(FB_BASE+'/gi_todos/'+uid+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(o)})
+  const url=FB_BASE+'/gi_todos/'+uid+'.json';
+  fetch(url,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(o)})
+    .then(r=>{
+      if(!r.ok) r.text().then(t=>console.error('[GI] todoSalvar HTTP '+r.status+' em '+url+' →',t));
+      else console.log('[GI] todoSalvar OK →',uid,'('+_todoItems.length+' itens)');
+    })
     .catch(e=>{
-      console.error('todoSalvar erro:',e);
+      console.error('[GI] todoSalvar ERRO de rede:',e);
       try{localStorage.setItem('todo_items_'+uid,JSON.stringify(_todoItems));}catch(_){}
     });
   todoAtualizarBadge();
@@ -8406,9 +8411,14 @@ function kpiSalvar(){
   const uid=_kpiUid;
   if(!uid){try{localStorage.setItem('kpi_items_x',JSON.stringify(_kpiItems));}catch(_){}return;}
   const o={};_kpiItems.forEach(k=>{o['k'+k.id]=k;});
-  fetch(FB_BASE+'/gi_kpis/'+uid+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(o)})
+  const url=FB_BASE+'/gi_kpis/'+uid+'.json';
+  fetch(url,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(o)})
+    .then(r=>{
+      if(!r.ok) r.text().then(t=>console.error('[GI] kpiSalvar HTTP '+r.status+' em '+url+' →',t));
+      else console.log('[GI] kpiSalvar OK →',uid,'('+_kpiItems.length+' itens)');
+    })
     .catch(e=>{
-      console.error('kpiSalvar erro:',e);
+      console.error('[GI] kpiSalvar ERRO de rede:',e);
       try{localStorage.setItem('kpi_items_'+uid,JSON.stringify(_kpiItems));}catch(_){}
     });
 }
