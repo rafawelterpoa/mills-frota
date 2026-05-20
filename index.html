@@ -8394,17 +8394,18 @@ async function todoInit(uid){
 
 function todoSalvar(){
   const uid=_todoUid||(window.currentUser?'shared':null);
-  if(!uid){try{localStorage.setItem('todo_items_x',JSON.stringify(_todoItems));}catch(_){}todoAtualizarBadge();return;}
-  if(!_todoUid)_todoUid=uid; // garante que fica setado
+  if(!uid){try{localStorage.setItem('todo_items_x',JSON.stringify(_todoItems));}catch(_){}todoAtualizarBadge();showToast('⚠ GI: sem uid, salvo local');return;}
+  if(!_todoUid)_todoUid=uid;
   const o={};_todoItems.forEach(t=>{o[t.id]=t;});
   const url=FB_BASE+'/gi_todos/'+uid+'.json';
   fetch(url,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(o)})
     .then(r=>{
-      if(!r.ok) r.text().then(t=>console.error('[GI] todoSalvar HTTP '+r.status+' em '+url+' →',t));
-      else console.log('[GI] todoSalvar OK →',uid,'('+_todoItems.length+' itens)');
+      if(!r.ok) r.text().then(t=>{showToast('❌ GI erro HTTP '+r.status+': '+t.slice(0,40));console.error('[GI] todoSalvar HTTP '+r.status,t);});
+      else showToast('✅ GI salvo → '+uid+' ('+_todoItems.length+' itens)');
     })
     .catch(e=>{
-      console.error('[GI] todoSalvar ERRO de rede:',e);
+      showToast('❌ GI erro rede: '+e.message);
+      console.error('[GI] todoSalvar ERRO:',e);
       try{localStorage.setItem('todo_items_'+uid,JSON.stringify(_todoItems));}catch(_){}
     });
   todoAtualizarBadge();
@@ -10242,7 +10243,7 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape') fecharPortalMulta(
 
 </script>
 
-<div id="app-version" style="position:fixed;bottom:6px;left:8px;z-index:99999;font-size:9px;font-weight:600;color:rgba(255,255,255,0.25);letter-spacing:.05em;pointer-events:none;user-select:none;">v1.0.1</div>
+<div id="app-version" style="position:fixed;bottom:6px;left:8px;z-index:99999;font-size:9px;font-weight:600;color:rgba(255,255,255,0.25);letter-spacing:.05em;pointer-events:none;user-select:none;">v1.0.2</div>
 
 </body>
 </html>
