@@ -1096,7 +1096,7 @@ input.filter-sel{padding:5px 8px;height:34px}
     </div>
     <div class="admin-body">
       <table class="user-table" id="users-table">
-        <thead><tr><th>Nome</th><th>Usuário</th><th>Perfil</th><th>Setor</th><th>Oficina</th><th>Ações</th></tr></thead>
+        <thead><tr><th>Nome</th><th>Usuário</th><th>Perfil</th><th>Setor</th><th>E-mail</th><th>Oficina</th><th>Ações</th></tr></thead>
         <tbody id="users-tbody"></tbody>
       </table>
       <div style="margin-top:16px;font-size:11px;font-weight:600;color:var(--text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em">Adicionar usuário</div>
@@ -1104,6 +1104,7 @@ input.filter-sel{padding:5px 8px;height:34px}
         <div class="admin-field"><div class="admin-label">Nome completo</div><input type="text" id="new-nome" placeholder="Nome Sobrenome"></div>
         <div class="admin-field"><div class="admin-label">Login</div><input type="text" id="new-login" placeholder="nome.sobrenome"></div>
         <div class="admin-field"><div class="admin-label">Senha</div><input type="password" id="new-senha" placeholder="••••"></div>
+        <div class="admin-field"><div class="admin-label">E-mail</div><input type="email" id="new-email" placeholder="nome@mills.com.br"></div>
         <div class="admin-field"><div class="admin-label">Perfil</div>
           <select id="new-perfil" onchange="toggleSetorField('new-setor','new-perfil')">
             <option value="usuario">Usuário</option>
@@ -3765,6 +3766,7 @@ function renderAdminUsers(){
     <td><code style="font-size:11px;color:var(--laranja)">${u.login}</code></td>
     <td><span class="badge-perfil perfil-${u.perfil}">${perfilLabel(u.perfil)}</span></td>
     <td style="color:var(--text3)">${u.setor||'—'}</td>
+    <td style="color:var(--text3);font-size:11px">${u.email||'<span style="opacity:.4">—</span>'}</td>
     <td style="color:var(--text3)">${u.oficina||'Todas'}</td>
     <td style="display:flex;gap:4px">
       <button class="btn btn-outline btn-sm" onclick="openEditUser(${i})">✏️ Editar</button>
@@ -3780,12 +3782,13 @@ async function addUser(){
   const oficina=document.getElementById('new-oficina').value;
   const needsSetor=['usuario','gestor'].includes(perfil);
   const setor=needsSetor?document.getElementById('new-setor').value:'';
+  const email=document.getElementById('new-email').value.trim().toLowerCase();
   if(!nome||!login||!senha){showToast('Preencha nome, login e senha');return;}
   if(usuariosCache.find(u=>u.login===login)){showToast('Login já existe');return;}
-  usuariosCache.push({nome,login,senha,setor,perfil,oficina});
+  usuariosCache.push({nome,login,senha,setor,perfil,oficina,email});
   await fbSetUsers(usuariosCache);renderAdminUsers();
   document.getElementById('new-nome').value='';document.getElementById('new-login').value='';
-  document.getElementById('new-senha').value='';
+  document.getElementById('new-senha').value='';document.getElementById('new-email').value='';
   showToast('Usuário '+nome+' adicionado');
 }
 function toggleSetorField(setorId,perfilId){
@@ -3810,6 +3813,7 @@ function openEditUser(idx){
     <div class="admin-form">
       <div class="admin-field"><div class="admin-label">Nome completo</div><input type="text" id="edit-nome" value="${u.nome}" placeholder="Nome Sobrenome"></div>
       <div class="admin-field"><div class="admin-label">Nova senha (deixe vazio p/ manter)</div><input type="password" id="edit-senha" placeholder="••••"></div>
+      <div class="admin-field"><div class="admin-label">E-mail</div><input type="email" id="edit-email" value="${u.email||''}" placeholder="nome@mills.com.br"></div>
       <div class="admin-field"><div class="admin-label">Perfil</div>
         <select id="edit-perfil" onchange="toggleSetorField('edit-setor','edit-perfil')">${perfilOpts}</select>
       </div>
@@ -3833,10 +3837,11 @@ async function saveEditUser(idx){
   const needsSetor=['usuario','gestor'].includes(perfil);
   const setor=needsSetor?document.getElementById('edit-setor').value:'';
   const oficina=document.getElementById('edit-oficina').value;
+  const email=document.getElementById('edit-email').value.trim().toLowerCase();
   if(!nome){showToast('Nome obrigatório');return;}
   u.nome=nome;
   if(senha)u.senha=senha;
-  u.perfil=perfil;u.setor=setor;u.oficina=oficina;
+  u.perfil=perfil;u.setor=setor;u.oficina=oficina;u.email=email;
   await fbSetUsers(usuariosCache);
   document.getElementById('edit-user-modal').remove();
   renderAdminUsers();showToast('Usuário atualizado');
@@ -10313,7 +10318,7 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape') fecharPortalMulta(
 
 </script>
 
-<div id="app-version" style="position:fixed;bottom:6px;left:8px;z-index:99999;font-size:9px;font-weight:600;color:rgba(255,255,255,0.25);letter-spacing:.05em;pointer-events:none;user-select:none;">v1.0.7</div>
+<div id="app-version" style="position:fixed;bottom:6px;left:8px;z-index:99999;font-size:9px;font-weight:600;color:rgba(255,255,255,0.25);letter-spacing:.05em;pointer-events:none;user-select:none;">v1.0.8</div>
 
 </body>
 </html>
