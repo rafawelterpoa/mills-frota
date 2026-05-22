@@ -529,6 +529,13 @@ input.filter-sel{padding:5px 8px;height:34px}
   </div>
 </header>
 
+<!-- Notificação boas-vindas -->
+<div id="notif-bem-vindo" style="display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:9999;background:#fff;border:1px solid #bfdbfe;border-left:4px solid #3b82f6;border-radius:10px;padding:12px 18px;font-size:13px;color:#1e293b;box-shadow:0 4px 24px rgba(0,0,0,.12);max-width:520px;width:90%;align-items:center;gap:12px;transition:opacity .4s">
+  <span id="notif-bem-vindo-txt" style="flex:1"></span>
+  <button onclick="notifBemVindoFechar()" style="background:none;border:none;cursor:pointer;font-size:16px;color:#94a3b8;padding:0 0 0 8px;line-height:1" title="Fechar">✕</button>
+</div>
+
+
 <div class="tabs-bar" id="tabs-bar"><div class="tab active" data-tab="home" onclick="switchTab('home')">🏠 Início</div><div class="tab" data-tab="bi" onclick="switchTab('bi')">BI Geral <span class="tab-n">561</span></div><div class="tab" data-tab="programacao" onclick="switchTab('programacao')">Programação</div><div class="tab" data-tab="graficos" onclick="switchTab('graficos')">Gráficos</div><div class="tab" data-tab="reprogramacoes" onclick="switchTab('reprogramacoes')">↻ Reprogramações <span class="tab-n" id="tab-reprog-n">0</span></div><div class="tab" data-tab="reservas" onclick="switchTab('reservas')">Reservas</div>
 <div class="tab" data-tab="disponiveis" onclick="switchTab('disponiveis')">Disponíveis <span class="tab-n" id="tab-disp-n">0</span></div>
 <div class="tab" data-tab="mapa" onclick="switchTab('mapa')">🗺 Mapa</div><div class="tab" data-tab="alteracoes" id="tab-alteracoes" onclick="switchTab('alteracoes')">⚡ Alterações <span class="tab-n" id="tab-alteracoes-n">0</span></div><div class="tab" data-tab="Assis_SP" onclick="switchTab('Assis_SP')">Assis (SP) <span class="tab-n">130</span></div><div class="tab" data-tab="Contagem_MG" onclick="switchTab('Contagem_MG')">Contagem (MG) <span class="tab-n">62</span></div><div class="tab" data-tab="Osasco_SP" onclick="switchTab('Osasco_SP')">Osasco (SP) <span class="tab-n">4</span></div><div class="tab" data-tab="Parauapebas_PA" onclick="switchTab('Parauapebas_PA')">Parauapebas (PA) <span class="tab-n">3</span></div><div class="tab" data-tab="Santos_SP" onclick="switchTab('Santos_SP')">Santos (SP) <span class="tab-n">4</span></div><div class="tab" data-tab="Sumaré_SP" onclick="switchTab('Sumaré_SP')">Sumaré (SP) <span class="tab-n">280</span></div><div class="tab" data-tab="São_José_dos_Pinhais_PR" onclick="switchTab('São_José_dos_Pinhais_PR')">São José dos Pinhais (PR) <span class="tab-n">78</span></div><div class="tab" data-tab="admin" onclick="switchToAdmin()">⚙ Admin</div></div>
@@ -1543,6 +1550,39 @@ function doLogin(){
   document.getElementById('login-overlay').style.display='none';
   document.getElementById('header-user').textContent=user.nome+(user.setor?' · '+user.setor:'');
   loadFromFirebase();renderAdminUsers();
+  setTimeout(mostrarNotifBemVindo, 1800);
+}
+
+function mostrarNotifBemVindo(){
+  if(!currentUser)return;
+  if(!_todoItems||!_todoItems.length){setTimeout(mostrarNotifBemVindo,2000);return;}
+  const meuNome=currentUser.nome||'';
+  const hoje=new Date();hoje.setHours(0,0,0,0);
+  const pendentes=_todoItems.filter(t=>{
+    if(t.feito)return false;
+    if(t.criadoPor==='Importação PCM 2026')return false;
+    const resps=t.responsaveis&&t.responsaveis.length>0?t.responsaveis:[t.resp].filter(Boolean);
+    return resps.includes(meuNome);
+  });
+  const atrasadas=pendentes.filter(t=>{
+    if(!t.dtEntrega)return false;
+    const dt=new Date(t.dtEntrega+'T00:00:00');
+    return dt<hoje;
+  });
+  if(!pendentes.length)return;
+  const el=document.getElementById('notif-bem-vindo');
+  if(!el)return;
+  const nome=meuNome.split(' ')[0];
+  let msg='Olá, <b>'+nome+'</b>! Você tem <b>'+pendentes.length+' atividade'+(pendentes.length!==1?'s':'')+' pendente'+(pendentes.length!==1?'s':'')+'</b> na sua área.';
+  if(atrasadas.length)msg+=' <span style="color:#ef4444;font-weight:700">'+atrasadas.length+' atrasada'+(atrasadas.length!==1?'s':'')+'.</span>';
+  msg+=' <a href="#" onclick="abrirTodo();notifBemVindoFechar();return false;" style="color:#1e40af;font-weight:700;text-decoration:underline">Ver Gestão Integrada →</a>';
+  document.getElementById('notif-bem-vindo-txt').innerHTML=msg;
+  el.style.display='flex';
+  setTimeout(notifBemVindoFechar,12000);
+}
+function notifBemVindoFechar(){
+  const el=document.getElementById('notif-bem-vindo');
+  if(el){el.style.opacity='0';setTimeout(()=>{el.style.display='none';el.style.opacity='1';},400);}
 }
 
 function solicitarRelatorio(){
@@ -8687,9 +8727,17 @@ function fecharModalTodo(){document.getElementById('todo-edit-modal').classList.
 
 function todoDeletarEv(el){
   const id=el.dataset.tid;
-  if(!confirm('Excluir esta atividade?'))return;
-  _todoItems=_todoItems.filter(t=>t.id!==id);
-  todoSalvar();todoRenderLista();
+  const isMaster=(currentUser&&(currentUser.perfil==='master'||currentUser.nivel==='master'));
+  if(isMaster){
+    if(!confirm('Excluir esta atividade?'))return;
+    _todoItems=_todoItems.filter(t=>t.id!==id);
+    todoSalvar();todoRenderLista();
+  } else {
+    requestSenha('🗑️ Excluir Atividade','Apenas o perfil master pode excluir atividades.','master',{},()=>{
+      _todoItems=_todoItems.filter(t=>t.id!==id);
+      todoSalvar();todoRenderLista();
+    });
+  }
 }
 
 function todoRenderLista(){
@@ -8699,6 +8747,8 @@ function todoRenderLista(){
   const meuNome=(currentUser&&currentUser.nome)||'';
   const isMaster=(currentUser&&(currentUser.perfil==='master'||currentUser.nivel==='master'));
   const visiveis=all.filter(t=>{
+    // Itens importados do PCM só aparecem para master
+    if(t.criadoPor==='Importação PCM 2026'&&!isMaster)return false;
     if(isMaster||!t.solicitante)return true;
     const resps=t.responsaveis&&t.responsaveis.length>0?t.responsaveis:[t.resp].filter(Boolean);
     return t.solicitante===meuNome||resps.includes(meuNome);
@@ -8743,6 +8793,9 @@ function todoRenderLista(){
     const feitoStr=t.feitoEm?new Date(t.feitoEm).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit'}):'—';
     const concluirDisabled=t.feito?'disabled style="opacity:.4;cursor:default"':'';
     const podeEditar=isMaster||(t.solicitante&&t.solicitante===meuNome);
+    const podeExcluir=isMaster;
+    const respsArr=t.responsaveis&&t.responsaveis.length>0?t.responsaveis:[t.resp].filter(Boolean);
+    const podeAndamento=isMaster||(t.solicitante&&t.solicitante===meuNome)||respsArr.includes(meuNome);
     const temAndamento=!!(t.andamento&&t.andamento.trim());
     const andBtnBg=temAndamento?'#dbeafe':'#f8fafc';
     const andBtnColor=temAndamento?'#1e40af':'#94a3b8';
@@ -8761,14 +8814,13 @@ function todoRenderLista(){
       +'<td>'+fluxoHtml(st)+'</td>'
       +'<td>'+prazoHtml(t)+'</td>'
       +'<td style="white-space:nowrap">'
-        +(podeEditar?'<button class="gi-edit-btn" data-tid="'+t.id+'" onclick="todoAbrirEditarEv(this)">Editar</button> <button class="gi-del" data-tid="'+t.id+'" onclick="todoDeletarEv(this)">✕</button>':'<span style="font-size:10px;color:#94a3b8">—</span>')
+        +(podeEditar?'<button class="gi-edit-btn" data-tid="'+t.id+'" onclick="todoAbrirEditarEv(this)">Editar</button> ':'')+' <button class="gi-del" data-tid="'+t.id+'" onclick="todoDeletarEv(this)" title="Excluir (requer master)">'+String.fromCharCode(10005)+'</button>'
       +'</td>'
       +'</tr>'
       +'<tr id="and-row-'+t.id+'" style="display:none;background:#f0f9ff">'
         +'<td colspan="11" style="padding:6px 16px 10px 42px">'
           +'<div style="font-size:10px;font-weight:700;color:#0369a1;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">📝 Andamento</div>'
-          +'<textarea id="and-txt-'+t.id+'" rows="3" placeholder="Descreva o andamento desta atividade..." style="width:100%;box-sizing:border-box;border:1px solid #bae6fd;border-radius:6px;padding:8px 10px;font-size:12px;color:#334155;resize:vertical;font-family:inherit;background:#fff" onblur="todoSalvarAndamento(\''+t.id+'\')">'+escapeHtml(t.andamento||'')+'</textarea>'
-        +'</td>'
+          +'<textarea id="and-txt-'+t.id+'" rows="3" placeholder="Descreva o andamento desta atividade..." style="width:100%;box-sizing:border-box;border:1px solid #bae6fd;border-radius:6px;padding:8px 10px;font-size:12px;color:#334155;resize:vertical;font-family:inherit;background:'+(podeAndamento?'#fff':'#f8fafc')+'"'+(podeAndamento?' onblur="todoSalvarAndamento(\\\'\'+t.id+\'\\\')"':' readonly title="Sem permissão"')+'>\'+escapeHtml(t.andamento||\'\')+\'</textarea>\'\n        +\'</td>'
       +'</tr>';
   }).join('');
 
@@ -8861,7 +8913,21 @@ function todoToggleAndamento(id){
   const open=row.style.display==='none'||row.style.display==='';
   row.style.display=open?'table-row':'none';
   if(btn){btn.style.background=open?'#bfdbfe':'';btn.style.color=open?'#1d4ed8':'';}
-  if(open){const ta=document.getElementById('and-txt-'+id);if(ta)ta.focus();}
+  if(open){
+    const ta=document.getElementById('and-txt-'+id);
+    if(ta){
+      // Check if current user can edit andamento (responsável, solicitante ou master)
+      const item=_todoItems.find(t=>t.id===id);
+      const meuNome=(currentUser&&currentUser.nome)||'';
+      const isMaster=(currentUser&&(currentUser.perfil==='master'||currentUser.nivel==='master'));
+      const resps=item&&item.responsaveis&&item.responsaveis.length>0?item.responsaveis:[item&&item.resp].filter(Boolean);
+      const pode=isMaster||(item&&item.solicitante===meuNome)||resps.includes(meuNome);
+      ta.readOnly=!pode;
+      ta.style.background=pode?'#fff':'#f8fafc';
+      ta.title=pode?'':'Apenas o responsável ou solicitante pode editar o andamento';
+      ta.focus();
+    }
+  }
 }
 function todoSalvarAndamento(id){
   const ta=document.getElementById('and-txt-'+id);if(!ta)return;
@@ -9059,9 +9125,17 @@ function kpiCancelarEdicao(){
 }
 
 function tkpiDeletar(id){
-  if(!confirm('Remover este KPI?'))return;
-  _kpiItems=_kpiItems.filter(k=>String(k.id)!==String(id));
-  kpiSalvar();tkpiRenderTabela();
+  const isMaster=(currentUser&&(currentUser.perfil==='master'||currentUser.nivel==='master'));
+  if(isMaster){
+    if(!confirm('Remover este KPI?'))return;
+    _kpiItems=_kpiItems.filter(k=>String(k.id)!==String(id));
+    kpiSalvar();tkpiRenderTabela();
+  } else {
+    requestSenha('🗑️ Remover KPI','Apenas o perfil master pode excluir KPIs.','master',{},()=>{
+      _kpiItems=_kpiItems.filter(k=>String(k.id)!==String(id));
+      kpiSalvar();tkpiRenderTabela();
+    });
+  }
 }
 
 function kpiLimparFiltros(){
@@ -9207,7 +9281,7 @@ function tkpiRenderTabela(){
       +'<td style="text-align:center"><span class="kpi-acomp '+acompCls+'">'+acomp+'</span></td>'
       +'<td style="text-align:center"><span class="kpi-farol '+fClass+'">'+fText+'</span></td>'
       +'<td style="text-align:center;white-space:nowrap">'
-        +(podeEditarKpi?'<button class="gi-edit-btn" data-kid="'+k.id+'" onclick="tkpiEditar(this.dataset.kid)">Editar</button> <button class="gi-del" data-kid="'+k.id+'" onclick="tkpiDeletar(this.dataset.kid)">✕</button>':'<span style="font-size:10px;color:#94a3b8">—</span>')
+        +(podeEditarKpi?'<button class="gi-edit-btn" data-kid="'+k.id+'" onclick="tkpiEditar(this.dataset.kid)">Editar</button> ':'')+' <button class="gi-del" data-kid="'+k.id+'" onclick="tkpiDeletar(this.dataset.kid)" title="Excluir (requer master)">'+String.fromCharCode(10005)+'</button>'
       +'</td></tr>'
       +'<tr id="kpi-desc-row-'+k.id+'" style="display:none;background:#f0f9ff">'
         +'<td colspan="20" style="padding:6px 16px 10px 16px">'
@@ -10479,7 +10553,7 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape') fecharPortalMulta(
 
 </script>
 
-<div id="app-version" style="position:fixed;bottom:6px;left:8px;z-index:99999;font-size:9px;font-weight:600;color:rgba(255,255,255,0.25);letter-spacing:.05em;pointer-events:none;user-select:none;">v1.0.9</div>
+<div id="app-version" style="position:fixed;bottom:6px;left:8px;z-index:99999;font-size:9px;font-weight:600;color:rgba(255,255,255,0.25);letter-spacing:.05em;pointer-events:none;user-select:none;">v1.0.10</div>
 
 </body>
 </html>
