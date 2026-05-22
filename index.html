@@ -8808,7 +8808,8 @@ function todoRenderLista(){
       +'<tr id="and-row-'+t.id+'" style="display:none;background:#f0f9ff">'
         +'<td colspan="11" style="padding:6px 16px 10px 42px">'
           +'<div style="font-size:10px;font-weight:700;color:#0369a1;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">📝 Andamento</div>'
-          +'<textarea id="and-txt-'+t.id+'" rows="3" placeholder="Descreva o andamento desta atividade..." style="width:100%;box-sizing:border-box;border:1px solid #bae6fd;border-radius:6px;padding:8px 10px;font-size:12px;color:#334155;resize:vertical;font-family:inherit;background:'+(podeAndamento?'#fff':'#f8fafc')+'"'+(podeAndamento?' onblur="todoSalvarAndamento(\\\'\'+t.id+\'\\\')"':' readonly title="Sem permissão"')+'>\'+escapeHtml(t.andamento||\'\')+\'</textarea>\'\n        +\'</td>'
+          +'<textarea id="and-txt-'+t.id+'" data-id="'+t.id+'" rows="3" placeholder="Descreva o andamento desta atividade..." style="width:100%;box-sizing:border-box;border:1px solid #bae6fd;border-radius:6px;padding:8px 10px;font-size:12px;color:#334155;resize:vertical;font-family:inherit;background:#fff" onblur="todoSalvarAndamento(this.dataset.id)">'+escapeHtml(t.andamento||'')+'</textarea>'
+        +'</td>'
       +'</tr>';
   }).join('');
 
