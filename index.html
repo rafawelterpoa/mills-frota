@@ -8122,6 +8122,7 @@ const SEED={"bms":[{"id":1,"bm":"BM-001","unidade":"ADECOAGRO VALE DO IVINHEMA",
       <div class="tp-tab active" id="tptab-todo"    onclick="todoMudarAba('todo')">✅ Atividades</div>
       <div class="tp-tab"        id="tptab-graficos" onclick="todoMudarAba('graficos')">📈 Dashboard</div>
       <div class="tp-tab"        id="tptab-kpi"      onclick="todoMudarAba('kpi')">📊 Indicadores</div>
+      <div class="tp-tab"        id="tptab-metas"    onclick="todoMudarAba('metas')">🎯 Metas</div>
     </div>
 
     <!-- ABA TO-DO -->
@@ -8196,6 +8197,7 @@ const SEED={"bms":[{"id":1,"bm":"BM-001","unidade":"ADECOAGRO VALE DO IVINHEMA",
 
       <table class="gi-table">
         <thead><tr>
+          <th style="width:24px"></th>
           <th style="width:90px">Ação Fluxo</th>
           <th>Tarefa / Atividade</th>
           <th style="width:110px">Solicitante</th>
@@ -8235,10 +8237,11 @@ const SEED={"bms":[{"id":1,"bm":"BM-001","unidade":"ADECOAGRO VALE DO IVINHEMA",
           <span id="kpi-form-label" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b"></span>
           <button class="gi-btn ghost" id="kpi-cancelar-btn" style="display:none;font-size:11px;padding:6px 14px" onclick="kpiCancelarEdicao()">Cancelar</button>
         </div>
-        <div class="gi-form-row" style="grid-template-columns:1fr 1fr 2fr 1fr 1fr 1fr 1fr">
+        <div class="gi-form-row" style="grid-template-columns:1fr 1fr 2fr 1fr 1fr 1fr 1fr;grid-template-rows:auto auto">
           <div><label class="gi-label">Área</label><select class="gi-select" id="tkpi-sector" onchange="tkpiUpdateSub()"><option>Avarias</option><option>Garantias</option><option>PCM</option><option>MRO e Pneus</option><option>Medição</option><option>Gestão de Ativos</option><option>Performance</option></select></div>
           <div><label class="gi-label">Subárea / Processo</label><select class="gi-select" id="tkpi-subarea"></select></div>
           <div><label class="gi-label">Nome do KPI</label><input class="gi-input" id="tkpi-name" placeholder="Ex: Leadtime Desmob"></div>
+          <div style="grid-column:span 4"><label class="gi-label">Descrição do KPI</label><input class="gi-input" id="tkpi-desc" placeholder="O que este indicador mede e como é calculado?"></div>
           <div><label class="gi-label">Unidade</label><select class="gi-select" id="tkpi-unit"><option value="Dias">Dias (Menos é Melhor)</option><option value="%">% (Mais é Melhor)</option>
               <option value="%-inv">% (Menos é Melhor)</option><option value="R$MI">R$MI (Mais é Melhor)</option><option value="Numérico">Numérico</option></select></div>
           <div><label class="gi-label">Responsável</label><select class="gi-select" id="tkpi-user"><option>Rafael Welter</option><option>Luana Macedo</option><option>Lucas Dutra</option><option>Diego Soares</option><option>João Moisés</option><option>Wagner Vilar</option><option>Alex Sandro</option><option>Bruno Vinicius</option><option>Henrique Melo</option></select></div>
@@ -8358,6 +8361,38 @@ const SEED={"bms":[{"id":1,"bm":"BM-001","unidade":"ADECOAGRO VALE DO IVINHEMA",
           </thead>
           <tbody id="tkpi-list"></tbody>
         </table>
+      </div>
+    </div>
+
+
+    <!-- ABA METAS -->
+    <div id="tp-aba-metas" class="gi-body" style="display:none">
+      <div class="gi-page-title">Metas e Desempenho por Área</div>
+      <div class="gi-page-sub">Visão consolidada do atingimento de metas 2026 por área e responsável.</div>
+      <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap">
+        <select class="gi-select" style="width:180px" id="metas-fil-area" onchange="metasRender()"><option value="">Todas as áreas</option><option>Avarias</option><option>Garantias</option><option>PCM</option><option>MRO e Pneus</option><option>Medição</option><option>Gestão de Ativos</option><option>Performance</option></select>
+        <select class="gi-select" style="width:180px" id="metas-fil-resp" onchange="metasRender()"><option value="">Todos os responsáveis</option><option>Rafael Welter</option><option>Luana Macedo</option><option>Lucas Dutra</option><option>Diego Soares</option><option>João Moisés</option><option>Wagner Vilar</option><option>Alex Sandro</option><option>Bruno Vinicius</option><option>Henrique Melo</option></select>
+        <select class="gi-select" style="width:150px" id="metas-fil-farol" onchange="metasRender()"><option value="">Todos os farois</option><option value="Atingido">✅ Atingido</option><option value="Em linha">🟡 Em linha</option><option value="Atenção">⚠️ Atenção</option><option value="Crítico">🔴 Crítico</option></select>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px">
+        <div class="gi-form-card">
+          <div style="font-size:11px;font-weight:700;color:#475569;margin-bottom:12px;text-transform:uppercase;letter-spacing:.05em">📊 Atingimento por Área (%)</div>
+          <canvas id="metas-chart-area" height="240"></canvas>
+        </div>
+        <div class="gi-form-card">
+          <div style="font-size:11px;font-weight:700;color:#475569;margin-bottom:12px;text-transform:uppercase;letter-spacing:.05em">👤 Atingimento por Responsável (%)</div>
+          <canvas id="metas-chart-resp" height="240"></canvas>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+        <div class="gi-form-card">
+          <div style="font-size:11px;font-weight:700;color:#475569;margin-bottom:12px;text-transform:uppercase;letter-spacing:.05em">🚦 Distribuição por Farol</div>
+          <canvas id="metas-chart-farol" height="240"></canvas>
+        </div>
+        <div class="gi-form-card">
+          <div style="font-size:11px;font-weight:700;color:#475569;margin-bottom:12px;text-transform:uppercase;letter-spacing:.05em">📈 Evolução Mensal — Média de Atingimento</div>
+          <canvas id="metas-chart-evolucao" height="240"></canvas>
+        </div>
       </div>
     </div>
 
@@ -8708,7 +8743,12 @@ function todoRenderLista(){
     const feitoStr=t.feitoEm?new Date(t.feitoEm).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit'}):'—';
     const concluirDisabled=t.feito?'disabled style="opacity:.4;cursor:default"':'';
     const podeEditar=isMaster||(t.solicitante&&t.solicitante===meuNome);
+    const temAndamento=!!(t.andamento&&t.andamento.trim());
+    const andBtnBg=temAndamento?'#dbeafe':'#f8fafc';
+    const andBtnColor=temAndamento?'#1e40af':'#94a3b8';
+    const andBtnBorder=temAndamento?'#93c5fd':'#cbd5e1';
     return'<tr class="'+(t.feito?'done-row':'')+'">'
+      +'<td style="text-align:center;padding:4px 2px"><button title="Andamento" style="cursor:pointer;width:20px;height:20px;border-radius:50%;border:1px solid '+andBtnBorder+';background:'+andBtnBg+';color:'+andBtnColor+';font-size:13px;font-weight:700;line-height:20px;display:inline-flex;align-items:center;justify-content:center" onclick="todoToggleAndamento(\''+t.id+'\')">+</button></td>'
       +'<td><button class="concluir-btn" data-tid="'+t.id+'" onclick="todoConcluirEv(this)" '+concluirDisabled+'>'+( t.feito?'✓ Concluído':'Concluir')+'</button></td>'
       +'<td><span style="font-size:12px;font-weight:500;color:'+(t.feito?'#94a3b8':'#1e293b')+(t.feito?';text-decoration:line-through':'')+'">'
         +escapeHtml(t.texto)+'</span>'
@@ -8723,6 +8763,12 @@ function todoRenderLista(){
       +'<td style="white-space:nowrap">'
         +(podeEditar?'<button class="gi-edit-btn" data-tid="'+t.id+'" onclick="todoAbrirEditarEv(this)">Editar</button> <button class="gi-del" data-tid="'+t.id+'" onclick="todoDeletarEv(this)">✕</button>':'<span style="font-size:10px;color:#94a3b8">—</span>')
       +'</td>'
+      +'</tr>'
+      +'<tr id="and-row-'+t.id+'" style="display:none;background:#f0f9ff">'
+        +'<td colspan="11" style="padding:6px 16px 10px 42px">'
+          +'<div style="font-size:10px;font-weight:700;color:#0369a1;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">📝 Andamento</div>'
+          +'<textarea id="and-txt-'+t.id+'" rows="3" placeholder="Descreva o andamento desta atividade..." style="width:100%;box-sizing:border-box;border:1px solid #bae6fd;border-radius:6px;padding:8px 10px;font-size:12px;color:#334155;resize:vertical;font-family:inherit;background:#fff" onblur="todoSalvarAndamento(\''+t.id+'\')">'+escapeHtml(t.andamento||'')+'</textarea>'
+        +'</td>'
       +'</tr>';
   }).join('');
 
@@ -8731,6 +8777,107 @@ function todoRenderLista(){
   if(_todoAba==='graficos')giRenderGraficos();
 }
 
+function metasRender(){
+  if(!window.Chart)return;
+  const filArea=(document.getElementById('metas-fil-area')||{}).value||'';
+  const filResp=(document.getElementById('metas-fil-resp')||{}).value||'';
+  const filFarol=(document.getElementById('metas-fil-farol')||{}).value||'';
+
+  let items=[..._kpiItems].map(k=>{
+    const meses=k.meses||[];
+    const ultIdx=[...meses].reverse().findIndex(v=>v&&v!=='');
+    const ultVal=ultIdx>=0?parseFloat(meses[meses.length-1-ultIdx]):NaN;
+    const metaNum=parseFloat(k.meta);
+    const inv=k.unit==='Dias'||k.unit==='%-inv';
+    let acompPct=NaN;
+    if(!isNaN(ultVal)&&!isNaN(metaNum)&&metaNum>0)
+      acompPct=inv?Math.round(metaNum/ultVal*100):Math.round(ultVal/metaNum*100);
+    const farol=kpiCalcFarol(k,ultVal,metaNum);
+    return{...k,_ultVal:ultVal,_metaNum:metaNum,_acompPct:acompPct,_farol:farol.cls};
+  });
+
+  if(filArea)items=items.filter(k=>k.sector===filArea);
+  if(filResp)items=items.filter(k=>k.user===filResp);
+  if(filFarol)items=items.filter(k=>k._farol===filFarol);
+
+  const destroyChart=id=>{const c=Chart.getChart(id);if(c)c.destroy();};
+
+  // ── Gráfico 1: Atingimento por Área
+  destroyChart('metas-chart-area');
+  const areas=[...new Set(items.map(k=>k.sector))];
+  const areaData=areas.map(a=>{
+    const ks=items.filter(k=>k.sector===a&&!isNaN(k._acompPct));
+    return ks.length?Math.round(ks.reduce((s,k)=>s+k._acompPct,0)/ks.length):0;
+  });
+  const areaColors=areaData.map(v=>v>=100?'#1D9E75':v>=80?'#f59e0b':'#ef4444');
+  const ctxA=document.getElementById('metas-chart-area');
+  if(ctxA)new Chart(ctxA,{type:'bar',data:{labels:areas,datasets:[{label:'% Atingimento',data:areaData,backgroundColor:areaColors,borderRadius:5,borderSkipped:false}]},options:{responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.y+'%'}}},scales:{y:{beginAtZero:true,max:130,ticks:{callback:v=>v+'%'}},x:{ticks:{font:{size:10}}}}}});
+
+  // ── Gráfico 2: Atingimento por Responsável
+  destroyChart('metas-chart-resp');
+  const resps=[...new Set(items.map(k=>k.user).filter(Boolean))];
+  const respData=resps.map(r=>{
+    const ks=items.filter(k=>k.user===r&&!isNaN(k._acompPct));
+    return ks.length?Math.round(ks.reduce((s,k)=>s+k._acompPct,0)/ks.length):0;
+  });
+  const respColors=respData.map(v=>v>=100?'#1D9E75':v>=80?'#f59e0b':'#ef4444');
+  const ctxR=document.getElementById('metas-chart-resp');
+  if(ctxR)new Chart(ctxR,{type:'bar',data:{labels:resps,datasets:[{label:'% Atingimento',data:respData,backgroundColor:respColors,borderRadius:5,borderSkipped:false}]},options:{indexAxis:'y',responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.x+'%'}}},scales:{x:{beginAtZero:true,max:130,ticks:{callback:v=>v+'%'}},y:{ticks:{font:{size:10}}}}}});
+
+  // ── Gráfico 3: Distribuição por Farol
+  destroyChart('metas-chart-farol');
+  const farolLabels=['Atingido','Em linha','Atenção','Crítico','-'];
+  const farolColors=['#1D9E75','#3b82f6','#f59e0b','#ef4444','#cbd5e1'];
+  const farolCounts=farolLabels.map(f=>items.filter(k=>k._farol===f).length);
+  const ctxF=document.getElementById('metas-chart-farol');
+  if(ctxF)new Chart(ctxF,{type:'doughnut',data:{labels:farolLabels,datasets:[{data:farolCounts,backgroundColor:farolColors,borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,plugins:{legend:{position:'bottom',labels:{font:{size:11},padding:12}},tooltip:{callbacks:{label:c=>c.label+': '+c.parsed+' KPI'+(c.parsed!==1?'s':'')}}}}});
+
+  // ── Gráfico 4: Evolução mensal média
+  destroyChart('metas-chart-evolucao');
+  const meses=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const evolData=meses.map((_,mi)=>{
+    const vals=items.map(k=>{
+      const v=parseFloat((k.meses||[])[mi]);
+      const meta=parseFloat(k.meta);
+      const inv=k.unit==='Dias'||k.unit==='%-inv';
+      if(isNaN(v)||isNaN(meta)||meta===0)return NaN;
+      return inv?meta/v*100:v/meta*100;
+    }).filter(v=>!isNaN(v));
+    return vals.length?Math.round(vals.reduce((s,v)=>s+v,0)/vals.length):null;
+  });
+  const ctxE=document.getElementById('metas-chart-evolucao');
+  if(ctxE)new Chart(ctxE,{type:'line',data:{labels:meses,datasets:[{label:'Atingimento Médio %',data:evolData,borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,0.1)',fill:true,tension:.3,pointRadius:4,pointBackgroundColor:'#3b82f6'},{label:'Meta (100%)',data:meses.map(()=>100),borderColor:'#1D9E75',borderDash:[6,4],borderWidth:1.5,pointRadius:0,fill:false}]},options:{responsive:true,plugins:{legend:{position:'bottom',labels:{font:{size:10}}}},scales:{y:{beginAtZero:false,ticks:{callback:v=>v+'%'}},x:{ticks:{font:{size:10}}}}}});
+}
+function kpiToggleDesc(id){
+  const row=document.getElementById('kpi-desc-row-'+id);
+  if(!row)return;
+  const open=row.style.display==='none'||row.style.display==='';
+  row.style.display=open?'table-row':'none';
+}
+function todoToggleAndamento(id){
+  const row=document.getElementById('and-row-'+id);
+  const btn=row?row.previousElementSibling.querySelector('button[title="Andamento"]'):null;
+  if(!row)return;
+  const open=row.style.display==='none'||row.style.display==='';
+  row.style.display=open?'table-row':'none';
+  if(btn){btn.style.background=open?'#bfdbfe':'';btn.style.color=open?'#1d4ed8':'';}
+  if(open){const ta=document.getElementById('and-txt-'+id);if(ta)ta.focus();}
+}
+function todoSalvarAndamento(id){
+  const ta=document.getElementById('and-txt-'+id);if(!ta)return;
+  const item=_todoItems.find(t=>t.id===id);if(!item)return;
+  item.andamento=ta.value;
+  todoSalvar();
+  // update button color
+  const row=document.getElementById('and-row-'+id);
+  const btn=row?row.previousElementSibling.querySelector('button[title="Andamento"]'):null;
+  if(btn){
+    const has=!!(item.andamento&&item.andamento.trim());
+    btn.style.background=has?'#dbeafe':'#f8fafc';
+    btn.style.color=has?'#1e40af':'#94a3b8';
+    btn.style.borderColor=has?'#93c5fd':'#cbd5e1';
+  }
+}
 function todoAtualizarBadge(){
   const meuNome=(currentUser&&currentUser.nome)||'';
   const isMaster=(currentUser&&(currentUser.perfil==='master'||currentUser.nivel==='master'));
@@ -8848,6 +8995,7 @@ function tkpiSetMeses(meses){for(let i=1;i<=12;i++){const el=document.getElement
 function tkpiAdicionar(){
   const name=((document.getElementById('tkpi-name')||{}).value||'').trim();
   if(!name)return alert('Informe o nome do KPI.');
+  const desc=((document.getElementById('tkpi-desc')||{}).value||'').trim();
   const unit=(document.getElementById('tkpi-unit')||{}).value||'%';
   const meta=(document.getElementById('tkpi-meta')||{}).value||'';
   const ref2025=(document.getElementById('tkpi-ref2025')||{}).value||'';
@@ -8867,7 +9015,7 @@ function tkpiAdicionar(){
   const baseObj={
     sector:(document.getElementById('tkpi-sector')||{}).value,
     subarea:(document.getElementById('tkpi-subarea')||{}).value,
-    name,unit,
+    name,desc,unit,
     user:(document.getElementById('tkpi-user')||{}).value,
     prio:(document.getElementById('tkpi-prio')||{}).value,
     ref2025:ref2025||'—',meta:meta||'—',meses,acomp,melhoria,
@@ -8880,7 +9028,7 @@ function tkpiAdicionar(){
     kpiCancelarEdicao();
   }else{
     _kpiItems.unshift({id:Date.now(),...baseObj});
-    ['tkpi-name','tkpi-meta','tkpi-ref2025'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+    ['tkpi-name','tkpi-meta','tkpi-ref2025','tkpi-desc'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
     tkpiSetMeses([]);
   }
   kpiSalvar();tkpiRenderTabela();
@@ -8891,7 +9039,7 @@ function tkpiEditar(id){
   const sv=(sid,v)=>{const el=document.getElementById(sid);if(el)el.value=v||'';};
   sv('tkpi-sector',k.sector);tkpiUpdateSub();
   setTimeout(()=>sv('tkpi-subarea',k.subarea),60);
-  sv('tkpi-name',k.name);sv('tkpi-unit',k.unit);sv('tkpi-user',k.user);sv('tkpi-prio',k.prio);
+  sv('tkpi-name',k.name);sv('tkpi-desc',k.desc||'');sv('tkpi-unit',k.unit);sv('tkpi-user',k.user);sv('tkpi-prio',k.prio);
   sv('tkpi-ref2025',k.ref2025==='—'?'':k.ref2025||'');
   sv('tkpi-meta',k.meta==='—'?'':k.meta||'');
   sv('tkpi-farol',k.farolManual);sv('tkpi-editing-id',String(k.id));
@@ -9041,8 +9189,14 @@ function tkpiRenderTabela(){
     const meuNomeKpi=(currentUser&&currentUser.nome)||'';
     const isMasterKpi=(currentUser&&(currentUser.perfil==='master'||currentUser.nivel==='master'));
     const podeEditarKpi=isMasterKpi||(k.user&&k.user===meuNomeKpi);
+    const temDescKpi=!!(k.desc&&k.desc.trim());
+    const kpiBtnBg=temDescKpi?'#dbeafe':'#f8fafc';
+    const kpiBtnColor=temDescKpi?'#1e40af':'#94a3b8';
+    const kpiBtnBorder=temDescKpi?'#93c5fd':'#cbd5e1';
     return'<tr>'
-      +'<td><span class="gi-badge area" style="margin-bottom:3px;display:block">'+escapeHtml(k.sector)+'</span>'
+      +'<td>'
+        +'<button title="Descrição" style="cursor:pointer;width:20px;height:20px;border-radius:50%;border:1px solid '+kpiBtnBorder+';background:'+kpiBtnBg+';color:'+kpiBtnColor+';font-size:13px;font-weight:700;line-height:20px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:4px" onclick="kpiToggleDesc(\''+k.id+'\')" >+</button><br>'
+        +'<span class="gi-badge area" style="margin-bottom:3px;display:block">'+escapeHtml(k.sector)+'</span>'
         +'<small style="color:#64748b;font-size:9px">'+escapeHtml(k.subarea||'')+'</small><br>'
         +'<span style="font-size:12px;font-weight:600;color:#1e293b">'+escapeHtml(k.name)+'</span></td>'
       +'<td style="font-size:11px;color:#475569">'+escapeHtml(k.user||'')+'</td>'
@@ -9054,7 +9208,13 @@ function tkpiRenderTabela(){
       +'<td style="text-align:center"><span class="kpi-farol '+fClass+'">'+fText+'</span></td>'
       +'<td style="text-align:center;white-space:nowrap">'
         +(podeEditarKpi?'<button class="gi-edit-btn" data-kid="'+k.id+'" onclick="tkpiEditar(this.dataset.kid)">Editar</button> <button class="gi-del" data-kid="'+k.id+'" onclick="tkpiDeletar(this.dataset.kid)">✕</button>':'<span style="font-size:10px;color:#94a3b8">—</span>')
-      +'</td></tr>';
+      +'</td></tr>'
+      +'<tr id="kpi-desc-row-'+k.id+'" style="display:none;background:#f0f9ff">'
+        +'<td colspan="20" style="padding:6px 16px 10px 16px">'
+          +'<div style="font-size:10px;font-weight:700;color:#0369a1;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">📋 Descrição do KPI</div>'
+          +'<div style="font-size:12px;color:#334155;line-height:1.6;white-space:pre-wrap;background:#fff;border:1px solid #bae6fd;border-radius:6px;padding:8px 12px">'+(k.desc?escapeHtml(k.desc):'<em style="color:#94a3b8">Sem descrição cadastrada.</em>')+'</div>'
+        +'</td>'
+      +'</tr>';
   }).join('');
   const hd=document.getElementById('todo-count-hd');
   if(hd){const p=_todoItems.filter(t=>!t.feito).length;hd.textContent='('+p+' pendente'+(p!==1?'s':'')+' · '+_kpiItems.length+' KPIs)';}
@@ -9063,11 +9223,12 @@ function tkpiRenderTabela(){
 // ── Navegação abas ──
 function todoMudarAba(aba){
   _todoAba=aba;
-  const abas={todo:'tp-aba-todo',graficos:'tp-aba-graficos',kpi:'tp-aba-kpi'};
-  const tabs={todo:'tptab-todo',graficos:'tptab-graficos',kpi:'tptab-kpi'};
+  const abas={todo:'tp-aba-todo',graficos:'tp-aba-graficos',kpi:'tp-aba-kpi',metas:'tp-aba-metas'};
+  const tabs={todo:'tptab-todo',graficos:'tptab-graficos',kpi:'tptab-kpi',metas:'tptab-metas'};
   Object.entries(abas).forEach(([k,id])=>{const el=document.getElementById(id);if(el)el.style.display=k===aba?'':'none';});
   Object.entries(tabs).forEach(([k,id])=>{const el=document.getElementById(id);if(el)el.classList.toggle('active',k===aba);});
   if(aba==='graficos')setTimeout(giRenderGraficos,100);
+  if(aba==='metas')setTimeout(metasRender,100);
 }
 
 function abrirTodo(){
