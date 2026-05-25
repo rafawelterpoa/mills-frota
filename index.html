@@ -8421,7 +8421,7 @@ const SEED={"bms":[{"id":1,"bm":"BM-001","unidade":"ADECOAGRO VALE DO IVINHEMA",
           <div><label class="gi-label">Subárea / Processo</label><select class="gi-select" id="treun-subarea"></select></div>
           <div><label class="gi-label">Nome do Indicador</label><input class="gi-input" id="treun-name" placeholder="Ex: Leadtime Desmob"></div>
           <div style="grid-column:span 4"><label class="gi-label">Descrição</label><input class="gi-input" id="treun-desc" placeholder="O que este indicador mede?"></div>
-          <div><label class="gi-label">Unidade</label><select class="gi-select" id="treun-unit"><option value="Dias">Dias (Menos é Melhor)</option><option value="%">% (Mais é Melhor)</option><option value="%-inv">% (Menos é Melhor)</option><option value="R$MI">R$MI (Mais é Melhor)</option><option value="Numérico">Numérico</option></select></div>
+          <div><label class="gi-label">Unidade</label><select class="gi-select" id="treun-unit"><option value="Dias">Dias (Menos é Melhor)</option><option value="%">% (Mais é Melhor)</option><option value="%-inv">% (Menos é Melhor)</option><option value="R$MI">R$MI (Mais é Melhor)</option><option value="Qtd">Quantidade (Mais é Melhor)</option><option value="Qtd-inv">Quantidade (Menos é Melhor)</option></select></div>
           <div><label class="gi-label">Responsável</label><select class="gi-select" id="treun-user"><option>Rafael Welter</option><option>Luana Macedo</option><option>Lucas Dutra</option><option>Diego Soares</option><option>João Moisés</option><option>Wagner Vilar</option><option>Alex Sandro</option><option>Bruno Vinicius</option><option>Henrique Melo</option></select></div>
           <div><label class="gi-label">Meta Alvo</label><input class="gi-input" type="number" id="treun-meta" placeholder="Meta alvo"></div>
           <div><label class="gi-label">Farol</label><select class="gi-select" id="treun-farol"><option value="auto">Automático</option><option value="Atingido">Atingido</option><option value="Atenção">Atenção</option><option value="Crítico">Crítico</option><option value="Em linha">Em linha</option></select></div>
@@ -8697,9 +8697,28 @@ function reunProximaLabel(){
 function reunAdicionarSemana(){
   const label=prompt('Nome da semana (ex: S01 · 07/01):',reunProximaLabel());
   if(!label||!label.trim())return;
-  _reunSemanas.push(label.trim());
-  // Adiciona coluna vazia pra todos os itens existentes
-  _reunItems.forEach(k=>{if(!k.semanas)k.semanas=[];while(k.semanas.length<_reunSemanas.length)k.semanas.push('');});
+  const novaLabel=label.trim();
+
+  // Insere e reordena por número extraído do label (S01, S10, etc.)
+  _reunSemanas.push(novaLabel);
+  const extrairNum=s=>{const m=s.match(/S(\d+)/i);return m?parseInt(m[1],10):9999;};
+  const ordemAntes=[..._reunSemanas];
+  _reunSemanas.sort((a,b)=>extrairNum(a)-extrairNum(b));
+
+  // Reordena as medições de cada item conforme nova ordem
+  _reunItems.forEach(k=>{
+    if(!k.semanas)k.semanas=[];
+    // Garante que o array tenha o tamanho da lista antiga antes da nova
+    while(k.semanas.length<ordemAntes.length-1)k.semanas.push('');
+    k.semanas.push(''); // slot para a nova semana
+    // Reordena seguindo a mesma permutação aplicada a _reunSemanas
+    const reordenado=_reunSemanas.map(s=>{
+      const idxAntigo=ordemAntes.indexOf(s);
+      return k.semanas[idxAntigo]||'';
+    });
+    k.semanas=reordenado;
+  });
+
   reunSalvar();
   treunRenderSemanasForm();
   treunRenderTabela();
@@ -8745,7 +8764,7 @@ function treunAdicionar(){
   const meta=(document.getElementById('treun-meta')||{}).value||'';
   const semanas=treunGetSemanas();
   const metaNum=parseFloat(meta);
-  const inv=unit==='Dias'||unit==='%-inv';
+  const inv=unit==='Dias'||unit==='%-inv'||unit==='Qtd-inv';
   // Último valor preenchido
   const ultIdx=[...semanas].reverse().findIndex(v=>v&&v!=='');
   const ultVal=ultIdx>=0?parseFloat(semanas[semanas.length-1-ultIdx]):NaN;
@@ -8823,7 +8842,7 @@ function reunCalcFarol(k,ultVal,metaNum){
     return{cls:fm==='Atingido'?'atingido':fm==='Atenção'?'atencao':fm==='Crítico'?'critico':'linha',txt:fm};
   }
   if(isNaN(ultVal)||isNaN(metaNum)||metaNum===0)return{cls:'linha',txt:'Em linha'};
-  const inv=k.unit==='Dias'||k.unit==='%-inv';
+  const inv=k.unit==='Dias'||k.unit==='%-inv'||k.unit==='Qtd-inv';
   if(inv){
     if(ultVal<=metaNum)return{cls:'atingido',txt:'Atingido'};
     if(ultVal<=metaNum*1.25)return{cls:'atencao',txt:'Atenção'};
@@ -8870,7 +8889,7 @@ function treunRenderTabela(){
     const ultIdx=[...sems].reverse().findIndex(v=>v&&v!=='');
     const ultVal=ultIdx>=0?parseFloat(sems[sems.length-1-ultIdx]):NaN;
     const metaNum=parseFloat(k.meta);
-    const inv=k.unit==='Dias'||k.unit==='%-inv';
+    const inv=k.unit==='Dias'||k.unit==='%-inv'||k.unit==='Qtd-inv';
     let acomp='-';
     if(!isNaN(ultVal)&&!isNaN(metaNum)&&metaNum>0)
       acomp=(inv?Math.round(metaNum/ultVal*100):Math.round(ultVal/metaNum*100))+'%';
@@ -8885,11 +8904,11 @@ function treunRenderTabela(){
 
   if(!items.length){tbody.innerHTML='<tr><td colspan="20" class="gi-empty">Nenhum indicador encontrado para os filtros aplicados</td></tr>';return;}
 
-  const unitLabel=u=>u==='%-inv'?'%':u;
+  const unitLabel=u=>(u==='%-inv'||u==='Qtd-inv')?u.replace('-inv',''):(u==='Qtd'?'Qtd':u);
   tbody.innerHTML=items.map(k=>{
     const sems=k.semanas||[];
     const metaNum=k._metaNum;
-    const inv=k.unit==='Dias'||k.unit==='%-inv';
+    const inv=k.unit==='Dias'||k.unit==='%-inv'||k.unit==='Qtd-inv';
     const acompNum=parseFloat(k._acomp);
     const acompCls=isNaN(acompNum)?'':acompNum>=100?'bom':acompNum>=80?'medio':'ruim';
     const ul=unitLabel(k.unit);
