@@ -8162,6 +8162,7 @@ const SEED={"bms":[{"id":1,"bm":"BM-001","unidade":"ADECOAGRO VALE DO IVINHEMA",
       <div class="tp-tab"        id="tptab-graficos" onclick="todoMudarAba('graficos')">📈 Dashboard</div>
       <div class="tp-tab"        id="tptab-kpi"      onclick="todoMudarAba('kpi')">📊 Indicadores</div>
       <div class="tp-tab"        id="tptab-metas"    onclick="todoMudarAba('metas')">🎯 Metas</div>
+      <div class="tp-tab" id="tptab-reuniao" onclick="todoMudarAba('reuniao')" style="display:none">📅 Reunião Semanal</div>
     </div>
 
     <!-- ABA TO-DO -->
@@ -8404,6 +8405,87 @@ const SEED={"bms":[{"id":1,"bm":"BM-001","unidade":"ADECOAGRO VALE DO IVINHEMA",
     </div>
 
 
+    <!-- ABA REUNIÃO SEMANAL -->
+    <div id="tp-aba-reuniao" class="gi-body" style="display:none">
+      <div class="gi-page-title">📅 Reunião Semanal de Indicadores</div>
+      <div class="gi-page-sub">Acompanhamento semanal por indicador — compare o andamento semana a semana.</div>
+
+      <!-- Formulário de cadastro -->
+      <div class="gi-form-card" id="reun-form-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+          <span id="reun-form-label" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b"></span>
+          <button class="gi-btn ghost" id="reun-cancelar-btn" style="display:none;font-size:11px;padding:6px 14px" onclick="reunCancelarEdicao()">Cancelar</button>
+        </div>
+        <div class="gi-form-row" style="grid-template-columns:1fr 1fr 2fr 1fr 1fr 1fr 1fr;grid-template-rows:auto auto">
+          <div><label class="gi-label">Área</label><select class="gi-select" id="treun-sector" onchange="treunUpdateSub()"><option>Avarias</option><option>Garantias</option><option>PCM</option><option>MRO e Pneus</option><option>Medição</option><option>Gestão de Ativos</option><option>Performance</option></select></div>
+          <div><label class="gi-label">Subárea / Processo</label><select class="gi-select" id="treun-subarea"></select></div>
+          <div><label class="gi-label">Nome do Indicador</label><input class="gi-input" id="treun-name" placeholder="Ex: Leadtime Desmob"></div>
+          <div style="grid-column:span 4"><label class="gi-label">Descrição</label><input class="gi-input" id="treun-desc" placeholder="O que este indicador mede?"></div>
+          <div><label class="gi-label">Unidade</label><select class="gi-select" id="treun-unit"><option value="Dias">Dias (Menos é Melhor)</option><option value="%">% (Mais é Melhor)</option><option value="%-inv">% (Menos é Melhor)</option><option value="R$MI">R$MI (Mais é Melhor)</option><option value="Numérico">Numérico</option></select></div>
+          <div><label class="gi-label">Responsável</label><select class="gi-select" id="treun-user"><option>Rafael Welter</option><option>Luana Macedo</option><option>Lucas Dutra</option><option>Diego Soares</option><option>João Moisés</option><option>Wagner Vilar</option><option>Alex Sandro</option><option>Bruno Vinicius</option><option>Henrique Melo</option></select></div>
+          <div><label class="gi-label">Meta Alvo</label><input class="gi-input" type="number" id="treun-meta" placeholder="Meta alvo"></div>
+          <div><label class="gi-label">Farol</label><select class="gi-select" id="treun-farol"><option value="auto">Automático</option><option value="Atingido">Atingido</option><option value="Atenção">Atenção</option><option value="Crítico">Crítico</option><option value="Em linha">Em linha</option></select></div>
+        </div>
+
+        <!-- Semanas cadastradas dinamicamente -->
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin-bottom:8px;margin-top:4px">Medições por semana</div>
+        <div id="reun-semanas-form" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px;margin-bottom:14px"></div>
+
+        <input type="hidden" id="treun-editing-id">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <button class="gi-btn" id="reun-salvar-btn" onclick="treunAdicionar()">Salvar Indicador</button>
+          <button class="gi-btn ghost" style="font-size:11px;padding:6px 12px" onclick="reunAdicionarSemana()">+ Adicionar Semana</button>
+          <select class="gi-select" style="width:100px" id="treun-prio"><option>Alta</option><option selected>Média</option><option>Baixa</option></select>
+        </div>
+      </div>
+
+      <!-- Filtros -->
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:10px 14px">
+        <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap">⊟ Filtros:</div>
+        <select class="gi-select" style="width:140px;font-size:11px" id="reun-fil-area" onchange="treunRenderTabela()">
+          <option value="">Área — Todas</option>
+          <option>Avarias</option><option>Garantias</option><option>PCM</option>
+          <option>MRO e Pneus</option><option>Medição</option><option>Gestão de Ativos</option><option>Performance</option>
+        </select>
+        <select class="gi-select" style="width:150px;font-size:11px" id="reun-fil-subarea" onchange="treunRenderTabela()">
+          <option value="">Subárea — Todas</option>
+        </select>
+        <select class="gi-select" style="width:140px;font-size:11px" id="reun-fil-resp" onchange="treunRenderTabela()">
+          <option value="">Responsável — Todos</option>
+          <option>Rafael Welter</option><option>Luana Macedo</option><option>Lucas Dutra</option>
+          <option>Diego Soares</option><option>João Moisés</option><option>Wagner Vilar</option>
+          <option>Alex Sandro</option><option>Bruno Vinicius</option><option>Henrique Melo</option>
+        </select>
+        <select class="gi-select" style="width:130px;font-size:11px" id="reun-fil-farol" onchange="treunRenderTabela()">
+          <option value="">Farol — Todos</option>
+          <option value="atingido">✅ Atingido</option>
+          <option value="atencao">⚠ Atenção</option>
+          <option value="critico">🔴 Crítico</option>
+          <option value="linha">Em linha</option>
+        </select>
+        <button class="gi-btn ghost" style="font-size:11px;padding:6px 12px" onclick="reunLimparFiltros()">✕ Limpar</button>
+        <span id="reun-fil-count" style="font-size:10px;color:#94a3b8;margin-left:4px"></span>
+      </div>
+
+      <!-- Tabela -->
+      <div style="overflow-x:auto">
+        <table class="gi-table" id="reun-tabela">
+          <thead id="reun-thead">
+            <tr>
+              <th style="min-width:170px">Área / Indicador</th>
+              <th style="width:90px">Resp.</th>
+              <th style="width:75px;text-align:center;background:#1e40af;color:#fff">Meta</th>
+              <!-- semanas injetadas via JS -->
+              <th style="width:80px;text-align:center;color:#F37021;background:#fff7ed">Acomp %</th>
+              <th style="width:80px;text-align:center">Farol</th>
+              <th style="width:90px;text-align:center">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="treun-list"></tbody>
+        </table>
+      </div>
+    </div>
+
     <!-- ABA METAS -->
     <div id="tp-aba-metas" class="gi-body" style="display:none">
       <div class="gi-page-title">Metas e Desempenho por Área</div>
@@ -8529,7 +8611,8 @@ async function todoInit(uid){
     try{_kpiItems=JSON.parse(localStorage.getItem('kpi_items_'+uid)||'[]');}catch(_){}
   }
   todoRenderLista();tkpiRenderTabela();todoAtualizarBadge();
-  tkpiUpdateSub();
+  tkpiUpdateSub();treunUpdateSub();
+  await reunCarregar(uid);
   const sel=document.getElementById('todo-area-sel');
   if(sel)todoUpdateSubarea();
 }
@@ -8567,6 +8650,301 @@ function kpiSalvar(){
       console.error('[GI] kpiSalvar ERRO:',e);
       try{localStorage.setItem('kpi_items_'+uid,JSON.stringify(_kpiItems));}catch(_){}
     });
+}
+
+// ══════════════════════════════════════════════
+// REUNIÃO SEMANAL
+// ══════════════════════════════════════════════
+let _reunItems=[];
+let _reunSemanas=[]; // ['S01 · 07/01','S02 · 14/01', ...]
+
+function reunSalvar(){
+  const uid=_kpiUid||(typeof currentUser!=='undefined'&&currentUser?'shared':null);
+  const payload={items:_reunItems,semanas:_reunSemanas};
+  if(!uid){try{localStorage.setItem('reun_items_x',JSON.stringify(payload));}catch(_){}return;}
+  const url=FB_BASE+'/gi_reuniao/'+uid+'.json';
+  fetch(url,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+    .then(r=>{if(!r.ok)r.text().then(t=>console.error('[GI] reunSalvar HTTP '+r.status,t));})
+    .catch(e=>{console.error('[GI] reunSalvar ERRO:',e);try{localStorage.setItem('reun_items_'+uid,JSON.stringify(payload));}catch(_){}});
+}
+
+async function reunCarregar(uid){
+  try{
+    const r=await fetch(FB_BASE+'/gi_reuniao/'+uid+'.json');
+    const v=await r.json();
+    if(v&&typeof v==='object'){
+      _reunItems=Array.isArray(v.items)?v.items:(v.items&&typeof v.items==='object'?Object.values(v.items):[]);
+      _reunSemanas=Array.isArray(v.semanas)?v.semanas:[];
+    }
+  }catch(e){
+    try{const s=localStorage.getItem('reun_items_'+uid);if(s){const p=JSON.parse(s);_reunItems=p.items||[];_reunSemanas=p.semanas||[];}}catch(_){}
+  }
+  treunRenderSemanasForm();
+  treunRenderTabela();
+}
+
+// Gera label automático pro próximo domingo
+function reunProximaLabel(){
+  const hoje=new Date();
+  const dow=hoje.getDay();
+  const diasAte=dow===0?0:7-dow;
+  const d=new Date(hoje);d.setDate(d.getDate()+diasAte);
+  const dd=String(d.getDate()).padStart(2,'0'),mm=String(d.getMonth()+1).padStart(2,'0');
+  const n=_reunSemanas.length+1;
+  return'S'+String(n).padStart(2,'0')+' · '+dd+'/'+mm;
+}
+
+function reunAdicionarSemana(){
+  const label=prompt('Nome da semana (ex: S01 · 07/01):',reunProximaLabel());
+  if(!label||!label.trim())return;
+  _reunSemanas.push(label.trim());
+  // Adiciona coluna vazia pra todos os itens existentes
+  _reunItems.forEach(k=>{if(!k.semanas)k.semanas=[];while(k.semanas.length<_reunSemanas.length)k.semanas.push('');});
+  reunSalvar();
+  treunRenderSemanasForm();
+  treunRenderTabela();
+}
+
+function reunRemoverSemana(idx){
+  if(!confirm('Remover a semana "'+_reunSemanas[idx]+'" de todos os indicadores?'))return;
+  _reunSemanas.splice(idx,1);
+  _reunItems.forEach(k=>{if(k.semanas)k.semanas.splice(idx,1);});
+  reunSalvar();
+  treunRenderSemanasForm();
+  treunRenderTabela();
+}
+
+function treunRenderSemanasForm(){
+  const cont=document.getElementById('reun-semanas-form');if(!cont)return;
+  if(!_reunSemanas.length){cont.innerHTML='<div style="font-size:11px;color:#94a3b8;padding:6px 0">Nenhuma semana cadastrada. Clique em "+ Adicionar Semana".</div>';return;}
+  cont.innerHTML=_reunSemanas.map((s,i)=>`
+    <div>
+      <label class="gi-label" style="text-align:center;display:flex;align-items:center;justify-content:center;gap:4px">
+        ${escapeHtml(s)}
+        <span onclick="reunRemoverSemana(${i})" style="cursor:pointer;color:#f87171;font-size:10px" title="Remover semana">✕</span>
+      </label>
+      <input class="gi-input" id="treun-s${i}" style="text-align:center;padding:7px 4px">
+    </div>`).join('');
+}
+
+function treunGetSemanas(){const v=[];for(let i=0;i<_reunSemanas.length;i++){const el=document.getElementById('treun-s'+i);v.push(el?(el.value||''):'');}return v;}
+function treunSetSemanas(vals){for(let i=0;i<_reunSemanas.length;i++){const el=document.getElementById('treun-s'+i);if(el)el.value=(vals&&vals[i])||'';}}
+
+function treunUpdateSub(){
+  const area=(document.getElementById('treun-sector')||{}).value||'Avarias';
+  const sel=document.getElementById('treun-subarea');if(!sel)return;
+  sel.innerHTML='';
+  (TODO_SUBAREAS[area]||[]).forEach(s=>{const o=document.createElement('option');o.value=s;o.textContent=s;sel.appendChild(o);});
+}
+
+function treunAdicionar(){
+  const name=((document.getElementById('treun-name')||{}).value||'').trim();
+  if(!name)return alert('Informe o nome do indicador.');
+  const desc=((document.getElementById('treun-desc')||{}).value||'').trim();
+  const unit=(document.getElementById('treun-unit')||{}).value||'%';
+  const meta=(document.getElementById('treun-meta')||{}).value||'';
+  const semanas=treunGetSemanas();
+  const metaNum=parseFloat(meta);
+  const inv=unit==='Dias'||unit==='%-inv';
+  // Último valor preenchido
+  const ultIdx=[...semanas].reverse().findIndex(v=>v&&v!=='');
+  const ultVal=ultIdx>=0?parseFloat(semanas[semanas.length-1-ultIdx]):NaN;
+  let acomp='-';
+  if(!isNaN(ultVal)&&!isNaN(metaNum)&&metaNum>0)
+    acomp=(inv?Math.round(metaNum/ultVal*100):Math.round(ultVal/metaNum*100))+'%';
+  const baseObj={
+    sector:(document.getElementById('treun-sector')||{}).value,
+    subarea:(document.getElementById('treun-subarea')||{}).value,
+    name,desc,unit,
+    user:(document.getElementById('treun-user')||{}).value,
+    prio:(document.getElementById('treun-prio')||{}).value,
+    meta:meta||'—',semanas,acomp,
+    farolManual:(document.getElementById('treun-farol')||{}).value
+  };
+  const editId=(document.getElementById('treun-editing-id')||{}).value||'';
+  if(editId){
+    const idx=_reunItems.findIndex(k=>String(k.id)===editId);
+    if(idx>=0)_reunItems[idx]={..._reunItems[idx],...baseObj};
+    reunCancelarEdicao();
+  }else{
+    _reunItems.unshift({id:Date.now(),...baseObj});
+    ['treun-name','treun-meta','treun-desc'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+    treunSetSemanas([]);
+  }
+  reunSalvar();treunRenderTabela();
+}
+
+function treunEditar(id){
+  const k=_reunItems.find(x=>String(x.id)===String(id));if(!k)return;
+  const sv=(sid,v)=>{const el=document.getElementById(sid);if(el)el.value=v||'';};
+  sv('treun-sector',k.sector);treunUpdateSub();
+  setTimeout(()=>sv('treun-subarea',k.subarea),60);
+  sv('treun-name',k.name);sv('treun-desc',k.desc||'');sv('treun-unit',k.unit);sv('treun-user',k.user);sv('treun-prio',k.prio);
+  sv('treun-meta',k.meta==='—'?'':k.meta||'');sv('treun-farol',k.farolManual);sv('treun-editing-id',String(k.id));
+  treunSetSemanas(k.semanas||[]);
+  const lbl=document.getElementById('reun-form-label');if(lbl)lbl.textContent='Editando: '+k.name;
+  const btn=document.getElementById('reun-salvar-btn');if(btn)btn.textContent='💾 Salvar alterações';
+  const can=document.getElementById('reun-cancelar-btn');if(can)can.style.display='inline-block';
+  const card=document.getElementById('reun-form-card');if(card)card.scrollIntoView({behavior:'smooth'});
+}
+
+function reunCancelarEdicao(){
+  ['treun-name','treun-meta','treun-editing-id'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  treunSetSemanas([]);
+  const lbl=document.getElementById('reun-form-label');if(lbl)lbl.textContent='';
+  const btn=document.getElementById('reun-salvar-btn');if(btn)btn.textContent='Salvar Indicador';
+  const can=document.getElementById('reun-cancelar-btn');if(can)can.style.display='none';
+}
+
+function treunDeletar(id){
+  const isMaster=(currentUser&&(currentUser.perfil==='master'||currentUser.nivel==='master'));
+  if(isMaster){
+    if(!confirm('Remover este indicador?'))return;
+    _reunItems=_reunItems.filter(k=>String(k.id)!==String(id));
+    reunSalvar();treunRenderTabela();
+  } else {
+    requestSenha('🗑️ Remover Indicador','Apenas o perfil master pode excluir indicadores.','master',{},()=>{
+      _reunItems=_reunItems.filter(k=>String(k.id)!==String(id));
+      reunSalvar();treunRenderTabela();
+    });
+  }
+}
+
+function reunLimparFiltros(){
+  ['reun-fil-area','reun-fil-subarea','reun-fil-resp','reun-fil-farol'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.value='';
+  });
+  treunRenderTabela();
+}
+
+function reunCalcFarol(k,ultVal,metaNum){
+  if(k.farolManual!=='auto'){
+    const fm=k.farolManual;
+    return{cls:fm==='Atingido'?'atingido':fm==='Atenção'?'atencao':fm==='Crítico'?'critico':'linha',txt:fm};
+  }
+  if(isNaN(ultVal)||isNaN(metaNum)||metaNum===0)return{cls:'linha',txt:'Em linha'};
+  const inv=k.unit==='Dias'||k.unit==='%-inv';
+  if(inv){
+    if(ultVal<=metaNum)return{cls:'atingido',txt:'Atingido'};
+    if(ultVal<=metaNum*1.25)return{cls:'atencao',txt:'Atenção'};
+    return{cls:'critico',txt:'Crítico'};
+  }else{
+    if(ultVal>=metaNum)return{cls:'atingido',txt:'Atingido'};
+    if(ultVal>=metaNum*0.8)return{cls:'atencao',txt:'Atenção'};
+    return{cls:'critico',txt:'Crítico'};
+  }
+}
+
+function treunRenderTabela(){
+  const tbody=document.getElementById('treun-list');if(!tbody)return;
+
+  // Rebuild header with current semanas
+  const thead=document.getElementById('reun-thead');
+  if(thead){
+    const semanaCols=_reunSemanas.map((s,i)=>`<th style="width:80px;text-align:center;min-width:72px">${escapeHtml(s)}</th>`).join('');
+    thead.innerHTML=`<tr>
+      <th style="min-width:170px">Área / Indicador</th>
+      <th style="width:90px">Resp.</th>
+      <th style="width:75px;text-align:center;background:#1e40af;color:#fff">Meta</th>
+      ${semanaCols}
+      <th style="width:80px;text-align:center;color:#F37021;background:#fff7ed">Acomp %</th>
+      <th style="width:80px;text-align:center">Farol</th>
+      <th style="width:90px;text-align:center">Ações</th>
+    </tr>`;
+  }
+
+  if(!_reunItems.length){tbody.innerHTML='<tr><td colspan="20" class="gi-empty">Nenhum indicador cadastrado. Use o formulário acima para adicionar.</td></tr>';return;}
+
+  const filArea=(document.getElementById('reun-fil-area')||{}).value||'';
+  const filSub=(document.getElementById('reun-fil-subarea')||{}).value||'';
+  const filResp=(document.getElementById('reun-fil-resp')||{}).value||'';
+  const filFarol=(document.getElementById('reun-fil-farol')||{}).value||'';
+
+  let items=[..._reunItems];
+  if(filArea)items=items.filter(k=>k.sector===filArea);
+  if(filSub)items=items.filter(k=>k.subarea===filSub);
+  if(filResp)items=items.filter(k=>k.user===filResp);
+
+  items=items.map(k=>{
+    const sems=k.semanas||[];
+    const ultIdx=[...sems].reverse().findIndex(v=>v&&v!=='');
+    const ultVal=ultIdx>=0?parseFloat(sems[sems.length-1-ultIdx]):NaN;
+    const metaNum=parseFloat(k.meta);
+    const inv=k.unit==='Dias'||k.unit==='%-inv';
+    let acomp='-';
+    if(!isNaN(ultVal)&&!isNaN(metaNum)&&metaNum>0)
+      acomp=(inv?Math.round(metaNum/ultVal*100):Math.round(ultVal/metaNum*100))+'%';
+    const farol=reunCalcFarol(k,ultVal,metaNum);
+    return{...k,_ultVal:ultVal,_metaNum:metaNum,_acomp:acomp,_farol:farol};
+  });
+
+  if(filFarol)items=items.filter(k=>k._farol.cls===filFarol);
+
+  const cnt=document.getElementById('reun-fil-count');
+  if(cnt)cnt.textContent=items.length+' de '+_reunItems.length+' indicador'+(items.length!==1?'es':'');
+
+  if(!items.length){tbody.innerHTML='<tr><td colspan="20" class="gi-empty">Nenhum indicador encontrado para os filtros aplicados</td></tr>';return;}
+
+  const unitLabel=u=>u==='%-inv'?'%':u;
+  tbody.innerHTML=items.map(k=>{
+    const sems=k.semanas||[];
+    const metaNum=k._metaNum;
+    const inv=k.unit==='Dias'||k.unit==='%-inv';
+    const acompNum=parseFloat(k._acomp);
+    const acompCls=isNaN(acompNum)?'':acompNum>=100?'bom':acompNum>=80?'medio':'ruim';
+    const ul=unitLabel(k.unit);
+
+    // Célula por semana — detecta tendência (↑↓)
+    const semCols=_reunSemanas.map((s,i)=>{
+      const v=sems[i]||'';
+      const numV=parseFloat(v);
+      const prev=parseFloat(sems[i-1]||'');
+      let cor='color:#475569';
+      let trend='';
+      if(!isNaN(numV)&&!isNaN(metaNum)){cor=(inv?numV<=metaNum:numV>=metaNum)?'color:#1D9E75':'color:#C24003';}
+      if(!isNaN(numV)&&!isNaN(prev)){
+        const melhora=inv?numV<prev:numV>prev;
+        const igual=numV===prev;
+        trend=igual?'<span style="color:#94a3b8;font-size:10px"> =</span>':melhora?'<span style="color:#1D9E75;font-size:10px"> ↑</span>':'<span style="color:#C24003;font-size:10px"> ↓</span>';
+      }
+      return`<td style="text-align:center;font-size:12px;${cor}">${v?v+'<span style="font-size:8px;color:#94a3b8;display:block">'+ul+'</span>':'<span style="color:#cbd5e1">—</span>'}${trend}</td>`;
+    }).join('');
+
+    const meuNome=(currentUser&&currentUser.nome)||'';
+    const isMaster=(currentUser&&(currentUser.perfil==='master'||currentUser.nivel==='master'));
+    const podeEditar=isMaster||(k.user&&k.user===meuNome);
+    const temDesc=!!(k.desc&&k.desc.trim());
+    const btnBg=temDesc?'#dbeafe':'#f8fafc';
+    const btnColor=temDesc?'#1e40af':'#94a3b8';
+    const btnBorder=temDesc?'#93c5fd':'#cbd5e1';
+
+    return'<tr>'
+      +'<td>'
+        +`<button title="Descrição" style="cursor:pointer;width:20px;height:20px;border-radius:50%;border:1px solid ${btnBorder};background:${btnBg};color:${btnColor};font-size:13px;font-weight:700;line-height:20px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:4px" onclick="reunToggleDesc('${k.id}')">+</button><br>`
+        +'<span class="gi-badge area" style="margin-bottom:3px;display:block">'+escapeHtml(k.sector)+'</span>'
+        +'<small style="color:#64748b;font-size:9px">'+escapeHtml(k.subarea||'')+'</small><br>'
+        +'<span style="font-size:12px;font-weight:600;color:#1e293b">'+escapeHtml(k.name)+'</span></td>'
+      +'<td style="font-size:11px;color:#475569">'+escapeHtml(k.user||'')+'</td>'
+      +'<td style="text-align:center;font-size:12px;font-weight:700;background:#dbeafe;color:#1e40af">'+(k.meta||'—')+'<br><small style="font-size:9px;font-weight:400;color:#3b82f6">'+ul+'</small></td>'
+      +semCols
+      +'<td style="text-align:center"><span class="kpi-acomp '+acompCls+'">'+k._acomp+'</span></td>'
+      +'<td style="text-align:center"><span class="kpi-farol '+k._farol.cls+'">'+k._farol.txt+'</span></td>'
+      +'<td style="text-align:center;white-space:nowrap">'
+        +(podeEditar?`<button class="gi-edit-btn" data-rid="${k.id}" onclick="treunEditar(this.dataset.rid)">Editar</button> `:'')
+        +`<button class="gi-del" data-rid="${k.id}" onclick="treunDeletar(this.dataset.rid)" title="Excluir (requer master)">${String.fromCharCode(10005)}</button>`
+      +'</td></tr>'
+      +`<tr id="reun-desc-row-${k.id}" style="display:none;background:#f0f9ff">`
+        +'<td colspan="20" style="padding:6px 16px 10px 16px">'
+          +'<div style="font-size:10px;font-weight:700;color:#0369a1;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">📋 Descrição do Indicador</div>'
+          +'<div style="font-size:12px;color:#334155;line-height:1.6;white-space:pre-wrap;background:#fff;border:1px solid #bae6fd;border-radius:6px;padding:8px 12px">'+(k.desc?escapeHtml(k.desc):'<em style="color:#94a3b8">Sem descrição cadastrada.</em>')+'</div>'
+        +'</td>'
+      +'</tr>';
+  }).join('');
+}
+
+function reunToggleDesc(id){
+  const row=document.getElementById('reun-desc-row-'+id);
+  if(row)row.style.display=row.style.display==='none'?'':'none';
 }
 
 // ── SUBÁREA ──
@@ -9285,13 +9663,15 @@ function tkpiRenderTabela(){
 
 // ── Navegação abas ──
 function todoMudarAba(aba){
+  if(aba==='reuniao'&&!(currentUser&&currentUser.login==='rafael'))return;
   _todoAba=aba;
-  const abas={todo:'tp-aba-todo',graficos:'tp-aba-graficos',kpi:'tp-aba-kpi',metas:'tp-aba-metas'};
-  const tabs={todo:'tptab-todo',graficos:'tptab-graficos',kpi:'tptab-kpi',metas:'tptab-metas'};
+  const abas={todo:'tp-aba-todo',graficos:'tp-aba-graficos',kpi:'tp-aba-kpi',metas:'tp-aba-metas',reuniao:'tp-aba-reuniao'};
+  const tabs={todo:'tptab-todo',graficos:'tptab-graficos',kpi:'tptab-kpi',metas:'tptab-metas',reuniao:'tptab-reuniao'};
   Object.entries(abas).forEach(([k,id])=>{const el=document.getElementById(id);if(el)el.style.display=k===aba?'':'none';});
   Object.entries(tabs).forEach(([k,id])=>{const el=document.getElementById(id);if(el)el.classList.toggle('active',k===aba);});
   if(aba==='graficos')setTimeout(giRenderGraficos,100);
   if(aba==='metas')setTimeout(metasRender,100);
+  if(aba==='reuniao'){treunRenderSemanasForm();treunRenderTabela();}
 }
 
 function abrirTodo(){
@@ -9299,6 +9679,9 @@ function abrirTodo(){
   const nome=(currentUser&&currentUser.nome)||'—';
   const el=document.getElementById('todo-solicitante-nome');
   if(el)el.textContent=nome;
+  // Aba Reunião Semanal — só rafael
+  const tabReun=document.getElementById('tptab-reuniao');
+  if(tabReun)tabReun.style.display=(currentUser&&currentUser.login==='rafael')?'':'none';
   // Garante inicialização imediata se ainda não foi feita
   if(!_todoUid&&currentUser){todoInit('shared');}
   if(typeof _todoResps!=='undefined'){_todoResps=[];todoRenderRespChips();}
