@@ -10316,7 +10316,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#eef1f6;color:#1a1a2
 
 </script>
 
-<div id="app-version" style="position:fixed;bottom:6px;left:8px;z-index:99999;font-size:9px;font-weight:600;color:rgba(255,255,255,0.25);letter-spacing:.05em;pointer-events:none;user-select:none;">v1.0.23</div>
+<div id="app-version" style="position:fixed;bottom:6px;left:8px;z-index:99999;font-size:9px;font-weight:600;color:rgba(255,255,255,0.25);letter-spacing:.05em;pointer-events:none;user-select:none;">v1.0.27</div>
 
 
 <script>
@@ -10393,9 +10393,9 @@ function rsIndCancelar(){
 
 function rsIndRenderLista(){
   const cont=document.getElementById('rs-ind-lista');if(!cont)return;
-  const aF=document.getElementById('rs-fil-ind-area')?.value||'';
-  const rF=document.getElementById('rs-fil-ind-resp')?.value||'';
-  let lista=_rsIndicadores;if(aF)lista=lista.filter(x=>x.area===aF);if(rF)lista=lista.filter(x=>x.resp===rF);
+  const indAF=document.getElementById('rs-fil-ind-area')?.value||'';
+  const indRF=document.getElementById('rs-fil-ind-resp')?.value||'';
+  let lista=_rsIndicadores;if(indAF)lista=lista.filter(x=>x.area===indAF);if(indRF)lista=lista.filter(x=>x.resp===indRF);
   if(!lista.length){cont.innerHTML='<div style="font-size:12px;color:#94a3b8;padding:8px">Nenhum indicador cadastrado.</div>';return;}
   cont.innerHTML=lista.map(ind=>`<div style="display:grid;grid-template-columns:2fr 2fr 1fr 1fr 1fr 80px auto;gap:8px;align-items:center;padding:8px 12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;margin-bottom:6px;font-size:12px">
     <div><div style="font-weight:600">${ind.nome}</div><div style="font-size:10px;color:#94a3b8">${ind.desc||''}</div></div>
@@ -10459,10 +10459,13 @@ function rsRenderSemanaChecks(){
 
 function rsRenderTabela(){
   const thead=document.getElementById('rs-thead'),tbody=document.getElementById('rs-tbody');if(!thead||!tbody)return;
-  const aF=document.getElementById('rs-tab-area')?.value||'',rF=document.getElementById('rs-tab-resp')?.value||'',tF=document.getElementById('rs-tab-tipo')?.value||'';
+  const tabAF=document.getElementById('rs-tab-area')?.value||'',tabRF=document.getElementById('rs-tab-resp')?.value||'',tabTF=document.getElementById('rs-tab-tipo')?.value||'';
   const semsSel=rsGetSemanasSelecionadas();
   const sems=rsGetTodasSemanas().filter(s=>!semsSel.length||semsSel.includes(s));
-  let inds=_rsIndicadores;if(aF)inds=inds.filter(x=>x.area===aF);if(rF)inds=inds.filter(x=>x.resp===rF);if(tF)inds=inds.filter(x=>x.tipo===tF);
+  let inds=_rsIndicadores;
+  if(tabAF)inds=inds.filter(x=>x.area===tabAF);
+  if(tabRF)inds=inds.filter(x=>x.resp===tabRF);
+  if(tabTF)inds=inds.filter(x=>x.tipo===tabTF);
   if(!inds.length||!sems.length){thead.innerHTML='';tbody.innerHTML='<tr><td colspan="20" style="text-align:center;color:#94a3b8;padding:20px">Nenhum dado para exibir. Cadastre indicadores e adicione valores de semana.</td></tr>';return;}
   thead.innerHTML=`<tr><th style="min-width:180px">Indicador</th><th style="width:80px">Resp.</th><th style="width:70px;text-align:center">Tipo</th><th style="width:75px;text-align:center;background:#1e40af;color:#fff">Meta</th>${sems.map(s=>`<th style="width:80px;text-align:center;background:#0f172a;color:#94a3b8;font-size:10px">${s.replace('_','/')}</th>`).join('')}<th style="width:90px;text-align:center;color:#1D9E75;background:#f0fdf4">Tendência</th></tr>`;
   let lastArea='';
@@ -10480,12 +10483,19 @@ function rsRenderTabela(){
 function rsLimparFiltros(){['rs-tab-area','rs-tab-resp','rs-tab-tipo'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});document.querySelectorAll('.rs-semana-check').forEach(c=>c.checked=true);rsRenderTabela();}
 
 function rsGerarRelatorio(){
-  const semsSel=rsGetSemanasSelecionadas();if(!semsSel.length)return alert('Selecione ao menos uma semana.');
-  const aF=document.getElementById('rs-tab-area')?.value||'';
-  const sems=rsGetTodasSemanas().filter(s=>semsSel.includes(s));
-  let inds=_rsIndicadores;if(aF)inds=inds.filter(x=>x.area===aF);
+  const relSemsSel=rsGetSemanasSelecionadas();if(!relSemsSel.length)return alert('Selecione ao menos uma semana.');
+  const relAF=document.getElementById('rs-tab-area')?.value||'';
+  const relRF=document.getElementById('rs-tab-resp')?.value||'';
+  const relTF=document.getElementById('rs-tab-tipo')?.value||'';
+  const sems=rsGetTodasSemanas().filter(s=>relSemsSel.includes(s));
+  let inds=_rsIndicadores;
+  if(relAF)inds=inds.filter(x=>x.area===relAF);
+  if(relRF)inds=inds.filter(x=>x.resp===relRF);
+  if(relTF)inds=inds.filter(x=>x.tipo===relTF);
+  if(!inds.length)return alert('Nenhum indicador corresponde aos filtros selecionados.');
   const periodo=sems.length>1?`${sems[0].replace('_','/')} a ${sems[sems.length-1].replace('_','/')}`:sems[0]?.replace('_','/');
   const hoje=new Date().toLocaleDateString('pt-BR');
+  const filtrosLabel=[relAF?'Área: '+relAF:'',relRF?'Resp.: '+relRF:'',relTF?'Tipo: '+rsTipoLabel(relTF):''].filter(Boolean).join(' · ');
   const criticos=[],atingidos=[],melhoras=[],pioras=[];
   inds.forEach(ind=>{
     const metaNum=parseFloat(ind.meta);
@@ -10497,9 +10507,9 @@ function rsGerarRelatorio(){
   const areas=[...new Set(inds.map(x=>x.area||'Geral'))];
   const blocos=areas.map(area=>{
     const ia=inds.filter(x=>(x.area||'Geral')===area);
-    return `<h2 style="font-size:14px;font-weight:700;margin:20px 0 8px;border-bottom:2px solid #F37021;padding-bottom:4px">${area}</h2><table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:12px"><thead><tr style="background:#0f172a;color:#fff"><th style="padding:6px 8px;text-align:left">Indicador</th><th style="padding:6px 8px;text-align:left">Resp.</th><th style="padding:6px 8px;text-align:center">Meta</th>${sems.map(s=>`<th style="padding:6px 8px;text-align:center">${s.replace('_','/')}</th>`).join('')}<th style="padding:6px 8px;text-align:center">Tendência</th></tr></thead><tbody>${ia.map((ind,ki)=>{const mN=parseFloat(ind.meta);const v=sems.map(s=>{const vv=(_rsValores[ind.id]||{})[s];return vv!=null?parseFloat(vv.valor):NaN;});const cV=v.filter(x=>!isNaN(x));let tr='—';let tc='#64748b';if(cV.length>=2){const d=cV[cV.length-1]-cV[0];const p=Math.abs((d/cV[0])*100).toFixed(1);const m=rsMaisEMelhor(ind.tipo)?d>0:d<0;tr=(d>=0?'↑ ':'↓ ')+p+'%';tc=m?'#16a34a':'#dc2626';}return`<tr style="background:${ki%2?'#fff':'#f8fafc'}"><td style="padding:5px 8px;font-weight:600">${ind.nome}<div style="font-size:10px;color:#94a3b8">${ind.desc||''}</div></td><td style="padding:5px 8px;color:#64748b">${(ind.resp||'').split(' ')[0]||'—'}</td><td style="padding:5px 8px;text-align:center;color:#60a5fa">${ind.meta||'—'}</td>${v.map(vv=>{if(isNaN(vv))return'<td style="padding:5px 8px;text-align:center;color:#cbd5e1">—</td>';const bg=rsFarol(vv,mN,ind.tipo);return`<td style="padding:5px 8px;text-align:center;font-weight:700;${bg}">${vv}${rsTipoUnidade(ind.tipo)}</td>`;}).join('')}<td style="padding:5px 8px;text-align:center;font-weight:700;color:${tc}">${tr}</td></tr>`;}).join('')}</tbody></table>`;
+    return `<h2 style="font-size:14px;font-weight:700;margin:20px 0 8px;border-bottom:2px solid #F37021;padding-bottom:4px">${area}</h2><table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:12px"><thead><tr style="background:#0f172a;color:#fff"><th style="padding:6px 8px;text-align:left">Indicador</th><th style="padding:6px 8px;text-align:left">Resp.</th><th style="padding:6px 8px;text-align:center">Meta</th>${sems.map(s=>`<th style="padding:6px 8px;text-align:center">${s.replace('_','/')}</th>`).join('')}<th style="padding:6px 8px;text-align:center">Tendência</th></tr></thead><tbody>${ia.map((ind,ki)=>{const mN=parseFloat(ind.meta);const v=sems.map(s=>{const vv=(_rsValores[ind.id]||{})[s];return vv!=null?parseFloat(vv.valor):NaN;});const obs=sems.map(s=>(_rsValores[ind.id]||{})[s]?.obs||'');const cV=v.filter(x=>!isNaN(x));let tr='—';let tc='#64748b';if(cV.length>=2){const d=cV[cV.length-1]-cV[0];const p=Math.abs((d/cV[0])*100).toFixed(1);const m=rsMaisEMelhor(ind.tipo)?d>0:d<0;tr=(d>=0?'↑ ':'↓ ')+p+'%';tc=m?'#16a34a':'#dc2626';}const temObs=obs.some(o=>o);return`<tr style="background:${ki%2?'#fff':'#f8fafc'}"><td style="padding:5px 8px;font-weight:600">${ind.nome}<div style="font-size:10px;color:#94a3b8">${ind.desc||''}</div></td><td style="padding:5px 8px;color:#64748b">${(ind.resp||'').split(' ')[0]||'—'}</td><td style="padding:5px 8px;text-align:center;color:#60a5fa">${ind.meta||'—'}</td>${v.map((vv,vi)=>{if(isNaN(vv))return'<td style="padding:5px 8px;text-align:center;color:#cbd5e1">—</td>';const bg=rsFarol(vv,mN,ind.tipo);const ob=obs[vi];return`<td style="padding:5px 8px;text-align:center;font-weight:700;${bg}">${vv}${rsTipoUnidade(ind.tipo)}${ob?`<div style="font-size:9px;font-weight:400;color:#64748b;font-style:italic;margin-top:2px">${ob}</div>`:''}</td>`;}).join('')}<td style="padding:5px 8px;text-align:center;font-weight:700;color:${tc}">${tr}</td></tr>`;}).join('')}</tbody></table>`;
   }).join('');
-  const rel=`<div style="font-family:Arial,sans-serif;color:#1e293b"><div style="border-bottom:3px solid #F37021;padding-bottom:16px;margin-bottom:24px"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#F37021">Mills Equipamentos</div><h1 style="font-size:22px;font-weight:800;margin:4px 0">Relatório de Reunião Semanal</h1><div style="font-size:13px;color:#64748b">Período: ${periodo} · Gerado em ${hoje}${aF?' · Área: '+aF:''}</div></div><div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;margin-bottom:24px"><div style="background:#fef2f2;border-radius:8px;padding:12px;text-align:center"><div style="font-size:11px;font-weight:700;color:#dc2626;text-transform:uppercase">Críticos</div><div style="font-size:28px;font-weight:800;color:#dc2626">${criticos.length}</div></div><div style="background:#f0fdf4;border-radius:8px;padding:12px;text-align:center"><div style="font-size:11px;font-weight:700;color:#16a34a;text-transform:uppercase">Atingidos</div><div style="font-size:28px;font-weight:800;color:#16a34a">${atingidos.length}</div></div><div style="background:#f0fdf4;border-radius:8px;padding:12px;text-align:center"><div style="font-size:11px;font-weight:700;color:#16a34a;text-transform:uppercase">Melhorias</div><div style="font-size:28px;font-weight:800;color:#16a34a">${melhoras.length}</div></div><div style="background:#fffbeb;border-radius:8px;padding:12px;text-align:center"><div style="font-size:11px;font-weight:700;color:#d97706;text-transform:uppercase">Pioras</div><div style="font-size:28px;font-weight:800;color:#d97706">${pioras.length}</div></div></div>${criticos.length?`<h2 style="font-size:14px;font-weight:700;color:#dc2626;margin:16px 0 6px">🔴 KPIs Críticos</h2><ul style="margin:0;padding-left:20px">${criticos.map(c=>`<li style="font-size:12px;margin-bottom:3px">${c}</li>`).join('')}</ul>`:''}${atingidos.length?`<h2 style="font-size:14px;font-weight:700;color:#16a34a;margin:16px 0 6px">✅ Metas Atingidas</h2><ul style="margin:0;padding-left:20px">${atingidos.map(c=>`<li style="font-size:12px;margin-bottom:3px">${c}</li>`).join('')}</ul>`:''}${melhoras.length?`<h2 style="font-size:14px;font-weight:700;color:#16a34a;margin:16px 0 6px">↑ Maiores Melhorias</h2><ul style="margin:0;padding-left:20px">${melhoras.map(c=>`<li style="font-size:12px;margin-bottom:3px">${c}</li>`).join('')}</ul>`:''}${pioras.length?`<h2 style="font-size:14px;font-weight:700;color:#dc2626;margin:16px 0 6px">↓ Pontos de Atenção</h2><ul style="margin:0;padding-left:20px">${pioras.map(c=>`<li style="font-size:12px;margin-bottom:3px">${c}</li>`).join('')}</ul>`:''}<h2 style="font-size:16px;font-weight:800;margin:24px 0 8px">📊 Resultados por Área</h2>${blocos}</div>`;
+  const rel=`<div style="font-family:Arial,sans-serif;color:#1e293b"><div style="border-bottom:3px solid #F37021;padding-bottom:16px;margin-bottom:24px"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#F37021">Mills Equipamentos</div><h1 style="font-size:22px;font-weight:800;margin:4px 0">Relatório de Reunião Semanal</h1><div style="font-size:13px;color:#64748b">Período: ${periodo} · Gerado em ${hoje}${filtrosLabel?' · '+filtrosLabel:''}</div></div><div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;margin-bottom:24px"><div style="background:#fef2f2;border-radius:8px;padding:12px;text-align:center"><div style="font-size:11px;font-weight:700;color:#dc2626;text-transform:uppercase">Críticos</div><div style="font-size:28px;font-weight:800;color:#dc2626">${criticos.length}</div></div><div style="background:#f0fdf4;border-radius:8px;padding:12px;text-align:center"><div style="font-size:11px;font-weight:700;color:#16a34a;text-transform:uppercase">Atingidos</div><div style="font-size:28px;font-weight:800;color:#16a34a">${atingidos.length}</div></div><div style="background:#f0fdf4;border-radius:8px;padding:12px;text-align:center"><div style="font-size:11px;font-weight:700;color:#16a34a;text-transform:uppercase">Melhorias</div><div style="font-size:28px;font-weight:800;color:#16a34a">${melhoras.length}</div></div><div style="background:#fffbeb;border-radius:8px;padding:12px;text-align:center"><div style="font-size:11px;font-weight:700;color:#d97706;text-transform:uppercase">Pioras</div><div style="font-size:28px;font-weight:800;color:#d97706">${pioras.length}</div></div></div>${criticos.length?`<h2 style="font-size:14px;font-weight:700;color:#dc2626;margin:16px 0 6px">🔴 KPIs Críticos</h2><ul style="margin:0;padding-left:20px">${criticos.map(c=>`<li style="font-size:12px;margin-bottom:3px">${c}</li>`).join('')}</ul>`:''}${atingidos.length?`<h2 style="font-size:14px;font-weight:700;color:#16a34a;margin:16px 0 6px">✅ Metas Atingidas</h2><ul style="margin:0;padding-left:20px">${atingidos.map(c=>`<li style="font-size:12px;margin-bottom:3px">${c}</li>`).join('')}</ul>`:''}${melhoras.length?`<h2 style="font-size:14px;font-weight:700;color:#16a34a;margin:16px 0 6px">↑ Maiores Melhorias</h2><ul style="margin:0;padding-left:20px">${melhoras.map(c=>`<li style="font-size:12px;margin-bottom:3px">${c}</li>`).join('')}</ul>`:''}${pioras.length?`<h2 style="font-size:14px;font-weight:700;color:#dc2626;margin:16px 0 6px">↓ Pontos de Atenção</h2><ul style="margin:0;padding-left:20px">${pioras.map(c=>`<li style="font-size:12px;margin-bottom:3px">${c}</li>`).join('')}</ul>`:''}<h2 style="font-size:16px;font-weight:800;margin:24px 0 8px">📊 Resultados por Área</h2>${blocos}</div>`;
   document.getElementById('rs-relatorio-content').innerHTML=rel;
   document.getElementById('rs-relatorio-modal').style.display='block';
 }
