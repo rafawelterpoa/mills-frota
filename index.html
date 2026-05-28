@@ -1770,6 +1770,7 @@ async function loadFromFirebase(){
   }catch(e){console.warn('base_atual load:',e);}
   try{
     const rem=await fbGetAll();
+    console.log("[FB Load] equipamentos recebidos:",rem?Object.keys(rem).length:0);
     if(rem&&Object.keys(rem).length>0){
       Object.entries(rem).forEach(([id,d])=>{
         if(!d||!d.equipamento)return;
@@ -1838,6 +1839,7 @@ async function loadFromFirebase(){
       if(!eq.planta)eq.planta='';if(!eq.estado)eq.estado='';if(!eq.municipio)eq.municipio='';
     });
     // Não escrever no Firebase na migração — campos serão salvos na próxima operação normal
+    console.log("[FB Load] CCB02905 etapa final:", state["CCB02905"]?state["CCB02905"].etapa:"nao encontrado");
     reRenderAtivo();setSyncStatus('ok');fbListen();
   }catch(e){
     console.error('[Firebase erro]',e.message||e);
